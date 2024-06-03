@@ -10,7 +10,6 @@
   },
   "scripts": {
     "prebuild": "dotenv -- cross-env yarn supabase:generate:remote",
-    "dev": "wrangler dev --env dev --port 4000",
     "format": "run-s format:lint format:prettier format:cspell",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
@@ -18,6 +17,7 @@
     "knip": "knip --config .github/knip.ts",
     "knip-ci": "knip --no-exit-code --reporter json --config .github/knip.ts",
     "prepare": "husky install",
+    "test": "jest",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
     "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\""
   },

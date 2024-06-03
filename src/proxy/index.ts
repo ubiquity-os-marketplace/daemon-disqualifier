@@ -1,6 +1,7 @@
 import { handleIssueOpened } from "../handlers/issue-opened";
+import { Context } from "../types/context";
 import { EnvConfigType } from "../types/env-type";
-import { PluginInputs, SupportedEvents } from "../types/plugin-inputs";
+import { SupportedEvents } from "../types/plugin-inputs";
 
 export interface Result {
   status: "ok" | "failed" | "skipped";
@@ -8,7 +9,7 @@ export interface Result {
   reason?: string;
 }
 
-const callbacks: { [k in SupportedEvents]: (inputs: PluginInputs, env: EnvConfigType) => Result } = {
+const callbacks: { [k in SupportedEvents]: (context: Context, env: EnvConfigType) => Result | Promise<Result> } = {
   issues() {
     return { status: "ok" };
   },
