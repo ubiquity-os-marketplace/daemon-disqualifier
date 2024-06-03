@@ -13,3 +13,4 @@ junit.xml
 cypress/screenshots
 .dev.vars
 /tests/http/http-client.private.env.json
+.wrangler
