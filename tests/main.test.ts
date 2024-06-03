@@ -23,18 +23,10 @@ describe("Run tests", () => {
     delete process.env.SUPABASE_URL;
     // @ts-ignore
     delete process.env.SUPABASE_KEY;
-    await expect(
-      run({
-        SUPABASE_URL: "",
-        SUPABASE_KEY: "",
-      })
-    ).rejects.toEqual(new ValidationException("The environment is invalid."));
+    await expect(run()).rejects.toEqual(new ValidationException("The environment is invalid."));
     process.env = oldEnv;
   });
   it("Should run", async () => {
-    await run({
-      SUPABASE_URL: "",
-      SUPABASE_KEY: "",
-    });
+    await run();
   });
 });
