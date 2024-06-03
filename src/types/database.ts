@@ -3,7 +3,30 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never;
+      repositories: {
+        Row: {
+          created_at: string;
+          deadline: string;
+          id: number;
+          last_check: string;
+          url: string;
+        };
+        Insert: {
+          created_at?: string;
+          deadline: string;
+          id?: number;
+          last_check?: string;
+          url: string;
+        };
+        Update: {
+          created_at?: string;
+          deadline?: string;
+          id?: number;
+          last_check?: string;
+          url?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
