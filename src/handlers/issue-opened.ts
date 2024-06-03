@@ -14,7 +14,7 @@ export async function handleIssueOpened(context: Context, env: EnvConfigType): P
   } = context;
   const timeEstimate = await getTimeEstimate(context);
   console.log(JSON.stringify(context.payload, null, 2));
-  await repository.upsert("url", DateTime.now().plus(timeEstimate).toJSDate());
+  await repository.upsert(context.payload.repository.html_url, DateTime.now().plus(timeEstimate).toJSDate());
   return { status: "ok" };
 }
 

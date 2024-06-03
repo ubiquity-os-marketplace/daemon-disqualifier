@@ -21,9 +21,9 @@ const callbacks: { [k in SupportedEvents]: (context: Context, env: EnvConfigType
 
 export const proxyCallbacks = new Proxy(callbacks, {
   get(target, prop: SupportedEvents) {
-    if (!Object.keys(target).includes(prop)) {
+    if (!(prop in target)) {
       console.warn(`${prop} is not supported, skipping.`);
-      return { status: "skipped", reason: "unsupported_event" };
+      return async () => ({ status: "skipped", reason: "unsupported_event" });
     }
     return target[prop].bind(target);
   },
