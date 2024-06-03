@@ -32,10 +32,14 @@ jobs:
     needs:
       - run-migration
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Generate Supabase Types
         run: |
           yarn install
           yarn run "supabase:generate:remote"
+
       - name: Commit and Push generated types
         run: |
           git config --global user.name 'github-actions[bot]'
