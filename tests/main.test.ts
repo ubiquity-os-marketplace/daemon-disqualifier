@@ -6,7 +6,7 @@ jest.mock("../src/parser/payload", () => {
   const cfg = require("./__mocks__/results/valid-configuration.json");
   return {
     stateId: 1,
-    eventName: "issues.closed",
+    eventName: "issues.opened",
     authToken: process.env.GITHUB_TOKEN,
     ref: "",
     eventPayload: {
@@ -23,10 +23,18 @@ describe("Run tests", () => {
     delete process.env.SUPABASE_URL;
     // @ts-ignore
     delete process.env.SUPABASE_KEY;
-    await expect(run()).rejects.toEqual(new ValidationException("The environment is invalid."));
+    await expect(
+      run({
+        SUPABASE_URL: "",
+        SUPABASE_KEY: "",
+      })
+    ).rejects.toEqual(new ValidationException("The environment is invalid."));
     process.env = oldEnv;
   });
   it("Should run", async () => {
-    await run();
+    await run({
+      SUPABASE_URL: "",
+      SUPABASE_KEY: "",
+    });
   });
 });

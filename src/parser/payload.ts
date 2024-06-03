@@ -4,7 +4,7 @@ import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as Webhook
 
 config();
 
-export type SupportedEvents = "issues" | "pull_request";
+export type SupportedEvents = "issues" | "pull_request" | "issues.opened";
 
 export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   stateId: string;
