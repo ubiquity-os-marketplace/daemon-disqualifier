@@ -6,21 +6,24 @@ import { DateTime, Duration } from "luxon";
 /**
  * On issue opened, we want to keep track of the deadline, and set an alarm for the reminder.
  */
-export async function handleIssueOpened(context: Context, env: EnvConfigType): Promise<Result> {
+export async function handleIssueOpened(context: Context<"issues.opened">, env: EnvConfigType): Promise<Result> {
   const {
     adapters: {
       supabase: { repository },
     },
   } = context;
   const timeEstimate = await getTimeEstimate(context);
-  console.log(JSON.stringify(context.payload, null, 2));
-  await repository.upsert(context.payload.repository.html_url, DateTime.now().plus(timeEstimate).toJSDate());
+  await repository.upsert(context.payload.issue.html_url, DateTime.now().plus(timeEstimate).toJSDate());
   return { status: "ok" };
 }
 
-async function getTimeEstimate(context: Context) {
+async function getTimeEstimate(context: Context<"issues.opened">) {
   const timeLabelRegex = /Time: <(\d+)/i;
-  const labels = await context.octokit.issues.listLabelsOnIssue();
+  const labels = await context.octokit.issues.listLabelsOnIssue({
+    owner: context.payload.repository.owner.login,
+    repo: context.payload.repository.name,
+    issue_number: context.payload.issue.number,
+  });
   const durationLabel = labels.data.find((o) => o.name.match(timeLabelRegex));
   if (!durationLabel) {
     return Duration.invalid("No time label was found.");
