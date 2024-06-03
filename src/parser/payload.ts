@@ -22,7 +22,7 @@ const program: PluginInputs = {
   authToken: webhookPayload.authToken,
   ref: webhookPayload.ref,
   eventPayload: JSON.parse(webhookPayload.eventPayload),
-  settings: webhookPayload.settings,
+  settings: JSON.parse(webhookPayload.settings),
 };
 
 export default program;

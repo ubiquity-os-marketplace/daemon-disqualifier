@@ -1,18 +1,7 @@
 import * as core from "@actions/core";
-import program from "./parser/payload";
+import { run } from "./run";
 
-async function main() {
-  console.log(program);
-  if (program.eventName === "issues") {
-    console.log("running");
-    return JSON.stringify({ status: "ok" });
-  } else {
-    console.warn(`${program.eventName} is not supported, skipping.`);
-    return JSON.stringify({ status: "skipped", reason: "unsupported_event" });
-  }
-}
-
-main()
+run()
   .then((result) => {
     core?.setOutput("result", result);
   })
