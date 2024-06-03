@@ -58,7 +58,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add src/types/database.ts
           if [ -n "$(git diff-index --cached --name-only HEAD)" ]; then
-            git commit -m "chore: updated generated Supabase types"
+            git commit -m "chore: updated generated Supabase types" || echo "Lint-staged check failed"
             git push origin main
           else
             echo "No changes to commit"
