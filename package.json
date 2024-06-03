@@ -37,6 +37,7 @@
     "@supabase/supabase-js": "2.43.4",
     "commander": "12.1.0",
     "dotenv": "16.4.5",
+    "luxon": "3.4.4",
     "typebox-validators": "0.3.5"
   },
   "devDependencies": {
@@ -48,6 +49,7 @@
     "@jest/globals": "29.7.0",
     "@mswjs/data": "0.16.1",
     "@types/jest": "29.5.12",
+    "@types/luxon": "3.4.2",
     "@types/node": "20.13.0",
     "@typescript-eslint/eslint-plugin": "7.11.0",
     "@typescript-eslint/parser": "7.11.0",
