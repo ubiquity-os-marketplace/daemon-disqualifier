@@ -29,6 +29,8 @@ jobs:
 
   generate_types:
     runs-on: ubuntu-latest
+    needs:
+      - run-migration
     steps:
       - name: Generate Supabase Types
         run: |
