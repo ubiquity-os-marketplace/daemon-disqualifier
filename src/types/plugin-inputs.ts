@@ -13,11 +13,17 @@ export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
 }
 
 export const userActivityWatcherSettingsSchema = T.Object({
-  sendReminders: T.Boolean({
-    default: true,
+  /**
+   * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
+   */
+  sendRemindersThreshold: T.Number({
+    default: 3.5,
   }),
-  unassignUser: T.Boolean({
-    default: true,
+  /**
+   * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
+   */
+  unassignUserThreshold: T.Number({
+    default: 7,
   }),
 });
 

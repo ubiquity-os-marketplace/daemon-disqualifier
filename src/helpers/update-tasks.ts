@@ -7,6 +7,7 @@ export async function updateTasks(context: Context) {
   const {
     adapters: { supabase },
     logger,
+    config,
   } = context;
   const watchedRepoList = await supabase.repositories.get();
 
@@ -16,14 +17,14 @@ export async function updateTasks(context: Context) {
   }
   for (const watchedIssue of watchedRepoList) {
     const now = DateTime.now().plus({ day: 10 });
-    const deadline = DateTime.fromISO(watchedIssue.deadline);
-    if (now >= deadline) {
-      const activity = await getAssigneesActivityForIssue(context, watchedIssue);
-      console.log(activity);
-      if (!activity?.length) {
-        console.log("bye");
-        await removeIdleAssignees(context);
-      }
+    const activity = await getAssigneesActivityForIssue(context, watchedIssue);
+    const deadline = DateTime.fromISO(watchedIssue.deadline).plus({ day: config.unassignUserThreshold });
+
+    if (activity?.length) {
+      await supabase.repositories.upsert(watchedIssue.url, deadline.toJSDate());
+    } else if (now >= deadline && !activity?.length) {
+      await removeIdleAssignees(context);
+      await supabase.repositories.delete(watchedIssue.url);
     }
   }
   return true;
@@ -31,7 +32,6 @@ export async function updateTasks(context: Context) {
 
 async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
-  console.log("users", JSON.stringify(payload.issue, null, 2));
   return octokit.paginate(
     octokit.rest.issues.listEvents,
     {
