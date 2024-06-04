@@ -5,7 +5,7 @@ import { Database } from "../types/database";
 export function createAdapters(supabaseClient: SupabaseClient<Database>, context: Context) {
   return {
     supabase: {
-      repository: {
+      repositories: {
         async upsert(url: string, deadline: Date, createdAt?: Date) {
           const { data, error } = await supabaseClient
             .from("repositories")
@@ -30,6 +30,13 @@ export function createAdapters(supabaseClient: SupabaseClient<Database>, context
           const { data, error } = await supabaseClient.from("repositories").delete().eq("url", url).select().single();
           if (error) {
             context.logger.error(`Could not delete repository ${url}.`, error);
+          }
+          return data;
+        },
+        async get() {
+          const { data, error } = await supabaseClient.from("repositories").select();
+          if (error) {
+            context.logger.error(`Could not get repositories.`, error);
           }
           return data;
         },

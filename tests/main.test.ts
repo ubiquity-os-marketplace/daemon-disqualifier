@@ -1,5 +1,8 @@
+import { Value } from "@sinclair/typebox/value";
+import program from "../src/parser/payload";
 import { ValidationException } from "typebox-validators";
 import { run } from "../src/run";
+import envConfigSchema from "../src/types/env-type";
 import { PluginInputs } from "../src/types/plugin-inputs";
 
 jest.mock("../src/parser/payload", () => {
@@ -11,7 +14,13 @@ jest.mock("../src/parser/payload", () => {
     authToken: process.env.GITHUB_TOKEN,
     ref: "",
     eventPayload: {
-      issue: { html_url: "https://github.com/ubiquibot/comment-incentives/issues/22" },
+      issue: { html_url: "https://github.com/Meniole/user-activity-watcher/issues/1", number: 1 },
+      repository: {
+        owner: {
+          login: "Meniole",
+        },
+        name: "user-activity-watcher",
+      },
     },
     settings: JSON.stringify(cfg),
   };
@@ -33,9 +42,10 @@ describe("Run tests", () => {
     process.env = oldEnv;
   });
   it("Should run", async () => {
-    await run({} as unknown as PluginInputs, {
-      SUPABASE_URL: "",
-      SUPABASE_KEY: "",
-    });
+    await run(program, Value.Decode(envConfigSchema, process.env));
+    // await run({} as unknown as PluginInputs, {
+    //   SUPABASE_URL: "",
+    //   SUPABASE_KEY: "",
+    // });
   });
 });

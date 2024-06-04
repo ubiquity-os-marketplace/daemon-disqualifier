@@ -1,6 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import { createClient } from "@supabase/supabase-js";
 import { createAdapters } from "./adapters";
+import { updateTasks } from "./helpers/update-tasks";
 import { proxyCallbacks } from "./proxy";
 import { Context } from "./types/context";
 import { Database } from "./types/database";
@@ -35,6 +36,6 @@ export async function run(inputs: PluginInputs, env: EnvConfigType) {
     adapters: {} as ReturnType<typeof createAdapters>,
   };
   context.adapters = createAdapters(supabaseClient, context);
-
+  await updateTasks(context);
   return JSON.stringify(await proxyCallbacks[inputs.eventName](context, env));
 }
