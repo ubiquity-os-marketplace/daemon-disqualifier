@@ -13,7 +13,11 @@ export async function handleIssueOpened(context: Context<"issues.opened">, env: 
     },
   } = context;
   const timeEstimate = await getTimeEstimate(context);
-  await repository.upsert(context.payload.issue.html_url, DateTime.now().plus(timeEstimate).toJSDate());
+  if (timeEstimate.isValid) {
+    await repository.upsert(context.payload.issue.html_url, DateTime.now().plus(timeEstimate).toJSDate());
+  } else {
+    context.logger.warn(`Time for the task is invalid. ${timeEstimate.invalidReason}`);
+  }
   return { status: "ok" };
 }
 

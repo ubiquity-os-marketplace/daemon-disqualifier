@@ -1,5 +1,6 @@
 import { ValidationException } from "typebox-validators";
 import { run } from "../src/run";
+import { PluginInputs } from "../src/types/plugin-inputs";
 
 jest.mock("../src/parser/payload", () => {
   // Require is needed because mock cannot access elements out of scope
@@ -23,10 +24,18 @@ describe("Run tests", () => {
     delete process.env.SUPABASE_URL;
     // @ts-ignore
     delete process.env.SUPABASE_KEY;
-    await expect(run()).rejects.toEqual(new ValidationException("The environment is invalid."));
+    await expect(
+      run({} as unknown as PluginInputs, {
+        SUPABASE_URL: "",
+        SUPABASE_KEY: "",
+      })
+    ).rejects.toEqual(new ValidationException("The environment is" + " invalid."));
     process.env = oldEnv;
   });
   it("Should run", async () => {
-    await run();
+    await run({} as unknown as PluginInputs, {
+      SUPABASE_URL: "",
+      SUPABASE_KEY: "",
+    });
   });
 });

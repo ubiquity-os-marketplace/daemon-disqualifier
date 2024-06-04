@@ -1,4 +1,8 @@
-import { EnvConfigType } from "./types/env-type";
+import { Value } from "@sinclair/typebox/value";
+import { ValidationException } from "typebox-validators";
+import { run } from "./run";
+import { EnvConfigType, envConfigValidator } from "./types/env-type";
+import { userActivityWatcherSettingsSchema } from "./types/plugin-inputs";
 
 export default {
   async fetch(request: Request, env: EnvConfigType): Promise<Response> {
@@ -16,11 +20,17 @@ export default {
           headers: { "content-type": "application/json" },
         });
       }
-      // const webhookPayload = await request.json();
-      // const settings = Value.Decode(commandQueryUserScheme, Value.Default(commandQueryUserScheme, JSON.parse(webhookPayload.settings)));
-      // webhookPayload.eventPayload = JSON.parse(webhookPayload.eventPayload);
-      // webhookPayload.settings = settings;
-      // await run(webhookPayload, env);
+      if (!envConfigValidator.test(env)) {
+        for (const error of envConfigValidator.errors(env)) {
+          console.error(error);
+        }
+        return Promise.reject(new ValidationException("The environment is invalid."));
+      }
+      const webhookPayload = await request.json();
+      const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, JSON.parse(webhookPayload.settings)));
+      webhookPayload.eventPayload = JSON.parse(webhookPayload.eventPayload);
+      webhookPayload.settings = settings;
+      await run(webhookPayload, env);
       return new Response(JSON.stringify("OK"), { status: 200, headers: { "content-type": "application/json" } });
     } catch (error) {
       return handleUncaughtError(error);

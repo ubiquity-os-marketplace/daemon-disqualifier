@@ -1,24 +1,13 @@
 import { Octokit } from "@octokit/rest";
-import { Value } from "@sinclair/typebox/value";
 import { createClient } from "@supabase/supabase-js";
-import { ValidationException } from "typebox-validators";
 import { createAdapters } from "./adapters";
-import program from "./parser/payload";
 import { proxyCallbacks } from "./proxy";
 import { Context } from "./types/context";
 import { Database } from "./types/database";
-import envConfigSchema, { envConfigValidator } from "./types/env-type";
+import { EnvConfigType } from "./types/env-type";
+import { PluginInputs } from "./types/plugin-inputs";
 
-export async function run() {
-  console.log(JSON.stringify(program, null, 2));
-  if (!envConfigValidator.test(process.env)) {
-    for (const error of envConfigValidator.errors(process.env)) {
-      console.error(error);
-    }
-    return Promise.reject(new ValidationException("The environment is invalid."));
-  }
-  const env = Value.Decode(envConfigSchema, process.env);
-  const inputs = program;
+export async function run(inputs: PluginInputs, env: EnvConfigType) {
   const octokit = new Octokit({ auth: inputs.authToken });
   const supabaseClient = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY);
   const context: Context = {
@@ -47,5 +36,5 @@ export async function run() {
   };
   context.adapters = createAdapters(supabaseClient, context);
 
-  return JSON.stringify(await proxyCallbacks[program.eventName](context, env));
+  return JSON.stringify(await proxyCallbacks[inputs.eventName](context, env));
 }

@@ -7,7 +7,7 @@ export function createAdapters(supabaseClient: SupabaseClient<Database>, context
     supabase: {
       repository: {
         async upsert(url: string, deadline: Date) {
-          const { data } = await supabaseClient
+          const { data, error } = await supabaseClient
             .from("repositories")
             .upsert({
               url,
@@ -15,6 +15,9 @@ export function createAdapters(supabaseClient: SupabaseClient<Database>, context
             })
             .select()
             .single();
+          if (error) {
+            context.logger.error("Could not upsert repository.", error);
+          }
           return data;
         },
       },
