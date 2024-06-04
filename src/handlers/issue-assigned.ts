@@ -1,13 +1,13 @@
-import { DateTime } from "luxon";
 import { getTimeEstimate } from "../helpers/time";
 import { Result } from "../proxy";
 import { Context } from "../types/context";
 import { EnvConfigType } from "../types/env-type";
+import { DateTime, Duration } from "luxon";
 
 /**
- * On issue opened, we want to keep track of the deadline, and set an alarm for the reminder.
+ * On issue assigned, we want to update the entry with the new created time and deadline.
  */
-export async function handleIssueOpened(context: Context, env: EnvConfigType): Promise<Result> {
+export async function handleIssueAssigned(context: Context, env: EnvConfigType): Promise<Result> {
   const {
     adapters: {
       supabase: { repository },
@@ -15,7 +15,7 @@ export async function handleIssueOpened(context: Context, env: EnvConfigType): P
   } = context;
   const timeEstimate = await getTimeEstimate(context);
   if (timeEstimate.isValid) {
-    await repository.upsert(context.payload.issue.html_url, DateTime.now().plus(timeEstimate).toJSDate());
+    await repository.upsert(context.payload.issue.html_url, DateTime.now().plus(timeEstimate).toJSDate(), new Date());
   } else {
     context.logger.warn(`Time for the task is invalid. ${timeEstimate.invalidReason}`);
   }

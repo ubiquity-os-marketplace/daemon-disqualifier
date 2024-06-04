@@ -6,17 +6,30 @@ export function createAdapters(supabaseClient: SupabaseClient<Database>, context
   return {
     supabase: {
       repository: {
-        async upsert(url: string, deadline: Date) {
+        async upsert(url: string, deadline: Date, createdAt?: Date) {
           const { data, error } = await supabaseClient
             .from("repositories")
-            .upsert({
-              url,
-              deadline: deadline.toISOString(),
-            })
+            .upsert(
+              {
+                url,
+                deadline: deadline.toISOString(),
+                created_at: createdAt?.toISOString(),
+              },
+              {
+                onConflict: "url",
+              }
+            )
             .select()
             .single();
           if (error) {
-            context.logger.error("Could not upsert repository.", error);
+            context.logger.error(`Could not upsert repository ${url}.`, error);
+          }
+          return data;
+        },
+        async delete(url: string) {
+          const { data, error } = await supabaseClient.from("repositories").delete().eq("url", url).select().single();
+          if (error) {
+            context.logger.error(`Could not delete repository ${url}.`, error);
           }
           return data;
         },
