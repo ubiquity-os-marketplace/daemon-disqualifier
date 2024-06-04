@@ -10,11 +10,11 @@ jest.mock("../src/parser/payload", () => {
   const cfg = require("./__mocks__/results/valid-configuration.json");
   return {
     stateId: 1,
-    eventName: "issues.opened",
+    eventName: "issues.assigned",
     authToken: process.env.GITHUB_TOKEN,
     ref: "",
     eventPayload: {
-      issue: { html_url: "https://github.com/Meniole/user-activity-watcher/issues/1", number: 1 },
+      issue: { html_url: "https://github.com/Meniole/user-activity-watcher/issues/2", number: 2, assignee: { login: "gentlementlegen" } },
       repository: {
         owner: {
           login: "Meniole",
