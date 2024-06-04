@@ -24,7 +24,7 @@ yarn supabase:generate:local
 ### Worker
 Start the Worker by running
 ```shell
-yarn wrangler
+yarn dev
 ```
 
 ### Make requests

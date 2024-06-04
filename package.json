@@ -9,7 +9,7 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "wrangler": "wrangler dev --env dev --port 4000",
+    "dev": "wrangler dev --env dev --port 4000",
     "start": "tsx src/index.ts",
     "prebuild": "dotenv -- cross-env yarn supabase:generate:remote",
     "format": "run-s format:lint format:prettier format:cspell",
