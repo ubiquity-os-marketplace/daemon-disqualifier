@@ -26,13 +26,13 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
   } else {
     if (now >= deadlineWithThreshold) {
       logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
-      await removeIdleAssignees(context, issue);
-      await supabase.repositories.delete(issue.url);
+      if (await removeIdleAssignees(context, issue)) {
+        await supabase.repositories.delete(issue.url);
+      }
     } else if (now >= reminderWithThreshold) {
       const lastReminder = issue.last_reminder;
       logger.info(`We are passed the deadline on ${issue.url}, should we send a reminder? ${!!lastReminder}`);
-      if (!lastReminder) {
-        await remindAssignees(context, issue);
+      if (!lastReminder && (await remindAssignees(context, issue))) {
         await supabase.repositories.upsert({
           url: issue.url,
           deadline: deadline.toJSDate(),
@@ -99,11 +99,12 @@ async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue
 }
 
 async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
-  const { octokit } = context;
+  const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
 
   if (!githubIssue?.assignees?.length || !githubIssue.repository) {
-    return;
+    logger.warn(`Missing Assignees or Repository from ${issue.url}`);
+    return false;
   }
   const logins = githubIssue.assignees
     .map((o) => o?.login)
@@ -115,14 +116,16 @@ async function remindAssignees(context: Context, issue: Database["public"]["Tabl
     issue_number: githubIssue.number,
     body: `@${logins}, this task has been idle for a while. Please provide an update.`,
   });
+  return true;
 }
 
 async function removeIdleAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
-  const { octokit } = context;
+  const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
 
   if (!githubIssue?.assignees?.length || !githubIssue.repository) {
-    return;
+    logger.warn(`Missing Assignees or Repository from ${issue.url}`);
+    return false;
   }
   const logins = githubIssue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   await octokit.rest.issues.removeAssignees({
@@ -131,6 +134,7 @@ async function removeIdleAssignees(context: Context, issue: Database["public"]["
     issue_number: githubIssue.number,
     assignees: logins,
   });
+  return true;
 }
 
 async function getGithubIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
