@@ -25,13 +25,19 @@ export async function updateTasks(context: Context) {
     if (activity?.length) {
       const lastCheck = DateTime.fromISO(watchedIssue.last_check);
       const timeDiff = now.diff(lastCheck);
-      await supabase.repositories.upsert({ url: watchedIssue.url, deadline: deadline.plus(timeDiff).toJSDate(), lastCheck: now.toJSDate() });
+      const newDeadline = deadline.plus(timeDiff);
+      logger.info(
+        `Activity found on ${watchedIssue.url}, will move the deadline forward from ${deadline.toLocaleString(DateTime.DATETIME_MED)} to ${newDeadline.toLocaleString(DateTime.DATETIME_MED)}`
+      );
+      await supabase.repositories.upsert({ url: watchedIssue.url, deadline: newDeadline.toJSDate(), lastCheck: now.toJSDate() });
     } else {
       if (now >= deadlineWithThreshold) {
+        logger.info(`Passed the deadline on ${watchedIssue.url} and no activity is detected, removing assignees.`);
         await removeIdleAssignees(context);
         await supabase.repositories.delete(watchedIssue.url);
       } else if (now >= reminderWithThreshold) {
         const lastReminder = watchedIssue.last_reminder;
+        logger.info(`We are passed the deadline on ${watchedIssue.url}, should we send a reminder? ${!!lastReminder}`);
         if (!lastReminder) {
           await remindAssignees(context);
           await supabase.repositories.upsert({
