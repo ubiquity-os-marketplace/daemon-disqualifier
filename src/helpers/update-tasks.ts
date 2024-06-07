@@ -85,7 +85,12 @@ async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue
       issue_number,
       per_page: 100,
     },
-    (res) => res.data.filter((o) => payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login))
+    (res) =>
+      res.data.filter(
+        (o) =>
+          payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) &&
+          DateTime.fromISO(o.created_at) >= DateTime.fromISO(issue.last_check)
+      )
   );
 }
 
