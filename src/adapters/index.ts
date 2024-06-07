@@ -6,7 +6,19 @@ export function createAdapters(supabaseClient: SupabaseClient<Database>, context
   return {
     supabase: {
       repositories: {
-        async upsert(url: string, deadline: Date, createdAt?: Date) {
+        async upsert({
+          url,
+          deadline,
+          lastReminder,
+          createdAt,
+          lastCheck,
+        }: {
+          url: string;
+          deadline: Date;
+          createdAt?: Date;
+          lastReminder?: Date;
+          lastCheck: Date;
+        }) {
           const { data, error } = await supabaseClient
             .from("repositories")
             .upsert(
@@ -14,6 +26,8 @@ export function createAdapters(supabaseClient: SupabaseClient<Database>, context
                 url,
                 deadline: deadline.toISOString(),
                 created_at: createdAt?.toISOString(),
+                last_reminder: lastReminder?.toISOString(),
+                last_check: lastCheck.toISOString(),
               },
               {
                 onConflict: "url",
@@ -37,6 +51,13 @@ export function createAdapters(supabaseClient: SupabaseClient<Database>, context
           const { data, error } = await supabaseClient.from("repositories").select();
           if (error) {
             context.logger.error(`Could not get repositories.`, error);
+          }
+          return data;
+        },
+        async getSingle(url: string) {
+          const { data, error } = await supabaseClient.from("repositories").select().eq("url", url).single();
+          if (error) {
+            context.logger.error(`Could not get repository.`, error);
           }
           return data;
         },

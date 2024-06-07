@@ -16,15 +16,32 @@ export async function updateTasks(context: Context) {
     return false;
   }
   for (const watchedIssue of watchedRepoList) {
-    const now = DateTime.now().plus({ day: 10 });
+    const now = DateTime.now().plus({ day: 11 });
     const activity = await getAssigneesActivityForIssue(context, watchedIssue);
-    const deadline = DateTime.fromISO(watchedIssue.deadline).plus({ day: config.unassignUserThreshold });
+    const deadline = DateTime.fromISO(watchedIssue.deadline);
+    const deadlineWithThreshold = deadline.plus({ day: config.unassignUserThreshold });
+    const reminderWithThreshold = deadline.plus({ day: config.sendRemindersThreshold });
 
     if (activity?.length) {
-      await supabase.repositories.upsert(watchedIssue.url, deadline.toJSDate());
-    } else if (now >= deadline && !activity?.length) {
-      await removeIdleAssignees(context);
-      await supabase.repositories.delete(watchedIssue.url);
+      const lastCheck = DateTime.fromISO(watchedIssue.last_check);
+      const timeDiff = now.diff(lastCheck);
+      await supabase.repositories.upsert({ url: watchedIssue.url, deadline: deadline.plus(timeDiff).toJSDate(), lastCheck: now.toJSDate() });
+    } else {
+      if (now >= deadlineWithThreshold) {
+        await removeIdleAssignees(context);
+        await supabase.repositories.delete(watchedIssue.url);
+      } else if (now >= reminderWithThreshold) {
+        const lastReminder = watchedIssue.last_reminder;
+        if (!lastReminder) {
+          await remindAssignees(context);
+          await supabase.repositories.upsert({
+            url: watchedIssue.url,
+            deadline: deadline.toJSDate(),
+            lastReminder: now.toJSDate(),
+            lastCheck: now.toJSDate(),
+          });
+        }
+      }
     }
   }
   return true;
@@ -42,6 +59,24 @@ async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue
     },
     (res) => res.data.filter((o) => payload.issue.assignees?.find((assignee) => assignee?.login === o.actor.login))
   );
+}
+
+async function remindAssignees(context: Context) {
+  const { octokit, payload } = context;
+
+  if (!payload.issue.assignees?.length) {
+    return;
+  }
+  const logins = payload.issue.assignees
+    .map((o) => o?.login)
+    .filter((o) => !!o)
+    .join(", @");
+  await octokit.rest.issues.createComment({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: payload.issue.number,
+    body: `@${logins}, this task has been idle for a while. Please provide an update.`,
+  });
 }
 
 async function removeIdleAssignees(context: Context) {

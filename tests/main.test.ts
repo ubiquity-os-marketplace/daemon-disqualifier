@@ -14,7 +14,7 @@ jest.mock("../src/parser/payload", () => {
     authToken: process.env.GITHUB_TOKEN,
     ref: "",
     eventPayload: {
-      issue: { html_url: "https://github.com/Meniole/user-activity-watcher/issues/2", number: 2, assignee: { login: "gentlementlegen" } },
+      issue: { html_url: "https://github.com/Meniole/user-activity-watcher/issues/2", number: 2, assignees: [{ login: "gentlementlegen" }] },
       repository: {
         owner: {
           login: "Meniole",
@@ -22,7 +22,7 @@ jest.mock("../src/parser/payload", () => {
         name: "user-activity-watcher",
       },
     },
-    settings: JSON.stringify(cfg),
+    settings: cfg,
   };
 });
 

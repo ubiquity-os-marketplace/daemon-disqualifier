@@ -15,7 +15,12 @@ export async function handleIssueAssigned(context: Context, env: EnvConfigType):
   } = context;
   const timeEstimate = await getTimeEstimate(context);
   if (timeEstimate.isValid) {
-    await repositories.upsert(context.payload.issue.html_url, DateTime.now().plus(timeEstimate).toJSDate(), new Date());
+    await repositories.upsert({
+      url: context.payload.issue.html_url,
+      deadline: DateTime.now().plus(timeEstimate).toJSDate(),
+      createdAt: new Date(),
+      lastCheck: new Date(),
+    });
   } else {
     context.logger.warn(`Time for the task is invalid. ${timeEstimate.invalidReason}`);
   }
