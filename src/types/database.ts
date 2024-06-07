@@ -9,6 +9,7 @@ export type Database = {
           deadline: string;
           id: number;
           last_check: string;
+          last_reminder: string | null;
           url: string;
         };
         Insert: {
@@ -16,6 +17,7 @@ export type Database = {
           deadline: string;
           id?: number;
           last_check?: string;
+          last_reminder?: string | null;
           url: string;
         };
         Update: {
@@ -23,6 +25,7 @@ export type Database = {
           deadline?: string;
           id?: number;
           last_check?: string;
+          last_reminder?: string | null;
           url?: string;
         };
         Relationships: [];
