@@ -40,6 +40,10 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
           lastCheck: now.toJSDate(),
         });
       }
+    } else {
+      logger.info(
+        `Nothing to do for ${issue.url}, still within due-time (now: ${now.toLocaleString(DateTime.DATETIME_MED)}, reminder ${reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED)}, deadline: ${deadline.toLocaleString(DateTime.DATETIME_MED)})`
+      );
     }
   }
 }
