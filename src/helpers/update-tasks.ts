@@ -101,9 +101,10 @@ async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue
 async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
   const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
+  const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
 
-  if (!githubIssue?.assignees?.length || !githubIssue.repository) {
-    logger.warn(`Missing Assignees or Repository from ${issue.url}`);
+  if (!githubIssue?.assignees?.length) {
+    logger.warn(`Missing Assignees from ${issue.url}`);
     return false;
   }
   const logins = githubIssue.assignees
@@ -111,9 +112,9 @@ async function remindAssignees(context: Context, issue: Database["public"]["Tabl
     .filter((o) => !!o)
     .join(", @");
   await octokit.rest.issues.createComment({
-    owner: githubIssue.repository.owner.login,
-    repo: githubIssue.repository.name,
-    issue_number: githubIssue.number,
+    owner,
+    repo,
+    issue_number,
     body: `@${logins}, this task has been idle for a while. Please provide an update.`,
   });
   return true;
@@ -122,16 +123,17 @@ async function remindAssignees(context: Context, issue: Database["public"]["Tabl
 async function removeIdleAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
   const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
+  const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
 
-  if (!githubIssue?.assignees?.length || !githubIssue.repository) {
-    logger.warn(`Missing Assignees or Repository from ${issue.url}`);
+  if (!githubIssue?.assignees?.length) {
+    logger.warn(`Missing Assignees from ${issue.url}`);
     return false;
   }
   const logins = githubIssue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   await octokit.rest.issues.removeAssignees({
-    owner: githubIssue.repository.owner.login,
-    repo: githubIssue.repository.name,
-    issue_number: githubIssue.number,
+    owner,
+    repo,
+    issue_number,
     assignees: logins,
   });
   return true;
