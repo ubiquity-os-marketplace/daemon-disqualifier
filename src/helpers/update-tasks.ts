@@ -64,7 +64,7 @@ async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue
 async function remindAssignees(context: Context) {
   const { octokit, payload } = context;
 
-  if (!payload.issue.assignees?.length) {
+  if (!payload.issue?.assignees?.length) {
     return;
   }
   const logins = payload.issue.assignees
@@ -82,7 +82,7 @@ async function remindAssignees(context: Context) {
 async function removeIdleAssignees(context: Context) {
   const { octokit, payload } = context;
 
-  if (!payload.issue.assignees?.length) {
+  if (!payload.issue?.assignees?.length) {
     return;
   }
   const logins = payload.issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
