@@ -99,36 +99,36 @@ async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue
 }
 
 async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
-  const { octokit, payload } = context;
+  const { octokit } = context;
   const githubIssue = await getGithubIssue(context, issue);
 
-  if (!githubIssue?.assignees?.length) {
+  if (!githubIssue?.assignees?.length || !githubIssue.repository) {
     return;
   }
-  const logins = payload.issue.assignees
+  const logins = githubIssue.assignees
     .map((o) => o?.login)
     .filter((o) => !!o)
     .join(", @");
   await octokit.rest.issues.createComment({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: payload.issue.number,
+    owner: githubIssue.repository.owner.login,
+    repo: githubIssue.repository.name,
+    issue_number: githubIssue.number,
     body: `@${logins}, this task has been idle for a while. Please provide an update.`,
   });
 }
 
 async function removeIdleAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
-  const { octokit, payload } = context;
+  const { octokit } = context;
   const githubIssue = await getGithubIssue(context, issue);
 
-  if (!githubIssue?.assignees?.length) {
+  if (!githubIssue?.assignees?.length || !githubIssue.repository) {
     return;
   }
-  const logins = payload.issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
+  const logins = githubIssue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   await octokit.rest.issues.removeAssignees({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: payload.issue.number,
+    owner: githubIssue.repository.owner.login,
+    repo: githubIssue.repository.name,
+    issue_number: githubIssue.number,
     assignees: logins,
   });
 }
