@@ -46,3 +46,12 @@ To start Jest testing, run
 ```shell
 yarn test
 ```
+
+## Valid configuration
+```yaml
+- plugin: ubiquibot/user-activity-watcher
+  type: github
+  with:
+    unassignUserThreshold: 7
+    sendRemindersThreshold: 3.5
+```

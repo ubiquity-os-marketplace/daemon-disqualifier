@@ -3,6 +3,48 @@ import { Context } from "../types/context";
 import { Database } from "../types/database";
 import { parseGitHubUrl } from "./github-url";
 
+async function unassignUserFromIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+  const {
+    adapters: { supabase },
+    logger,
+    config,
+  } = context;
+
+  if (config.unassignUserThreshold <= 0) {
+    logger.info("The unassign threshold is <= 0, won't unassign users.");
+  } else {
+    logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
+    if (await removeIdleAssignees(context, issue)) {
+      await supabase.repositories.delete(issue.url);
+    }
+  }
+}
+
+async function remindAssigneesForIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+  const {
+    adapters: { supabase },
+    logger,
+    config,
+  } = context;
+  const now = DateTime.now();
+  const deadline = DateTime.fromISO(issue.deadline);
+
+  if (config.sendRemindersThreshold <= 0) {
+    logger.info("The reminder threshold is <= 0, won't send any reminder.");
+  } else {
+    const lastReminder = issue.last_reminder;
+    logger.info(`We are passed the deadline on ${issue.url}, should we send a reminder? ${!!lastReminder}`);
+    if (!lastReminder && (await remindAssignees(context, issue))) {
+      await supabase.repositories.upsert({
+        url: issue.url,
+        deadline: deadline.toJSDate(),
+        lastReminder: now.toJSDate(),
+        lastCheck: now.toJSDate(),
+      });
+    }
+  }
+}
+
 async function updateReminders(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
   const {
     adapters: { supabase },
@@ -25,21 +67,9 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
     await supabase.repositories.upsert({ url: issue.url, deadline: newDeadline.toJSDate(), lastCheck: now.toJSDate() });
   } else {
     if (now >= deadlineWithThreshold) {
-      logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
-      if (await removeIdleAssignees(context, issue)) {
-        await supabase.repositories.delete(issue.url);
-      }
+      await unassignUserFromIssue(context, issue);
     } else if (now >= reminderWithThreshold) {
-      const lastReminder = issue.last_reminder;
-      logger.info(`We are passed the deadline on ${issue.url}, should we send a reminder? ${!!lastReminder}`);
-      if (!lastReminder && (await remindAssignees(context, issue))) {
-        await supabase.repositories.upsert({
-          url: issue.url,
-          deadline: deadline.toJSDate(),
-          lastReminder: now.toJSDate(),
-          lastCheck: now.toJSDate(),
-        });
-      }
+      await remindAssigneesForIssue(context, issue);
     } else {
       logger.info(
         `Nothing to do for ${issue.url}, still within due-time (now: ${now.toLocaleString(DateTime.DATETIME_MED)}, reminder ${reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED)}, deadline: ${deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED)})`
