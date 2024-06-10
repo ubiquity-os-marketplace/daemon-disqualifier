@@ -78,20 +78,6 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
   }
 }
 
-export async function updateTask(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
-  const {
-    adapters: { supabase },
-    logger,
-  } = context;
-  const watchedRepo = await supabase.repositories.getSingle(issue.url);
-  if (!watchedRepo) {
-    logger.info(`${issue.url} could not be retrieved, skipping.`);
-    return false;
-  }
-  await updateReminders(context, issue);
-  return true;
-}
-
 export async function updateTasks(context: Context) {
   const {
     adapters: { supabase },
