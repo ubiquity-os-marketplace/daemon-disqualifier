@@ -5,7 +5,7 @@ import program from "./parser/payload";
 import { run } from "./run";
 import envConfigSchema, { envConfigValidator } from "./types/env-type";
 
-async function getEnv() {
+export async function getEnv() {
   if (!envConfigValidator.test(process.env)) {
     for (const error of envConfigValidator.errors(process.env)) {
       console.error(error);

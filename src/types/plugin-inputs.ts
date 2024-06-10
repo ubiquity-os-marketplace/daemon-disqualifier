@@ -1,7 +1,7 @@
 import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { StaticDecode, Type as T } from "@sinclair/typebox";
 
-export type SupportedEvents = "issues.closed" | "issues.opened" | "issues.assigned" | "issues.unassigned";
+export type SupportedEvents = "issues.closed" | "issues.assigned" | "issues.unassigned";
 
 export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   stateId: string;

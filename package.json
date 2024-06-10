@@ -69,6 +69,7 @@
     "jest-junit": "16.0.0",
     "knip": "5.17.3",
     "lint-staged": "15.2.5",
+    "msw": "2.3.1",
     "prettier": "3.3.0",
     "supabase": "1.172.2",
     "ts-jest": "29.1.4",

@@ -8,6 +8,8 @@ on:
 
 env:
   NODE_ENV: "test"
+  SUPABASE_URL: "http://127.0.0.1:54321"
+  SUPABASE_KEY: "key"
 
 jobs:
   testing:
