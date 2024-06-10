@@ -1,7 +1,7 @@
 import { drop } from "@mswjs/data";
 import { Value } from "@sinclair/typebox/value";
 import { ValidationException } from "typebox-validators";
-import { getEnv } from "../src";
+import { getEnv } from "../src/helpers/get-env";
 import program from "../src/parser/payload";
 import { run } from "../src/run";
 import envConfigSchema from "../src/types/env-type";
