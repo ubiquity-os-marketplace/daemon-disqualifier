@@ -33,7 +33,7 @@ async function remindAssigneesForIssue(context: Context, issue: Database["public
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else {
     const lastReminder = issue.last_reminder;
-    logger.info(`We are passed the deadline on ${issue.url}, should we send a reminder? ${!!lastReminder}`);
+    logger.info(`We are passed the deadline on ${issue.url}, should we send a reminder? ${!lastReminder}`);
     if (!lastReminder && (await remindAssignees(context, issue))) {
       await supabase.repositories.upsert({
         url: issue.url,
