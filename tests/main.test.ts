@@ -2,6 +2,7 @@ import { drop } from "@mswjs/data";
 import { Value } from "@sinclair/typebox/value";
 import { ValidationException } from "typebox-validators";
 import { getEnv } from "../src/helpers/get-env";
+import { parseDurationString } from "../src/helpers/time";
 import program from "../src/parser/payload";
 import { run } from "../src/run";
 import envConfigSchema from "../src/types/env-type";
@@ -54,5 +55,11 @@ describe("Run tests", () => {
   it("Should run", async () => {
     const result = await run(program, Value.Decode(envConfigSchema, process.env));
     expect(JSON.parse(result)).toEqual({ status: "ok" });
+  });
+  it("Should parse time", () => {
+    expect(parseDurationString("Time: <1 Day").get("days")).toEqual(1);
+    expect(parseDurationString("Time: <1 Week").get("weeks")).toEqual(1);
+    expect(parseDurationString("Time: <4 Hours").get("hours")).toEqual(4);
+    expect(parseDurationString("Time: <8 Weeks").get("months")).toEqual(2);
   });
 });

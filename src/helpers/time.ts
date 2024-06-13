@@ -1,5 +1,6 @@
 import { Duration } from "luxon";
 import { Context } from "../types/context";
+import ms from "ms";
 
 export async function getTimeEstimate(context: Context) {
   const timeLabelRegex = /Time: <(\d+)/i;
@@ -16,29 +17,10 @@ export async function getTimeEstimate(context: Context) {
 }
 
 export function parseDurationString(durationString: string) {
-  const match = durationString.match(/<(\d+)\s*(\w+)/);
+  const match = durationString.match(/(\d+\s+\w+)/);
   if (!match) {
     throw new Error("Invalid duration string format.");
   }
-
-  const [, value, unit] = match;
-  let duration;
-  switch (unit.toLowerCase()) {
-    case "hour":
-    case "hours":
-      duration = { hours: parseInt(value) };
-      break;
-    case "day":
-    case "days":
-      duration = { days: parseInt(value) };
-      break;
-    case "week":
-    case "weeks":
-      duration = { weeks: parseInt(value) };
-      break;
-    default:
-      throw new Error("Unsupported duration unit.");
-  }
-
-  return Duration.fromObject(duration);
+  const [, value] = match;
+  return Duration.fromMillis(ms(value)).shiftToAll();
 }
