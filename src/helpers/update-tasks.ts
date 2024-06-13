@@ -51,9 +51,13 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
     adapters: { supabase },
     logger,
     config,
+    payload,
   } = context;
   const now = DateTime.now();
-  const activity = await getAssigneesActivityForIssue(context, issue);
+  const activity = (await getAssigneesActivityForIssue(context, issue)).filter(
+    (o) =>
+      payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= DateTime.fromISO(issue.last_check)
+  );
   const deadline = DateTime.fromISO(issue.deadline);
   const deadlineWithThreshold = deadline.plus({ day: config.unassignUserThreshold });
   const reminderWithThreshold = deadline.plus({ day: config.sendRemindersThreshold });
@@ -98,21 +102,12 @@ export async function updateTasks(context: Context) {
 
 async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
-  return octokit.paginate(
-    octokit.rest.issues.listEvents,
-    {
-      owner,
-      repo,
-      issue_number,
-      per_page: 100,
-    },
-    (res) =>
-      res.data.filter(
-        (o) =>
-          payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) &&
-          DateTime.fromISO(o.created_at) >= DateTime.fromISO(issue.last_check)
-      )
-  );
+  return octokit.paginate(octokit.rest.issues.listEvents, {
+    owner,
+    repo,
+    issue_number,
+    per_page: 100,
+  });
 }
 
 async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
