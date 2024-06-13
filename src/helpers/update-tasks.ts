@@ -15,7 +15,7 @@ async function unassignUserFromIssue(context: Context, issue: Database["public"]
     logger.info("The unassign threshold is <= 0, won't unassign users.");
   } else {
     logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
-    if (await removeIdleAssignees(context, issue)) {
+    if (await removeAllAssignees(context, issue)) {
       await supabase.repositories.delete(issue.url);
     }
   }
@@ -137,7 +137,7 @@ async function remindAssignees(context: Context, issue: Database["public"]["Tabl
   return true;
 }
 
-async function removeIdleAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+async function removeAllAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
   const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
