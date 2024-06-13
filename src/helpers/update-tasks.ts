@@ -62,6 +62,8 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
   const deadlineWithThreshold = deadline.plus({ milliseconds: config.unassignUserThreshold });
   const reminderWithThreshold = deadline.plus({ milliseconds: config.sendRemindersThreshold });
 
+  console.log(issue.url, now, reminderWithThreshold, deadlineWithThreshold);
+
   if (activity?.length) {
     const lastCheck = DateTime.fromISO(issue.last_check);
     const timeDiff = now.diff(lastCheck);
