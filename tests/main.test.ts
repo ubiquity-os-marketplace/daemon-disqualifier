@@ -6,9 +6,11 @@ import { parseDurationString } from "../src/helpers/time";
 import program from "../src/parser/payload";
 import { run } from "../src/run";
 import envConfigSchema from "../src/types/env-type";
+import { userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
 import { db as mockDb } from "./__mocks__/db";
 import dbSeed from "./__mocks__/db-seed.json";
 import { server } from "./__mocks__/node";
+import cfg from "./__mocks__/results/valid-configuration.json";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -51,6 +53,10 @@ describe("Run tests", () => {
     delete process.env.SUPABASE_KEY;
     await expect(getEnv()).rejects.toEqual(new ValidationException("The environment is" + " invalid."));
     process.env = oldEnv;
+  });
+  it("Should parse thresholds", async () => {
+    const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
+    expect(settings).toEqual({ sendRemindersThreshold: 302400000, unassignUserThreshold: 604800000 });
   });
   it("Should run", async () => {
     const result = await run(program, Value.Decode(envConfigSchema, process.env));

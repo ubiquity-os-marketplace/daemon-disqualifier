@@ -1,4 +1,4 @@
 {
-  "sendRemindersThreshold": 3.5,
-  "unassignUserThreshold": 7
+  "sendRemindersThreshold": "3.5 days",
+  "unassignUserThreshold": "7 days"
 }

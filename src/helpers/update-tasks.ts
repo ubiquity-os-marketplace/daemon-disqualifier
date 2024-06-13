@@ -59,8 +59,8 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
       payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= DateTime.fromISO(issue.last_check)
   );
   const deadline = DateTime.fromISO(issue.deadline);
-  const deadlineWithThreshold = deadline.plus({ day: config.unassignUserThreshold });
-  const reminderWithThreshold = deadline.plus({ day: config.sendRemindersThreshold });
+  const deadlineWithThreshold = deadline.plus({ milliseconds: config.unassignUserThreshold });
+  const reminderWithThreshold = deadline.plus({ milliseconds: config.sendRemindersThreshold });
 
   if (activity?.length) {
     const lastCheck = DateTime.fromISO(issue.last_check);
