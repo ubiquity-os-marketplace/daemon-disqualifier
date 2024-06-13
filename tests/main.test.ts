@@ -37,8 +37,8 @@ jest.mock("../src/parser/payload", () => {
 describe("Run tests", () => {
   beforeAll(() => {
     drop(mockDb);
-    for (const item of dbSeed.repositories) {
-      mockDb.repositories.create(item);
+    for (const item of dbSeed.issues) {
+      mockDb.issues.create(item);
     }
   });
 
@@ -48,7 +48,7 @@ describe("Run tests", () => {
     delete process.env.SUPABASE_URL;
     // @ts-expect-error Testing for invalid env
     delete process.env.SUPABASE_KEY;
-    await expect(getEnv()).resolves.toEqual(new ValidationException("The environment is" + " invalid."));
+    await expect(getEnv()).rejects.toEqual(new ValidationException("The environment is" + " invalid."));
     process.env = oldEnv;
   });
   it("Should run", async () => {

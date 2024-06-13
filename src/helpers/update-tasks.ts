@@ -4,7 +4,7 @@ import { Database } from "../types/database";
 import { getGithubIssue } from "./get-env";
 import { parseGitHubUrl } from "./github-url";
 
-async function unassignUserFromIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+async function unassignUserFromIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const {
     adapters: { supabase },
     logger,
@@ -16,12 +16,12 @@ async function unassignUserFromIssue(context: Context, issue: Database["public"]
   } else {
     logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
     if (await removeAllAssignees(context, issue)) {
-      await supabase.repositories.delete(issue.url);
+      await supabase.issues.delete(issue.url);
     }
   }
 }
 
-async function remindAssigneesForIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+async function remindAssigneesForIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const {
     adapters: { supabase },
     logger,
@@ -36,7 +36,7 @@ async function remindAssigneesForIssue(context: Context, issue: Database["public
     const lastReminder = issue.last_reminder;
     logger.info(`We are passed the deadline on ${issue.url}, should we send a reminder? ${!lastReminder}`);
     if (!lastReminder && (await remindAssignees(context, issue))) {
-      await supabase.repositories.upsert({
+      await supabase.issues.upsert({
         url: issue.url,
         deadline: deadline.toJSDate(),
         lastReminder: now.toJSDate(),
@@ -46,7 +46,7 @@ async function remindAssigneesForIssue(context: Context, issue: Database["public
   }
 }
 
-async function updateReminders(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+async function updateReminders(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const {
     adapters: { supabase },
     logger,
@@ -65,7 +65,7 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
     logger.info(
       `Activity found on ${issue.url}, will move the deadline forward from ${deadline.toLocaleString(DateTime.DATETIME_MED)} to ${newDeadline.toLocaleString(DateTime.DATETIME_MED)}`
     );
-    await supabase.repositories.upsert({ url: issue.url, deadline: newDeadline.toJSDate(), lastCheck: now.toJSDate() });
+    await supabase.issues.upsert({ url: issue.url, deadline: newDeadline.toJSDate(), lastCheck: now.toJSDate() });
   } else {
     if (now >= deadlineWithThreshold) {
       await unassignUserFromIssue(context, issue);
@@ -84,7 +84,7 @@ export async function updateTasks(context: Context) {
     adapters: { supabase },
     logger,
   } = context;
-  const watchedRepoList = await supabase.repositories.get();
+  const watchedRepoList = await supabase.issues.get();
 
   if (!watchedRepoList?.length) {
     logger.info("No watched repos have been found, no work to do.");
@@ -96,7 +96,7 @@ export async function updateTasks(context: Context) {
   return true;
 }
 
-async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
   return octokit.paginate(
     octokit.rest.issues.listEvents,
@@ -115,7 +115,7 @@ async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue
   );
 }
 
-async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
@@ -137,7 +137,7 @@ async function remindAssignees(context: Context, issue: Database["public"]["Tabl
   return true;
 }
 
-async function removeAllAssignees(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+async function removeAllAssignees(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);

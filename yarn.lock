@@ -5321,10 +5321,10 @@ summary@2.1.0:
   resolved "https://registry.yarnpkg.com/summary/-/summary-2.1.0.tgz#be8a49a0aa34eb6ceea56042cae88f8add4b0885"
   integrity sha512-nMIjMrd5Z2nuB2RZCKJfFMjgS3fygbeyGk9PxPPaJR1RIcyN9yn4A63Isovzm3ZtQuEkLBVgMdPup8UeLH7aQw==
 
-supabase@1.172.2:
-  version "1.172.2"
-  resolved "https://registry.yarnpkg.com/supabase/-/supabase-1.172.2.tgz#bec84a5da24a3bad57876422f3f73f109069bbe5"
-  integrity sha512-h2J6kKEikXnZyurUcCYg215qkQpINOhdWkiclHcWAuVeqXsNrfrYaf1s0qbbcdRyMtrVW48I+VdVTw71Cnn20Q==
+supabase@1.176.9:
+  version "1.176.9"
+  resolved "https://registry.yarnpkg.com/supabase/-/supabase-1.176.9.tgz#ebff62d9269715dc28387ad65c4388b1b6b2452a"
+  integrity sha512-VmMgKsbwBf7IjZ6HUV7YRteYYmrBKhguRCX6JPyDizj9Ui/dd/4sZ31z2cVkuCDePChaCDeNF1bogIBC6822GQ==
   dependencies:
     bin-links "^4.0.3"
     https-proxy-agent "^7.0.2"

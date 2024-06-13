@@ -8,7 +8,7 @@ import { EnvConfigType } from "../types/env-type";
 export async function handleIssueUnassigned(context: Context, env: EnvConfigType): Promise<Result> {
   const {
     adapters: {
-      supabase: { repositories },
+      supabase: { issues },
     },
     logger,
     payload,
@@ -16,7 +16,7 @@ export async function handleIssueUnassigned(context: Context, env: EnvConfigType
   try {
     const assignees = payload.issue.assignees;
     if (assignees.length <= 0) {
-      await repositories.delete(context.payload.issue.html_url);
+      await issues.delete(context.payload.issue.html_url);
     } else {
       logger.info(`There are assignees remaining within issue ${payload.issue.html_url}, will not remove.`);
     }

@@ -10,12 +10,12 @@ import { EnvConfigType } from "../types/env-type";
 export async function handleIssueAssigned(context: Context, env: EnvConfigType): Promise<Result> {
   const {
     adapters: {
-      supabase: { repositories },
+      supabase: { issues },
     },
   } = context;
   const timeEstimate = await getTimeEstimate(context);
   if (timeEstimate.isValid) {
-    await repositories.upsert({
+    await issues.upsert({
       url: context.payload.issue.html_url,
       deadline: DateTime.now().plus(timeEstimate).toJSDate(),
       createdAt: new Date(),

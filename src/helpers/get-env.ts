@@ -15,7 +15,7 @@ export async function getEnv() {
   return Promise.resolve(Value.Decode(envConfigSchema, process.env));
 }
 
-export async function getGithubIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
+export async function getGithubIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
 
   try {

@@ -8,9 +8,9 @@ import { EnvConfigType } from "../types/env-type";
 export async function handleIssueClosed(context: Context, env: EnvConfigType): Promise<Result> {
   const {
     adapters: {
-      supabase: { repositories },
+      supabase: { issues },
     },
   } = context;
-  await repositories.delete(context.payload.issue.html_url);
+  await issues.delete(context.payload.issue.html_url);
   return { status: "ok" };
 }
