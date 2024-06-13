@@ -3,7 +3,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
-      repositories: {
+      issues: {
         Row: {
           created_at: string;
           deadline: string;
