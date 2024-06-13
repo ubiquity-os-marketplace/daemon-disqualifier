@@ -7,7 +7,7 @@ export async function getEnv() {
     for (const error of envConfigValidator.errors(process.env)) {
       console.error(error);
     }
-    return Promise.reject(new ValidationException("The environment is invalid."));
+    return new ValidationException("The environment is invalid.");
   }
-  return Promise.resolve(Value.Decode(envConfigSchema, process.env));
+  return Value.Decode(envConfigSchema, process.env);
 }
