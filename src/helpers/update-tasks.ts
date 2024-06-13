@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { Context } from "../types/context";
 import { Database } from "../types/database";
+import { getGithubIssue } from "./get-env";
 import { parseGitHubUrl } from "./github-url";
 
 async function unassignUserFromIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
@@ -153,20 +154,4 @@ async function removeIdleAssignees(context: Context, issue: Database["public"]["
     assignees: logins,
   });
   return true;
-}
-
-async function getGithubIssue(context: Context, issue: Database["public"]["Tables"]["repositories"]["Row"]) {
-  const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
-
-  try {
-    const { data } = await context.octokit.issues.get({
-      owner,
-      repo,
-      issue_number,
-    });
-    return data;
-  } catch (e) {
-    context.logger.error(`Could not get GitHub issue ${issue.url}`);
-    return null;
-  }
 }
