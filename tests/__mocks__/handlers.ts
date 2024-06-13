@@ -7,11 +7,11 @@ import issuesLabelsGet from "./routes/get-labels.json";
  * Intercepts the routes and returns a custom payload
  */
 export const handlers = [
-  http.get("http://127.0.0.1:54321/rest/v1/repositories", () => {
+  http.get("http://127.0.0.1:54321/rest/v1/issues", () => {
     const repos = db.issues.getAll();
     return HttpResponse.json(repos);
   }),
-  http.post("http://127.0.0.1:54321/rest/v1/repositories", async ({ request }) => {
+  http.post("http://127.0.0.1:54321/rest/v1/issues", async ({ request }) => {
     const body = await request.json();
 
     if (typeof body === "object") {

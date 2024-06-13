@@ -100,7 +100,7 @@ export async function updateTasks(context: Context) {
   return true;
 }
 
-async function getAssigneesActivityForIssue({ octokit, payload }: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+async function getAssigneesActivityForIssue({ octokit }: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
   return octokit.paginate(octokit.rest.issues.listEvents, {
     owner,
