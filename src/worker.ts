@@ -28,7 +28,6 @@ export default {
       }
       const webhookPayload = await request.json();
       const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, webhookPayload.settings));
-      webhookPayload.eventPayload = JSON.parse(webhookPayload.eventPayload);
       webhookPayload.settings = settings;
       await run(webhookPayload, env);
       return new Response(JSON.stringify("OK"), { status: 200, headers: { "content-type": "application/json" } });
