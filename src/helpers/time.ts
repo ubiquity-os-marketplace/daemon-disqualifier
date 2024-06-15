@@ -3,7 +3,7 @@ import { Context } from "../types/context";
 import ms from "ms";
 
 export async function getTimeEstimate(context: Context) {
-  const timeLabelRegex = /Time: <(\d+)/i;
+  const timeLabelRegex = /Time: <?(\d+)/i;
   const labels = await context.octokit.issues.listLabelsOnIssue({
     owner: context.payload.repository.owner.login,
     repo: context.payload.repository.name,
