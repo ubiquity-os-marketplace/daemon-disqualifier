@@ -27,7 +27,7 @@ export default {
         return Promise.reject(new ValidationException("The environment is invalid."));
       }
       const webhookPayload = await request.json();
-      const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, JSON.parse(webhookPayload.settings)));
+      const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, webhookPayload.settings));
       webhookPayload.eventPayload = JSON.parse(webhookPayload.eventPayload);
       webhookPayload.settings = settings;
       await run(webhookPayload, env);
