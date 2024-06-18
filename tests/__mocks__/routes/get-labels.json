@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "node_id": "LA_kwDOMEFYIM8AAAABo2UafQ",
+    "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/labels/Price:%2012.5%20USD",
+    "name": "Price: 12.5 USD",
+    "color": "ededed",
+    "default": false,
+    "description": null
+  },
+  {
+    "id": 2,
+    "node_id": "LA_kwDOMEFYIM8AAAABo2Uakw",
+    "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/labels/Time:%20%3C1%20Hour",
+    "name": "Time: <1 Hour",
+    "color": "ededed",
+    "default": false,
+    "description": null
+  },
+  {
+    "id": 3,
+    "node_id": "LA_kwDOMEFYIM8AAAABo2Uasw",
+    "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/labels/Priority:%201%20(Normal)",
+    "name": "Priority: 1 (Normal)",
+    "color": "ededed",
+    "default": false,
+    "description": null
+  }
+]
