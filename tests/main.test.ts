@@ -61,5 +61,6 @@ describe("Run tests", () => {
     expect(parseDurationString("Time: <1 Week").get("weeks")).toEqual(1);
     expect(parseDurationString("Time: <4 Hours").get("hours")).toEqual(4);
     expect(parseDurationString("Time: <8 Weeks").get("months")).toEqual(2);
+    expect(parseDurationString("Time: <3 Months").get("months")).toEqual(3);
   });
 });
