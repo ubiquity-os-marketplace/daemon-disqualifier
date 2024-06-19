@@ -3,7 +3,7 @@ import { Context } from "../types/context";
 import ms from "ms";
 
 export async function getTimeEstimate(context: Context) {
-  const timeLabelRegex = /Time: <(\d+)/i;
+  const timeLabelRegex = /Time: <?(\d+)/i;
   const labels = await context.octokit.issues.listLabelsOnIssue({
     owner: context.payload.repository.owner.login,
     repo: context.payload.repository.name,
@@ -22,5 +22,14 @@ export function parseDurationString(durationString: string) {
     throw new Error("Invalid duration string format.");
   }
   const [, value] = match;
+  // Custom support for months, based on a 30 days duration
+  if (/months?/i.test(value)) {
+    const monthsMatch = value.match(/\d+/);
+    if (monthsMatch) {
+      return Duration.fromObject({ months: Number(monthsMatch[0]) }).shiftToAll();
+    } else {
+      throw new Error("Invalid duration string format.");
+    }
+  }
   return Duration.fromMillis(ms(value)).shiftToAll();
 }
