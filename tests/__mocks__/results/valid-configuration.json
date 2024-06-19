@@ -1,0 +1,4 @@
+{
+  "sendRemindersThreshold": 3.5,
+  "unassignUserThreshold": 7
+}
