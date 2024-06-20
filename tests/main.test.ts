@@ -1,5 +1,5 @@
 import { drop } from "@mswjs/data";
-import { Value } from "@sinclair/typebox/value";
+import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { ValidationException } from "typebox-validators";
 import { getEnv } from "../src/helpers/get-env";
 import { parseDurationString } from "../src/helpers/time";
@@ -57,6 +57,15 @@ describe("Run tests", () => {
   it("Should parse thresholds", async () => {
     const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
     expect(settings).toEqual({ sendRemindersThreshold: 302400000, unassignUserThreshold: 604800000 });
+    expect(() =>
+      Value.Decode(
+        userActivityWatcherSettingsSchema,
+        Value.Default(userActivityWatcherSettingsSchema, {
+          sendRemindersThreshold: "12 foobars",
+          unassignUserThreshold: "2 days",
+        })
+      )
+    ).toThrow(TransformDecodeError);
   });
   it("Should run", async () => {
     const result = await run(program, Value.Decode(envConfigSchema, process.env));

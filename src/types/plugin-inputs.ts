@@ -14,14 +14,7 @@ export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
 }
 
 function thresholdType(options?: StringOptions) {
-  return T.Transform(
-    T.String({
-      // Matches a pattern like [decimal] [unit], e.g. 3.25 hours
-      pattern: /^\s*\d+(\.\d+)?\s+\S+\s*$/.source,
-      errorMessage: "must be a duration, in the format of [decimal] [unit]",
-      ...options,
-    })
-  )
+  return T.Transform(T.String(options))
     .Decode((value) => {
       const milliseconds = ms(value);
       if (milliseconds === undefined) {
