@@ -1,4 +1,4 @@
 {
-  "sendRemindersThreshold": 3.5,
-  "unassignUserThreshold": 7
+  "warning": "3.5 days",
+  "disqualification": "7 days"
 }
