@@ -52,6 +52,6 @@ yarn test
 - plugin: ubiquibot/user-activity-watcher
   type: github
   with:
-    unassignUserThreshold: "7 days"
-    sendRemindersThreshold: "3.5 days"
+    disqualification: "7 days"
+    warning: "3.5 days"
 ```

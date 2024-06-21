@@ -35,11 +35,11 @@ export const userActivityWatcherSettingsSchema = T.Object({
   /**
    * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
    */
-  sendRemindersThreshold: thresholdType({ default: "3.5 days" }),
+  warning: thresholdType({ default: "3.5 days" }),
   /**
    * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
    */
-  unassignUserThreshold: thresholdType({
+  disqualification: thresholdType({
     default: "7 days",
   }),
 });

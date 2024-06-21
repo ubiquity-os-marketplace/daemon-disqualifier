@@ -56,13 +56,13 @@ describe("Run tests", () => {
   });
   it("Should parse thresholds", async () => {
     const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
-    expect(settings).toEqual({ sendRemindersThreshold: 302400000, unassignUserThreshold: 604800000 });
+    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000 });
     expect(() =>
       Value.Decode(
         userActivityWatcherSettingsSchema,
         Value.Default(userActivityWatcherSettingsSchema, {
-          sendRemindersThreshold: "12 foobars",
-          unassignUserThreshold: "2 days",
+          warning: "12 foobars",
+          disqualification: "2 days",
         })
       )
     ).toThrow(TransformDecodeError);
