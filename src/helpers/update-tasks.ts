@@ -114,10 +114,11 @@ async function getAssigneesActivityForIssue(context: Context, issue: Database["p
   });
   const linkedPullRequests = await collectLinkedPullRequests(context, gitHubUrl);
   for (const linkedPullRequest of linkedPullRequests) {
+    const { owner, repo, issue_number } = parseGitHubUrl(linkedPullRequest.source.issue.html_url);
     const events = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
-      owner: gitHubUrl.owner,
-      repo: gitHubUrl.repo,
-      issue_number: linkedPullRequest.source.issue.number,
+      owner,
+      repo,
+      issue_number,
       per_page: 100,
     });
     issueEvents.push(...events);
