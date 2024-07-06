@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
 import { Context } from "../types/context";
 import { Database } from "../types/database";
 import { getGithubIssue } from "./get-env";
@@ -100,14 +101,29 @@ export async function updateTasks(context: Context) {
   return true;
 }
 
-async function getAssigneesActivityForIssue({ octokit }: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
-  const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
-  return octokit.paginate(octokit.rest.issues.listEvents, {
-    owner,
-    repo,
-    issue_number,
+/**
+ * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
+ */
+async function getAssigneesActivityForIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+  const gitHubUrl = parseGitHubUrl(issue.url);
+  const issueEvents = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
+    owner: gitHubUrl.owner,
+    repo: gitHubUrl.repo,
+    issue_number: gitHubUrl.issue_number,
     per_page: 100,
   });
+  const linkedPullRequests = await collectLinkedPullRequests(context, gitHubUrl);
+  for (const linkedPullRequest of linkedPullRequests) {
+    const { owner, repo, issue_number } = parseGitHubUrl(linkedPullRequest.source.issue.html_url);
+    const events = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
+      owner,
+      repo,
+      issue_number,
+      per_page: 100,
+    });
+    issueEvents.push(...events);
+  }
+  return issueEvents;
 }
 
 async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {

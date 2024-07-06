@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import { db } from "./db";
 import issueEventsGet from "./routes/get-events.json";
 import issuesLabelsGet from "./routes/get-labels.json";
+import issueTimeline from "./routes/get-timeline.json";
 
 /**
  * Intercepts the routes and returns a custom payload
@@ -28,5 +29,8 @@ export const handlers = [
   }),
   http.get("https://api.github.com/repos/:owner/:repo/issues/:id/labels", () => {
     return HttpResponse.json(issuesLabelsGet);
+  }),
+  http.get("https://api.github.com/repos/:owner/:repo/issues/:id/timeline", () => {
+    return HttpResponse.json(issueTimeline);
   }),
 ];
