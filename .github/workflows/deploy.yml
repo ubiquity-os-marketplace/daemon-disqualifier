@@ -11,7 +11,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.10.0"
       - uses: actions/checkout@v4
       - uses: cloudflare/wrangler-action@v3
         with:

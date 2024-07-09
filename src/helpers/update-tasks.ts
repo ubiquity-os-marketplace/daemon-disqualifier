@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
 import { Context } from "../types/context";
 import { Database } from "../types/database";
 import { getGithubIssue } from "./get-env";
@@ -11,7 +12,7 @@ async function unassignUserFromIssue(context: Context, issue: Database["public"]
     config,
   } = context;
 
-  if (config.unassignUserThreshold <= 0) {
+  if (config.disqualification <= 0) {
     logger.info("The unassign threshold is <= 0, won't unassign users.");
   } else {
     logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
@@ -30,7 +31,7 @@ async function remindAssigneesForIssue(context: Context, issue: Database["public
   const now = DateTime.now();
   const deadline = DateTime.fromISO(issue.deadline);
 
-  if (config.sendRemindersThreshold <= 0) {
+  if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else {
     const lastReminder = issue.last_reminder;
@@ -59,8 +60,8 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
       payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= DateTime.fromISO(issue.last_check)
   );
   const deadline = DateTime.fromISO(issue.deadline);
-  const deadlineWithThreshold = deadline.plus({ day: config.unassignUserThreshold });
-  const reminderWithThreshold = deadline.plus({ day: config.sendRemindersThreshold });
+  const deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
+  const reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
 
   if (activity?.length) {
     const lastCheck = DateTime.fromISO(issue.last_check);
@@ -100,14 +101,29 @@ export async function updateTasks(context: Context) {
   return true;
 }
 
-async function getAssigneesActivityForIssue({ octokit }: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
-  const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
-  return octokit.paginate(octokit.rest.issues.listEvents, {
-    owner,
-    repo,
-    issue_number,
+/**
+ * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
+ */
+async function getAssigneesActivityForIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+  const gitHubUrl = parseGitHubUrl(issue.url);
+  const issueEvents = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
+    owner: gitHubUrl.owner,
+    repo: gitHubUrl.repo,
+    issue_number: gitHubUrl.issue_number,
     per_page: 100,
   });
+  const linkedPullRequests = await collectLinkedPullRequests(context, gitHubUrl);
+  for (const linkedPullRequest of linkedPullRequests) {
+    const { owner, repo, issue_number } = parseGitHubUrl(linkedPullRequest.source.issue.html_url);
+    const events = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
+      owner,
+      repo,
+      issue_number,
+      per_page: 100,
+    });
+    issueEvents.push(...events);
+  }
+  return issueEvents;
 }
 
 async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {

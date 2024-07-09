@@ -1,7 +1,7 @@
 # @ubiquibot/user-activity-watcher
 
 Watches user activity on issues, sends reminders on deadlines, and eventually unassigns inactive user to ensure that 
-tasks don't stall, and applies malus XP.
+tasks don't stall, and subtracts XP.
 
 ## Setup
 ```shell
@@ -52,6 +52,6 @@ yarn test
 - plugin: ubiquibot/user-activity-watcher
   type: github
   with:
-    unassignUserThreshold: 7
-    sendRemindersThreshold: 3.5
+    disqualification: "7 days"
+    warning: "3.5 days"
 ```
