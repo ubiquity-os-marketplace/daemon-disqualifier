@@ -1,5 +1,5 @@
 {
   "name": "User activity watcher",
   "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
-  "ubiquibot:listeners": [ "push" ]
+  "ubiquity:listeners": [ "push" ]
 }
