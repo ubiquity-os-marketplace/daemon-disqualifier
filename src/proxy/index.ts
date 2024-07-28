@@ -2,7 +2,6 @@ import { handleIssueAssigned } from "../handlers/issue-assigned";
 import { handleIssueClosed } from "../handlers/issue-closed";
 import { handleIssueUnassigned } from "../handlers/issue-unassigned";
 import { Context } from "../types/context";
-import { EnvConfigType } from "../types/env-type";
 import { SupportedEvents } from "../types/plugin-inputs";
 
 export interface Result {
@@ -11,7 +10,7 @@ export interface Result {
   reason?: string;
 }
 
-const callbacks: { [k in SupportedEvents]: (context: Context, env: EnvConfigType) => Result | Promise<Result> } = {
+const callbacks: { [k in SupportedEvents]: (context: Context) => Result | Promise<Result> } = {
   "issues.closed": handleIssueClosed,
   "issues.assigned": handleIssueAssigned,
   "issues.unassigned": handleIssueUnassigned,

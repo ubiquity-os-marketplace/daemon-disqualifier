@@ -1,11 +1,10 @@
 import { DateTime } from "luxon";
 import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
 import { Context } from "../types/context";
-import { Database } from "../types/database";
 import { getGithubIssue } from "./get-env";
 import { parseGitHubUrl } from "./github-url";
 
-async function unassignUserFromIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+async function unassignUserFromIssue(context: Context, issue: Context["payload"]["issue"]) {
   const {
     adapters: { supabase },
     logger,
@@ -22,7 +21,7 @@ async function unassignUserFromIssue(context: Context, issue: Database["public"]
   }
 }
 
-async function remindAssigneesForIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+async function remindAssigneesForIssue(context: Context, issue: Context["payload"]["issue"]) {
   const {
     adapters: { supabase },
     logger,
@@ -47,7 +46,7 @@ async function remindAssigneesForIssue(context: Context, issue: Database["public
   }
 }
 
-async function updateReminders(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+async function updateReminders(context: Context, issue: Context["payload"]["issue"]) {
   const {
     adapters: { supabase },
     logger,
@@ -104,7 +103,7 @@ export async function updateTasks(context: Context) {
 /**
  * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
  */
-async function getAssigneesActivityForIssue(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+async function getAssigneesActivityForIssue(context: Context, issue: Context["payload"]["issue"]) {
   const gitHubUrl = parseGitHubUrl(issue.url);
   const issueEvents = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
     owner: gitHubUrl.owner,
@@ -126,7 +125,7 @@ async function getAssigneesActivityForIssue(context: Context, issue: Database["p
   return issueEvents;
 }
 
-async function remindAssignees(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+async function remindAssignees(context: Context, issue: Context["payload"]["issue"]) {
   const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
@@ -148,7 +147,7 @@ async function remindAssignees(context: Context, issue: Database["public"]["Tabl
   return true;
 }
 
-async function removeAllAssignees(context: Context, issue: Database["public"]["Tables"]["issues"]["Row"]) {
+async function removeAllAssignees(context: Context, issue: Context["payload"]["issue"]) {
   const { octokit, logger } = context;
   const githubIssue = await getGithubIssue(context, issue);
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);

@@ -1,11 +1,10 @@
 import { Result } from "../proxy";
 import { Context } from "../types/context";
-import { EnvConfigType } from "../types/env-type";
 
 /**
  * On issue un-assigned, we want to delete the entry to stop watching this issue, if no assignee is left.
  */
-export async function handleIssueUnassigned(context: Context, env: EnvConfigType): Promise<Result> {
+export async function handleIssueUnassigned(context: Context): Promise<Result> {
   const {
     adapters: {
       supabase: { issues },

@@ -2,12 +2,11 @@ import { DateTime } from "luxon";
 import { getTimeEstimate } from "../helpers/time";
 import { Result } from "../proxy";
 import { Context } from "../types/context";
-import { EnvConfigType } from "../types/env-type";
 
 /**
  * On issue assigned, we want to update the entry with the new created time and deadline.
  */
-export async function handleIssueAssigned(context: Context, env: EnvConfigType): Promise<Result> {
+export async function handleIssueAssigned(context: Context): Promise<Result> {
   const {
     adapters: {
       supabase: { issues },
