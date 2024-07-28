@@ -3,7 +3,7 @@ import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
 import { Context } from "../types/context";
 import { getProjectUrls } from "./get-env";
 import { parseGitHubUrl } from "./github-url";
-import { ListForOrg, ListIssueForRepo } from "../types/github-types";
+import { ListCommentsForIssue, ListForOrg, ListIssueForRepo } from "../types/github-types";
 
 export async function updateTasks(context: Context) {
   const {
@@ -19,6 +19,7 @@ export async function updateTasks(context: Context) {
   }
 
   for (const repo of repos) {
+    logger.info(`Updating reminders for ${repo.owner.login}/${repo.name}`);
     await updateReminders(context, repo);
   }
 
@@ -37,7 +38,9 @@ async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
   }) as ListIssueForRepo[];
 
   for (const issue of issues) {
-    await updateReminderForIssue(context, repo, issue);
+    if (issue.assignees?.length || issue.assignee) {
+      await updateReminderForIssue(context, repo, issue);
+    }
   }
 }
 
@@ -53,49 +56,58 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     repo: repo.name,
     issue_number: issue.number,
     per_page: 100,
-  })
+  }) as ListCommentsForIssue[];
+
   const botComments = comments.filter((o) => o.user?.type === "Bot");
-  // Mon, Jul 22, 10:25 PM UTC
-  const dateRegex = /(\w{3}, \w{3} \d{1,2}, \d{4}, \d{1,2}:\d{2} (AM|PM) UTC)/;
-  // capturing via the metadata comment
+  const dateRegex = /(?<=<td>)(\w{3}, \w{3} \d{1,2}, \d{1,2}:\d{2} (AM|PM) UTC)(?=<\/td>)/gi;
   const assignmentRegex = /Ubiquity - Assignment - start -/gi;
   const botAssignmentComments = sortAndReturn(botComments.filter((o) => assignmentRegex.test(o?.body || "")), "desc");
-
   const botFollowup = /this task has been idle for a while. Please provide an update./gi;
   const botFollowupComments = botComments.filter((o) => botFollowup.test(o?.body || ""));
 
-  const lastCheck = DateTime.fromISO(botFollowupComments[0]?.created_at) || DateTime.fromISO(botAssignmentComments[0].created_at);
-  const deadline = DateTime.fromISO(botAssignmentComments[0].body.match(dateRegex)[0]);
+  if (!botAssignmentComments.length && !botFollowupComments.length) {
+    logger.info(`No assignment or followup comments found for ${issue.url}`);
+    return false;
+  }
+
+  const lastCheckComment = botFollowupComments[0]?.created_at ? botFollowupComments[0] : botAssignmentComments[0];
+
+  const lastCheck = DateTime.fromISO(new Date(lastCheckComment?.created_at).toISOString())
+  const matchedDeadline = botAssignmentComments[0]?.body?.match(dateRegex)
+  const deadline = matchedDeadline?.length ? DateTime.fromFormat(matchedDeadline[0], "EEE, LLL d, h:mm a 'UTC'") : DateTime.fromISO(new Date(issue.created_at).toISOString())
   const now = DateTime.now();
+
+  if (!deadline.isValid && !lastCheck.isValid) {
+    logger.error(`Invalid date found on ${issue.url}`);
+    return false;
+  }
 
   const activity = (await getAssigneesActivityForIssue(context, issue)).filter(
     (o) =>
-      payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= lastCheck
+      payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) > lastCheck
   );
 
-  const deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
-  const reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
+  let deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
+  let reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
 
   if (activity?.length) {
-    const timeDiff = now.diff(lastCheck);
-    const newDeadline = deadline.plus(timeDiff);
-    logger.info(
-      `Activity found on ${issue.url}, will move the deadline forward from ${deadline.toLocaleString(DateTime.DATETIME_MED)} to ${newDeadline.toLocaleString(DateTime.DATETIME_MED)}`
-    );
+    const lastActivity = DateTime.fromISO(activity[0].created_at);
+    deadlineWithThreshold = lastActivity.plus({ milliseconds: config.disqualification });
+    reminderWithThreshold = lastActivity.plus({ milliseconds: config.warning });
+  }
+
+  if (now >= deadlineWithThreshold) {
+    await unassignUserFromIssue(context, issue);
+  } else if (now >= reminderWithThreshold) {
+    await remindAssigneesForIssue(context, issue);
   } else {
-    if (now >= deadlineWithThreshold) {
-      await unassignUserFromIssue(context, issue);
-    } else if (now >= reminderWithThreshold) {
-      await remindAssigneesForIssue(context, issue);
-    } else {
-      logger.info(
-        `Nothing to do for ${issue.url}, still within due-time (now: ${now.toLocaleString(DateTime.DATETIME_MED)}, reminder ${reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED)}, deadline: ${deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED)})`
-      );
-    }
+    logger.info(
+      `Nothing to do for ${issue.html_url}, still within due-time (now: ${now.toLocaleString(DateTime.DATETIME_MED)}, reminder ${reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED)}, deadline: ${deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED)})`
+    );
   }
 }
 
-function sortAndReturn(array: any[], direction: "asc" | "desc") {
+function sortAndReturn(array: ListCommentsForIssue[], direction: "asc" | "desc") {
   return array.sort((a, b) => {
     if (direction === "asc") {
       return DateTime.fromISO(a.created_at).toMillis() - DateTime.fromISO(b.created_at).toMillis();
@@ -115,8 +127,7 @@ async function unassignUserFromIssue(context: Context, issue: ListIssueForRepo) 
     logger.info("The unassign threshold is <= 0, won't unassign users.");
   } else {
     logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
-    if (await removeAllAssignees(context, issue)) {
-    }
+    await removeAllAssignees(context, issue)
   }
 }
 
@@ -136,7 +147,7 @@ async function remindAssigneesForIssue(context: Context, issue: ListIssueForRepo
  * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
  */
 async function getAssigneesActivityForIssue(context: Context, issue: ListIssueForRepo) {
-  const gitHubUrl = parseGitHubUrl(issue.url);
+  const gitHubUrl = parseGitHubUrl(issue.html_url);
   const issueEvents = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
     owner: gitHubUrl.owner,
     repo: gitHubUrl.repo,
@@ -159,7 +170,7 @@ async function getAssigneesActivityForIssue(context: Context, issue: ListIssueFo
 
 async function remindAssignees(context: Context, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
-  const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
+  const { repo, owner, issue_number } = parseGitHubUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
     logger.error(`Missing Assignees from ${issue.url}`);
@@ -180,7 +191,7 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
 
 async function removeAllAssignees(context: Context, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
-  const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
+  const { repo, owner, issue_number } = parseGitHubUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
     logger.error(`Missing Assignees from ${issue.url}`);

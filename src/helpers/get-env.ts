@@ -72,18 +72,19 @@ export function getRepoCredentials(projectUrl: string) {
  * @param orgOrRepo org or repository name
  * @returns array of repository urls
  */
-export async function getRepoUrls(content: Context, orgOrRepo: string) {
+export async function getRepoUrls(context: Context, orgOrRepo: string) {
+  const { logger } = context;
   if (!orgOrRepo) {
-    console.warn("No org or repo provided: ", orgOrRepo);
+    logger.info("No org or repo provided: ", { orgOrRepo });
     return [];
   }
 
   if (orgOrRepo.startsWith("/") || orgOrRepo.endsWith("/")) {
-    console.warn("Invalid org or repo provided: ", orgOrRepo);
+    logger.info("Invalid org or repo provided: ", { orgOrRepo });
     return [];
   }
 
-  const { octokit } = content;
+  const { octokit } = context;
 
   const params = orgOrRepo.split("/");
   let repos: ListForOrg["data"] = [];
@@ -95,9 +96,9 @@ export async function getRepoUrls(content: Context, orgOrRepo: string) {
             org: orgOrRepo,
           });
           repos = res.map((repo) => repo);
-          console.info(`Getting ${orgOrRepo} org repositories: ${repos.length}`);
+          logger.info(`Getting ${orgOrRepo} org repositories: ${repos.length}`);
         } catch (error: unknown) {
-          console.warn(`Getting ${orgOrRepo} org repositories failed: ${error}`);
+          logger.error(`Getting ${orgOrRepo} org repositories failed: ${error}`);
           throw error;
         }
         break;
@@ -110,18 +111,18 @@ export async function getRepoUrls(content: Context, orgOrRepo: string) {
 
           if (res.status === 200) {
             repos.push(res.data as ListForOrg["data"][0]);
-            console.info(`Getting repo ${params[0]}/${params[1]}: ${res.data.html_url}`);
-          } else console.warn(`Getting repo ${params[0]}/${params[1]} failed: ${res.status}`)
+            logger.info(`Getting repo ${params[0]}/${params[1]}: ${res.data.html_url}`);
+          } else logger.error(`Getting repo ${params[0]}/${params[1]} failed: ${res.status}`)
         } catch (error: unknown) {
-          console.warn(`Getting repo ${params[0]}/${params[1]} failed: ${error}`);
+          logger.error(`Getting repo ${params[0]}/${params[1]} failed: ${error}`);
           throw error;
         }
         break;
       default:
-        console.warn(`Neither org or nor repo GitHub provided: ${orgOrRepo}.`);
+        logger.error(`Neither org or nor repo GitHub provided: ${orgOrRepo}.`);
     }
   } catch (err) {
-    console.error(err);
+    logger.error("Error getting repositories: ", { err });
   }
 
   return repos
