@@ -2,7 +2,7 @@ import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as Webhook
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
 import ms from "ms";
 
-export type SupportedEvents = "issues.closed" | "issues.assigned" | "issues.unassigned";
+export type SupportedEvents = "issues.assigned"
 
 export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   stateId: string;
@@ -36,6 +36,17 @@ export const userActivityWatcherSettingsSchema = T.Object({
    * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
    */
   warning: thresholdType({ default: "3.5 days" }),
+  /**
+   * Define how different organizations, users or specific repositories
+   * should be watched. Use the following format:
+   * 
+   * - "ubiquibot" - all repositories in the organization
+   * - "ubiquity/ubiquibot-logger" - specific repository
+   */
+  watch: T.Object({
+    optIn: T.Array(T.String()),
+    optOut: T.Array(T.String()),
+  }),
   /**
    * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
    */

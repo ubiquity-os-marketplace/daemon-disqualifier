@@ -4,6 +4,10 @@ export type GitHubIssue = RestEndpointMethodTypes["issues"]["get"]["response"]["
 export type GitHubPullRequest = RestEndpointMethodTypes["pulls"]["get"]["response"]["data"];
 export type GitHubTimelineEvent = RestEndpointMethodTypes["issues"]["listEventsForTimeline"]["response"]["data"][0];
 export type GitHubRepository = RestEndpointMethodTypes["repos"]["get"]["response"]["data"];
+export type ListForOrg = RestEndpointMethodTypes["repos"]["listForOrg"]["response"]
+export type GetRepo = RestEndpointMethodTypes["repos"]["get"]["response"]
+export type ListIssueForRepo = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"][0];
+
 
 type LinkPullRequestDetail = {
   url: string;
