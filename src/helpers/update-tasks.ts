@@ -1,75 +1,82 @@
 import { DateTime } from "luxon";
 import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
 import { Context } from "../types/context";
-import { getGithubIssue } from "./get-env";
+import { getProjectUrls } from "./get-env";
 import { parseGitHubUrl } from "./github-url";
+import { ListForOrg, ListIssueForRepo } from "../types/github-types";
 
-async function unassignUserFromIssue(context: Context, issue: Context["payload"]["issue"]) {
+export async function updateTasks(context: Context) {
   const {
-    adapters: { supabase },
     logger,
-    config,
+    config: { watch }
   } = context;
 
-  if (config.disqualification <= 0) {
-    logger.info("The unassign threshold is <= 0, won't unassign users.");
-  } else {
-    logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
-    if (await removeAllAssignees(context, issue)) {
-      await supabase.issues.delete(issue.url);
-    }
+  const { projectUrls, repos } = await getProjectUrls(context, watch);
+
+  if (!projectUrls?.length && !repos?.length) {
+    logger.info("No watched repos have been found, no work to do.");
+    return false;
+  }
+
+  for (const repo of repos) {
+    await updateReminders(context, repo);
+  }
+
+  return true;
+}
+
+async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
+  const {
+    octokit
+  } = context;
+  const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
+    owner: repo.owner.login,
+    repo: repo.name,
+    per_page: 100,
+  }) as ListIssueForRepo[];
+
+  for (const issue of issues) {
+    await updateReminderForIssue(context, repo, issue);
   }
 }
 
-async function remindAssigneesForIssue(context: Context, issue: Context["payload"]["issue"]) {
+async function updateReminderForIssue(context: Context, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
   const {
-    adapters: { supabase },
-    logger,
-    config,
-  } = context;
-  const now = DateTime.now();
-  const deadline = DateTime.fromISO(issue.deadline);
-
-  if (config.warning <= 0) {
-    logger.info("The reminder threshold is <= 0, won't send any reminder.");
-  } else {
-    const lastReminder = issue.last_reminder;
-    logger.info(`We are passed the deadline on ${issue.url}, should we send a reminder? ${!lastReminder}`);
-    if (!lastReminder && (await remindAssignees(context, issue))) {
-      await supabase.issues.upsert({
-        url: issue.url,
-        deadline: deadline.toJSDate(),
-        lastReminder: now.toJSDate(),
-        lastCheck: now.toJSDate(),
-      });
-    }
-  }
-}
-
-async function updateReminders(context: Context, issue: Context["payload"]["issue"]) {
-  const {
-    adapters: { supabase },
     logger,
     config,
     payload,
+    octokit
   } = context;
+  const comments = await octokit.paginate(octokit.rest.issues.listComments, {
+    owner: repo.owner.login,
+    repo: repo.name,
+    issue_number: issue.number,
+    per_page: 100,
+  })
+  const botComments = comments.filter((o) => o.user?.type === "Bot");
+  // Mon, Jul 22, 10:25 PM UTC
+  const dateRegex = /(\w{3}, \w{3} \d{1,2}, \d{4}, \d{1,2}:\d{2} (AM|PM) UTC)/;
+  // capturing via the metadata comment
+  const assignmentRegex = /Ubiquity - Assignment - start -/gi;
+  const botAssignmentComments = sortAndReturn(botComments.filter((o) => assignmentRegex.test(o?.body || "")), "desc");
+  const lastCheck = DateTime.fromISO(botAssignmentComments[0].created_at)
+  const deadline = DateTime.fromISO(botAssignmentComments[0].body.match(dateRegex)[0]);
+
   const now = DateTime.now();
   const activity = (await getAssigneesActivityForIssue(context, issue)).filter(
     (o) =>
-      payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= DateTime.fromISO(issue.last_check)
+      payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= lastCheck
   );
-  const deadline = DateTime.fromISO(issue.deadline);
+
   const deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
   const reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
 
   if (activity?.length) {
-    const lastCheck = DateTime.fromISO(issue.last_check);
     const timeDiff = now.diff(lastCheck);
     const newDeadline = deadline.plus(timeDiff);
     logger.info(
       `Activity found on ${issue.url}, will move the deadline forward from ${deadline.toLocaleString(DateTime.DATETIME_MED)} to ${newDeadline.toLocaleString(DateTime.DATETIME_MED)}`
     );
-    await supabase.issues.upsert({ url: issue.url, deadline: newDeadline.toJSDate(), lastCheck: now.toJSDate() });
   } else {
     if (now >= deadlineWithThreshold) {
       await unassignUserFromIssue(context, issue);
@@ -83,27 +90,47 @@ async function updateReminders(context: Context, issue: Context["payload"]["issu
   }
 }
 
-export async function updateTasks(context: Context) {
-  const {
-    adapters: { supabase },
-    logger,
-  } = context;
-  const watchedRepoList = await supabase.issues.get();
+function sortAndReturn(array: any[], direction: "asc" | "desc") {
+  return array.sort((a, b) => {
+    if (direction === "asc") {
+      return DateTime.fromISO(a.created_at).toMillis() - DateTime.fromISO(b.created_at).toMillis();
+    } else {
+      return DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis();
+    }
+  });
+}
 
-  if (!watchedRepoList?.length) {
-    logger.info("No watched repos have been found, no work to do.");
-    return false;
+async function unassignUserFromIssue(context: Context, issue: ListIssueForRepo) {
+  const {
+    logger,
+    config,
+  } = context;
+
+  if (config.disqualification <= 0) {
+    logger.info("The unassign threshold is <= 0, won't unassign users.");
+  } else {
+    logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
+    if (await removeAllAssignees(context, issue)) {
+    }
   }
-  for (const watchedIssue of watchedRepoList) {
-    await updateReminders(context, watchedIssue);
+}
+
+async function remindAssigneesForIssue(context: Context, issue: ListIssueForRepo) {
+  const {
+    logger,
+    config,
+  } = context;
+  if (config.warning <= 0) {
+    logger.info("The reminder threshold is <= 0, won't send any reminder.");
+  } else {
+    await remindAssignees(context, issue)
   }
-  return true;
 }
 
 /**
  * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
  */
-async function getAssigneesActivityForIssue(context: Context, issue: Context["payload"]["issue"]) {
+async function getAssigneesActivityForIssue(context: Context, issue: ListIssueForRepo) {
   const gitHubUrl = parseGitHubUrl(issue.url);
   const issueEvents = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
     owner: gitHubUrl.owner,
@@ -125,16 +152,15 @@ async function getAssigneesActivityForIssue(context: Context, issue: Context["pa
   return issueEvents;
 }
 
-async function remindAssignees(context: Context, issue: Context["payload"]["issue"]) {
+async function remindAssignees(context: Context, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
-  const githubIssue = await getGithubIssue(context, issue);
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
 
-  if (!githubIssue?.assignees?.length) {
-    logger.warn(`Missing Assignees from ${issue.url}`);
+  if (!issue?.assignees?.length) {
+    logger.error(`Missing Assignees from ${issue.url}`);
     return false;
   }
-  const logins = githubIssue.assignees
+  const logins = issue.assignees
     .map((o) => o?.login)
     .filter((o) => !!o)
     .join(", @");
@@ -147,16 +173,15 @@ async function remindAssignees(context: Context, issue: Context["payload"]["issu
   return true;
 }
 
-async function removeAllAssignees(context: Context, issue: Context["payload"]["issue"]) {
+async function removeAllAssignees(context: Context, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
-  const githubIssue = await getGithubIssue(context, issue);
   const { repo, owner, issue_number } = parseGitHubUrl(issue.url);
 
-  if (!githubIssue?.assignees?.length) {
-    logger.warn(`Missing Assignees from ${issue.url}`);
+  if (!issue?.assignees?.length) {
+    logger.error(`Missing Assignees from ${issue.url}`);
     return false;
   }
-  const logins = githubIssue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
+  const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   await octokit.rest.issues.removeAssignees({
     owner,
     repo,
