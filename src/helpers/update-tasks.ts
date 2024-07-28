@@ -33,6 +33,7 @@ async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
     owner: repo.owner.login,
     repo: repo.name,
     per_page: 100,
+    state: "open",
   }) as ListIssueForRepo[];
 
   for (const issue of issues) {
@@ -59,10 +60,14 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
   // capturing via the metadata comment
   const assignmentRegex = /Ubiquity - Assignment - start -/gi;
   const botAssignmentComments = sortAndReturn(botComments.filter((o) => assignmentRegex.test(o?.body || "")), "desc");
-  const lastCheck = DateTime.fromISO(botAssignmentComments[0].created_at)
-  const deadline = DateTime.fromISO(botAssignmentComments[0].body.match(dateRegex)[0]);
 
+  const botFollowup = /this task has been idle for a while. Please provide an update./gi;
+  const botFollowupComments = botComments.filter((o) => botFollowup.test(o?.body || ""));
+
+  const lastCheck = DateTime.fromISO(botFollowupComments[0]?.created_at) || DateTime.fromISO(botAssignmentComments[0].created_at);
+  const deadline = DateTime.fromISO(botAssignmentComments[0].body.match(dateRegex)[0]);
   const now = DateTime.now();
+
   const activity = (await getAssigneesActivityForIssue(context, issue)).filter(
     (o) =>
       payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= lastCheck
