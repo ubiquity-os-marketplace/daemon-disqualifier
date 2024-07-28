@@ -1,4 +1,12 @@
 {
   "warning": "3.5 days",
-  "disqualification": "7 days"
+  "disqualification": "7 days",
+  "watch": {
+    "optIn": [
+      "ubiquity"
+    ],
+    "optOut": [
+      "ubiquity/private-repo"
+    ]
+  }
 }

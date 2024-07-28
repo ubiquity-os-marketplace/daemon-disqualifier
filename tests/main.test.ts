@@ -44,13 +44,14 @@ describe("Run tests", () => {
 
   it("Should parse thresholds", async () => {
     const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
-    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000 });
+    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optIn: ["ubiquity"], optOut: ["ubiquity/private-repo"] } });
     expect(() =>
       Value.Decode(
         userActivityWatcherSettingsSchema,
         Value.Default(userActivityWatcherSettingsSchema, {
           warning: "12 foobars",
           disqualification: "2 days",
+          watch: { optIn: ["ubiquity"], optOut: ["ubiquity/private-repo"] },
         })
       )
     ).toThrow(TransformDecodeError);

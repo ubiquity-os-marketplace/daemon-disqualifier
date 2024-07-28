@@ -33,4 +33,16 @@ export const handlers = [
   http.get("https://api.github.com/repos/:owner/:repo/issues/:id/timeline", () => {
     return HttpResponse.json(issueTimeline);
   }),
+
+  http.get("https://api.github.com/:org/repos", () => {
+    return HttpResponse.json(db.repos.getAll());
+  }),
+
+  http.get("https://api.github.com/repos/:owner/:repo/issues", () => {
+    return HttpResponse.json(db.issues.getAll());
+  }),
+
+  http.get("https://api.github.com/orgs/:org/repos", () => {
+    return HttpResponse.json(db.repos.getAll());
+  }),
 ];

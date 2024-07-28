@@ -13,4 +13,9 @@ export const db = factory({
     deadline: String,
     last_reminder: nullable(String),
   },
+  repos: {
+    id: primaryKey(Number),
+    name: String,
+    owner: String,
+  },
 });
