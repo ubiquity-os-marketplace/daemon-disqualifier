@@ -15,5 +15,5 @@ export async function run(inputs: PluginInputs) {
   };
 
   await updateTasks(context);
-  return JSON.stringify({ status: "ok" }); // don't really need to return anything to the kernel
+  return JSON.stringify({ status: 200 });
 }

@@ -5,10 +5,8 @@ export type GitHubPullRequest = RestEndpointMethodTypes["pulls"]["get"]["respons
 export type GitHubTimelineEvent = RestEndpointMethodTypes["issues"]["listEventsForTimeline"]["response"]["data"][0];
 export type GitHubRepository = RestEndpointMethodTypes["repos"]["get"]["response"]["data"];
 export type ListForOrg = RestEndpointMethodTypes["repos"]["listForOrg"]["response"]
-export type GetRepo = RestEndpointMethodTypes["repos"]["get"]["response"]
 export type ListIssueForRepo = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"][0];
 export type ListCommentsForIssue = RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"][0];
-
 
 type LinkPullRequestDetail = {
   url: string;
