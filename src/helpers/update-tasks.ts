@@ -3,7 +3,7 @@ import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
 import { Context } from "../types/context";
 import { getWatchedRepos } from "./get-watched-repos";
 import { parseIssueUrl } from "./github-url";
-import { ListCommentsForIssue, ListForOrg, ListIssueForRepo } from "../types/github-types";
+import { GitHubListEvents, ListCommentsForIssue, ListForOrg, ListIssueForRepo } from "../types/github-types";
 
 export async function updateTasks(context: Context) {
   const {
@@ -148,7 +148,7 @@ async function remindAssigneesForIssue(context: Context, issue: ListIssueForRepo
  */
 async function getAssigneesActivityForIssue(context: Context, issue: ListIssueForRepo) {
   const gitHubUrl = parseIssueUrl(issue.html_url);
-  const issueEvents = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
+  const issueEvents: GitHubListEvents[] = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
     owner: gitHubUrl.owner,
     repo: gitHubUrl.repo,
     issue_number: gitHubUrl.issue_number,
@@ -165,7 +165,16 @@ async function getAssigneesActivityForIssue(context: Context, issue: ListIssueFo
     });
     issueEvents.push(...events);
   }
-  return issueEvents;
+  const assignees = issue.assignees ? issue.assignees.map((assignee) => assignee.login) : issue.assignee ? [issue.assignee.login] : [];
+
+  return issueEvents.reduce((acc, event) => {
+    if (event.actor && event.actor.login && event.actor.login) {
+
+      if (assignees.includes(event.actor.login))
+        acc.push(event);
+    }
+    return acc;
+  }, [] as GitHubListEvents[]);
 }
 
 async function remindAssignees(context: Context, issue: ListIssueForRepo) {
