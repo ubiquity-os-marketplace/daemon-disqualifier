@@ -1,8 +1,8 @@
-import { parseGitHubUrl } from "../helpers/github-url";
+import { parseIssueUrl } from "../helpers/github-url";
 import { Context } from "../types/context";
 import { GitHubLinkEvent, GitHubTimelineEvent, isGitHubLinkEvent } from "../types/github-types";
 
-export type IssueParams = ReturnType<typeof parseGitHubUrl>;
+export type IssueParams = ReturnType<typeof parseIssueUrl>;
 
 export async function collectLinkedPullRequests(context: Context, issue: IssueParams) {
   const onlyPullRequests = await collectLinkedPulls(context, issue);
@@ -27,7 +27,7 @@ export async function collectLinkedPullRequests(context: Context, issue: IssuePa
       } else {
         const url = linkedPrUrls[i].match(/https.+/)?.[0];
         if (url) {
-          const linkedRepo = parseGitHubUrl(url);
+          const linkedRepo = parseIssueUrl(url);
           isClosingPr = linkedRepo.issue_number === issue.issue_number && linkedRepo.repo === issue.repo && linkedRepo.owner === issue.owner;
         }
       }

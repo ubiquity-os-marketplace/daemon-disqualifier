@@ -48,7 +48,6 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
   const {
     logger,
     config,
-    payload,
     octokit
   } = context;
   const comments = await octokit.paginate(octokit.rest.issues.listComments, {
@@ -72,7 +71,7 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
 
   const lastCheckComment = botFollowupComments[0]?.created_at ? botFollowupComments[0] : botAssignmentComments[0];
 
-  const lastCheck = DateTime.fromISO(new Date(lastCheckComment?.created_at).toISOString())
+  const lastCheck = DateTime.fromISO(lastCheckComment.created_at);
   const matchedDeadline = botAssignmentComments[0]?.body?.match(dateRegex)
   const deadline = matchedDeadline?.length ? DateTime.fromFormat(matchedDeadline[0], "EEE, LLL d, h:mm a 'UTC'") : DateTime.fromISO(new Date(issue.created_at).toISOString())
   const now = DateTime.now();
@@ -82,10 +81,7 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     return false;
   }
 
-  const activity = (await getAssigneesActivityForIssue(context, issue)).filter(
-    (o) =>
-      payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) > lastCheck
-  );
+  const activity = (await getAssigneesActivityForIssue(context, issue)).filter((o) => DateTime.fromISO(o.created_at) > lastCheck)
 
   let deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
   let reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
@@ -174,7 +170,8 @@ async function getAssigneesActivityForIssue(context: Context, issue: ListIssueFo
         acc.push(event);
     }
     return acc;
-  }, [] as GitHubListEvents[]);
+  }, [] as GitHubListEvents[])
+    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
 }
 
 async function remindAssignees(context: Context, issue: ListIssueForRepo) {

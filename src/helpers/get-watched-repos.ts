@@ -7,7 +7,7 @@ export async function getWatchedRepos(context: Context, watch: Context["config"]
   let repos: ListForOrg["data"] = [];
 
   for (const orgOrRepo of watch.optIn) {
-    const repositories: ListForOrg["data"] = await getRepoUrls(context, orgOrRepo);
+    const repositories: ListForOrg["data"] = await getReposForOrg(context, orgOrRepo);
     repositories.forEach((repo) => repoUrls.add(repo.html_url));
     repos = repos.concat(repositories);
   }
@@ -42,7 +42,7 @@ export async function getWatchedRepos(context: Context, watch: Context["config"]
  * @param orgOrRepo org or repository name
  * @returns array of repository urls
  */
-export async function getRepoUrls(context: Context, orgOrRepo: string) {
+export async function getReposForOrg(context: Context, orgOrRepo: string) {
   const { logger } = context;
   if (!orgOrRepo) {
     logger.info("No org or repo provided: ", { orgOrRepo });

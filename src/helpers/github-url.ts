@@ -24,6 +24,6 @@ export function parseRepoUrl(repoUrl: string) {
       repo: repoName,
     };
   } else {
-    throw new Error(`Invalid project URL: [${repoUrl}]`);
+    throw new Error(`[parseRepoUrl] Invalid repo URL: [${repoUrl}]`);
   }
 }
