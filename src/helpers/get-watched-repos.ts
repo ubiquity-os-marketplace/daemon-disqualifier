@@ -1,13 +1,14 @@
 import { Context } from "../types/context";
 import { ListForOrg } from "../types/github-types";
+import { parseRepoUrl } from "./github-url";
 
-export async function getProjectUrls(context: Context, watch: Context["config"]["watch"]) {
-  const projectUrls = new Set<string>();
+export async function getWatchedRepos(context: Context, watch: Context["config"]["watch"]) {
+  const repoUrls = new Set<string>();
   let repos: ListForOrg["data"] = [];
 
   for (const orgOrRepo of watch.optIn) {
     const repositories: ListForOrg["data"] = await getRepoUrls(context, orgOrRepo);
-    repositories.forEach((repo) => projectUrls.add(repo.html_url));
+    repositories.forEach((repo) => repoUrls.add(repo.html_url));
     repos = repos.concat(repositories);
   }
 
@@ -16,38 +17,24 @@ export async function getProjectUrls(context: Context, watch: Context["config"][
 
     if (len === 1) {
       //it's an org, delete all org repos in the list
-      projectUrls.forEach((url) => {
+      repoUrls.forEach((url) => {
         if (url.includes(orgOrRepo)) {
-          const [owner, repo] = getRepoCredentials(url);
+          const parsed = parseRepoUrl(url);
+          if (!parsed) return;
+          const { owner, repo } = parsed;
           if (watch.optIn.includes(`${owner}/${repo}`)) {
             return;
           }
-          projectUrls.delete(url);
+          repoUrls.delete(url);
         }
       });
     } else {
       // it's a repo, delete the repo from the list
-      projectUrls.forEach((url) => url.includes(orgOrRepo) && projectUrls.delete(url));
+      repoUrls.forEach((url) => url.includes(orgOrRepo) && repoUrls.delete(url));
     }
   }
 
-  return { projectUrls: Array.from(projectUrls), repos };
-}
-
-/**
- * Returns owner and repository names from a project URL
- * @param projectUrl project URL
- * @returns array of owner and repository names
- */
-export function getRepoCredentials(projectUrl: string) {
-  const urlObject = new URL(projectUrl);
-  const urlPath = urlObject.pathname.split("/");
-  const ownerName = urlPath[1];
-  const repoName = urlPath[2];
-  if (!ownerName || !repoName) {
-    throw new Error(`Missing owner name or repo name in [${projectUrl}]`);
-  }
-  return [ownerName, repoName];
+  return { repoUrls: Array.from(repoUrls), repos };
 }
 
 /**

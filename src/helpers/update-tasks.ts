@@ -1,8 +1,8 @@
 import { DateTime } from "luxon";
 import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
 import { Context } from "../types/context";
-import { getProjectUrls } from "./get-env";
-import { parseGitHubUrl } from "./github-url";
+import { getWatchedRepos } from "./get-watched-repos";
+import { parseIssueUrl } from "./github-url";
 import { ListCommentsForIssue, ListForOrg, ListIssueForRepo } from "../types/github-types";
 
 export async function updateTasks(context: Context) {
@@ -11,9 +11,9 @@ export async function updateTasks(context: Context) {
     config: { watch }
   } = context;
 
-  const { projectUrls, repos } = await getProjectUrls(context, watch);
+  const { repoUrls, repos } = await getWatchedRepos(context, watch);
 
-  if (!projectUrls?.length && !repos?.length) {
+  if (!repoUrls?.length && !repos?.length) {
     logger.info("No watched repos have been found, no work to do.");
     return false;
   }
@@ -147,7 +147,7 @@ async function remindAssigneesForIssue(context: Context, issue: ListIssueForRepo
  * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
  */
 async function getAssigneesActivityForIssue(context: Context, issue: ListIssueForRepo) {
-  const gitHubUrl = parseGitHubUrl(issue.html_url);
+  const gitHubUrl = parseIssueUrl(issue.html_url);
   const issueEvents = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
     owner: gitHubUrl.owner,
     repo: gitHubUrl.repo,
@@ -156,7 +156,7 @@ async function getAssigneesActivityForIssue(context: Context, issue: ListIssueFo
   });
   const linkedPullRequests = await collectLinkedPullRequests(context, gitHubUrl);
   for (const linkedPullRequest of linkedPullRequests) {
-    const { owner, repo, issue_number } = parseGitHubUrl(linkedPullRequest.source.issue.html_url);
+    const { owner, repo, issue_number } = parseIssueUrl(linkedPullRequest.source.issue.html_url);
     const events = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
       owner,
       repo,
@@ -170,7 +170,7 @@ async function getAssigneesActivityForIssue(context: Context, issue: ListIssueFo
 
 async function remindAssignees(context: Context, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
-  const { repo, owner, issue_number } = parseGitHubUrl(issue.html_url);
+  const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
     logger.error(`Missing Assignees from ${issue.url}`);
@@ -191,7 +191,7 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
 
 async function removeAllAssignees(context: Context, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
-  const { repo, owner, issue_number } = parseGitHubUrl(issue.html_url);
+  const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
     logger.error(`Missing Assignees from ${issue.url}`);
