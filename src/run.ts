@@ -13,7 +13,10 @@ export async function run(inputs: PluginInputs) {
     octokit,
     logger: new Logs("info"),
   };
-
-  await updateTasks(context);
+  await runPlugin(context);
   return JSON.stringify({ status: 200 });
+}
+
+export async function runPlugin(context: Context) {
+  return await updateTasks(context);
 }
