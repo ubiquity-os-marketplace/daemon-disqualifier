@@ -58,7 +58,8 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
   }) as ListCommentsForIssue[];
 
   const botComments = comments.filter((o) => o.user?.type === "Bot");
-  const dateRegex = /(?<=<td>)(\w{3}, \w{3} \d{1,2}, \d{1,2}:\d{2} (AM|PM) UTC)(?=<\/td>)/gi;
+  const taskDeadlineJsonRegex = /"taskDeadline": "([^"]*)"/g;
+  const taskAssigneesJsonRegex = /"taskAssignees": \[([^\]]*)\]/g;
   const assignmentRegex = /Ubiquity - Assignment - start -/gi;
   const botAssignmentComments = sortAndReturn(botComments.filter((o) => assignmentRegex.test(o?.body || "")), "desc");
   const botFollowup = /this task has been idle for a while. Please provide an update./gi;
@@ -70,10 +71,34 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
   }
 
   const lastCheckComment = botFollowupComments[0]?.created_at ? botFollowupComments[0] : botAssignmentComments[0];
-
   const lastCheck = DateTime.fromISO(lastCheckComment.created_at);
-  const matchedDeadline = botAssignmentComments[0]?.body?.match(dateRegex)
-  const deadline = matchedDeadline?.length ? DateTime.fromFormat(matchedDeadline[0], "EEE, LLL d, h:mm a 'UTC'") : DateTime.fromISO(new Date(issue.created_at).toISOString())
+
+  const taskDeadlineMatch = taskDeadlineJsonRegex.exec(botAssignmentComments[0]?.body || "");
+  const taskAssigneesMatch = taskAssigneesJsonRegex.exec(botAssignmentComments[0]?.body || "");
+
+  if (!taskDeadlineMatch || !taskAssigneesMatch) {
+    logger.error(`Missing metadata from ${issue.url}`);
+    return false;
+  }
+
+  const metadata = {
+    taskDeadline: taskDeadlineMatch[1],
+    taskAssignees: taskAssigneesMatch[1].split(",").map((o) => o.trim()).map(Number),
+  };
+
+  if (!metadata.taskAssignees.length) {
+    logger.error(`No assignees found for ${issue.url}`);
+    return false;
+  } else if (metadata.taskAssignees.length && issue.assignees?.length && metadata.taskAssignees.some((a) => !issue.assignees?.map((o) => o.id).includes(a))) {
+    logger.error(`Assignees mismatch found for ${issue.url}`);
+    return false;
+  }
+
+  if (!metadata.taskDeadline) {
+    logger.info(`No deadline found for ${issue.url}`);
+    return false;
+  }
+  const deadline = DateTime.fromFormat(metadata?.taskDeadline, "EEE, LLL d, h:mm a 'UTC'")
   const now = DateTime.now();
 
   if (!deadline.isValid && !lastCheck.isValid) {

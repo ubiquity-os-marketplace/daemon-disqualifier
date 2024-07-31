@@ -11,9 +11,13 @@ export function parseIssueUrl(url: string): { owner: string; repo: string; issue
 }
 
 export function parseRepoUrl(repoUrl: string) {
+  if (!repoUrl) {
+    throw new Error(`[parseRepoUrl] Missing repo URL`);
+  }
   const urlObject = new URL(repoUrl);
   const urlPath = urlObject.pathname.split("/");
-  if (urlPath.length < 3) {
+
+  if (urlPath.length === 3) {
     const ownerName = urlPath[1];
     const repoName = urlPath[2];
     if (!ownerName || !repoName) {
