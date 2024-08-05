@@ -37,11 +37,11 @@ export default {
   node_id: "1",
   owner: "ubiquity",
   number: 1,
+  url: "https://api.github.com/repos/ubiquity/test-repo/issues/1",
   repository_url: "https://github.com/ubiquity/test-repo",
   state: "open",
   title: "issue",
   updated_at: "",
-  url: "",
   user: null,
   repo: "test-repo",
   labels: [

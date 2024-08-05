@@ -13,7 +13,7 @@ import { Context } from "../src/types/context";
 import mockUsers from "./__mocks__/mock-users";
 import issueTemplate from "./__mocks__/issue-template";
 import repoTemplate from "./__mocks__/repo-template";
-import { STRINGS } from "./__mocks__/strings";
+import { getIssueHtmlUrl, getIssueUrl, getRepoHtmlUrl, getRepoUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
 
 dotenv.config();
 const ONE_DAY = 1000 * 60 * 60 * 24;
@@ -52,6 +52,20 @@ describe("User start/stop", () => {
     const result = await runPlugin(context);
     expect(result).toBe(true);
   });
+
+  it.only("Should process update for all repos except optOut", async () => {
+    const context = createContext(2, 1);
+    const infoSpy = jest.spyOn(context.logger, "info");
+    await runPlugin(context);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, "Getting ubiquity org repositories: 4")
+    expect(infoSpy).toHaveBeenNthCalledWith(2, updatingRemindersFor(STRINGS.TEST_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(1)))
+    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(2)))
+    expect(infoSpy).toHaveBeenNthCalledWith(5, noAssignmentCommentFor(getIssueUrl(3)))
+    expect(infoSpy).toHaveBeenNthCalledWith(6, noAssignmentCommentFor(getIssueUrl(4)))
+    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.PRIVATE_REPO));
+  });
 });
 
 async function setupTests() {
@@ -63,16 +77,16 @@ async function setupTests() {
   db.repo.create({ ...repoTemplate, id: 2, name: "private-repo" });
   db.repo.create({ ...repoTemplate, id: 3, name: "user-activity-watcher" });
   db.repo.create({ ...repoTemplate, id: 4, name: "filler-repo" });
-  db.repo.create({ ...repoTemplate, id: 5, owner: { login: STRINGS.UBIQUIBOT }, html_url: repoTemplate.html_url.replace("ubiquity", STRINGS.UBIQUIBOT) });
+  db.repo.create({ ...repoTemplate, id: 5, name: "ubiquibot", owner: { login: STRINGS.UBIQUIBOT }, url: getRepoUrl(STRINGS.UBIQUIBOT), html_url: getRepoHtmlUrl(STRINGS.UBIQUIBOT), });
 
   // nothing to do
-  db.issue.create({ ...issueTemplate, id: 1, assignees: [STRINGS.UBIQUITY], created_at: new Date(Date.now() - ONE_DAY).toISOString() });
+  db.issue.create({ ...issueTemplate, id: 1, assignees: [STRINGS.UBIQUITY], created_at: new Date(Date.now() - ONE_DAY).toISOString(), url: getIssueUrl(1), html_url: getIssueHtmlUrl(1) });
   // nothing to do
-  db.issue.create({ ...issueTemplate, id: 2, assignees: [STRINGS.USER], created_at: new Date(Date.now() - ONE_DAY * 2).toISOString() });
+  db.issue.create({ ...issueTemplate, id: 2, assignees: [STRINGS.USER], created_at: new Date(Date.now() - ONE_DAY * 2).toISOString(), url: getIssueUrl(2), html_url: getIssueHtmlUrl(2) });
   // warning
-  db.issue.create({ ...issueTemplate, id: 4, assignees: [STRINGS.USER], created_at: new Date(Date.now() - ONE_DAY * 4).toISOString() });
+  db.issue.create({ ...issueTemplate, id: 3, assignees: [STRINGS.USER], created_at: new Date(Date.now() - ONE_DAY * 4).toISOString(), url: getIssueUrl(3), html_url: getIssueHtmlUrl(3) });
   // disqualification
-  db.issue.create({ ...issueTemplate, id: 5, assignees: [STRINGS.USER], created_at: new Date(Date.now() - ONE_DAY * 8).toISOString() });
+  db.issue.create({ ...issueTemplate, id: 4, assignees: [STRINGS.USER], created_at: new Date(Date.now() - ONE_DAY * 8).toISOString(), url: getIssueUrl(4), html_url: getIssueHtmlUrl(2) });
 
   db.issueComments.create({ id: 1, issueId: 1, body: "test", created_at: new Date(Date.now() - ONE_DAY).toISOString() });
   db.issueComments.create({ id: 2, issueId: 2, body: "test", created_at: new Date(Date.now() - ONE_DAY * 2).toISOString() });

@@ -18,18 +18,18 @@ export const handlers = [
     return HttpResponse.json(issueTimeline);
   }),
 
-  http.get("https://api.github.com/:org/repos", () => {
-    return HttpResponse.json(db.repo.getAll());
+  http.get("https://api.github.com/:org/repos", ({ params: { org } }) => {
+    return HttpResponse.json(db.repo.findMany({ where: { owner: { login: { equals: org as string } } } }));
   }),
 
-  http.get("https://api.github.com/repos/:owner/:repo/issues", () => {
-    return HttpResponse.json(db.issue.getAll());
+  http.get("https://api.github.com/repos/:owner/:repo/issues", ({ params: { owner, repo } }) => {
+    return HttpResponse.json(db.issue.findMany({ where: { owner: { equals: owner as string }, repo: { equals: repo as string } } }));
   }),
 
-  http.get("https://api.github.com/orgs/:org/repos", () => {
-    return HttpResponse.json(db.repo.getAll());
+  http.get("https://api.github.com/orgs/:org/repos", ({ params: { org } }) => {
+    return HttpResponse.json(db.repo.findMany({ where: { owner: { login: { equals: org as string } } } }));
   }),
-  http.get("https://api.github.com/repos/:owner/:repo/issues/:id/comments", () => {
-    return HttpResponse.json(db.issueComments.getAll());
+  http.get("https://api.github.com/repos/:owner/:repo/issues/:id/comments", ({ params: { owner, repo } }) => {
+    return HttpResponse.json(db.issueComments.findMany({ where: { owner: { login: { equals: owner as string } }, repo: { name: { equals: repo as string } } } }));
   }),
 ];

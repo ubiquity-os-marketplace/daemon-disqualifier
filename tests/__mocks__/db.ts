@@ -61,6 +61,7 @@ export const db = factory({
   repo: {
     id: primaryKey(Number),
     html_url: String,
+    url: String,
     name: String,
     owner: {
       login: String,
@@ -114,6 +115,13 @@ export const db = factory({
     body: String,
     created_at: Date,
     updated_at: Date,
+    owner: {
+      login: String,
+      id: Number,
+    },
+    repo: {
+      name: String,
+    },
     user: {
       login: String,
       id: Number,
