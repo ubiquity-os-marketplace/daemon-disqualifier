@@ -102,7 +102,7 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     logger.info(`No deadline found for ${issue.url}`);
     return false;
   }
-  const deadline = DateTime.fromISO(new Date(metadata.taskDeadline).toISOString());
+  const deadline = DateTime.fromISO(metadata.taskDeadline);
   const now = DateTime.now();
 
   if (!deadline.isValid && !lastCheck.isValid) {
@@ -110,13 +110,15 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     return false;
   }
 
-  const activity = (await getAssigneesActivityForIssue(context, issue)).filter((o) => DateTime.fromISO(new Date(o.created_at).toISOString()) > lastCheck);
+  const activity = (await getAssigneesActivityForIssue(context, issue)).filter((o) => {
+    return DateTime.fromISO(o.created_at) > lastCheck;
+  });
 
   let deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
   let reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
 
   if (activity?.length) {
-    const lastActivity = DateTime.fromISO(new Date(activity[0].created_at).toISOString());
+    const lastActivity = DateTime.fromISO(activity[0].created_at);
     deadlineWithThreshold = lastActivity.plus({ milliseconds: config.disqualification });
     reminderWithThreshold = lastActivity.plus({ milliseconds: config.warning });
   }
