@@ -8,12 +8,11 @@ import { GitHubListEvents, ListCommentsForIssue, ListForOrg, ListIssueForRepo } 
 export async function updateTasks(context: Context) {
   const {
     logger,
-    config: { watch }
   } = context;
 
-  const { repoUrls, repos } = await getWatchedRepos(context, watch);
+  const repos = await getWatchedRepos(context);
 
-  if (!repoUrls?.length && !repos?.length) {
+  if (!repos?.length) {
     logger.info("No watched repos have been found, no work to do.");
     return false;
   }
@@ -31,7 +30,7 @@ async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
     octokit
   } = context;
   const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
-    owner: repo.owner.login,
+    owner: context.payload.repository.owner.login,
     repo: repo.name,
     per_page: 100,
     state: "open",
@@ -211,6 +210,7 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
     .map((o) => o?.login)
     .filter((o) => !!o)
     .join(", @");
+
   await octokit.rest.issues.createComment({
     owner,
     repo,

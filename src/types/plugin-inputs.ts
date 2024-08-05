@@ -37,14 +37,10 @@ export const userActivityWatcherSettingsSchema = T.Object({
    */
   warning: thresholdType({ default: "3.5 days" }),
   /**
-   * Define how different organizations, users or specific repositories
-   * should be watched. Use the following format:
-   * 
-   * - "ubiquibot" - all repositories in the organization
-   * - "ubiquity/ubiquibot-logger" - specific repository
+   * By default all repositories are watched. Use this option to opt-out from watching specific repositories
+   * within your organization. The value is an array of repository names.
    */
   watch: T.Object({
-    optIn: T.Array(T.String()),
     optOut: T.Array(T.String()),
   }),
   /**
