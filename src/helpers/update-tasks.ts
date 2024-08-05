@@ -6,14 +6,11 @@ import { parseIssueUrl } from "./github-url";
 import { GitHubListEvents, ListCommentsForIssue, ListForOrg, ListIssueForRepo } from "../types/github-types";
 
 export async function updateTasks(context: Context) {
-  const {
-    logger,
-    config: { watch }
-  } = context;
+  const { logger } = context;
 
-  const { repoUrls, repos } = await getWatchedRepos(context, watch);
+  const repos = await getWatchedRepos(context);
 
-  if (!repoUrls?.length && !repos?.length) {
+  if (!repos?.length) {
     logger.info("No watched repos have been found, no work to do.");
     return false;
   }
@@ -27,15 +24,13 @@ export async function updateTasks(context: Context) {
 }
 
 async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
-  const {
-    octokit
-  } = context;
-  const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
-    owner: repo.owner.login,
+  const { octokit } = context;
+  const issues = (await octokit.paginate(octokit.rest.issues.listForRepo, {
+    owner: context.payload.repository.owner.login,
     repo: repo.name,
     per_page: 100,
     state: "open",
-  }) as ListIssueForRepo[];
+  })) as ListIssueForRepo[];
 
   for (const issue of issues) {
     if (issue.assignees?.length || issue.assignee) {
@@ -45,23 +40,22 @@ async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
 }
 
 async function updateReminderForIssue(context: Context, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
-  const {
-    logger,
-    config,
-    octokit
-  } = context;
-  const comments = await octokit.paginate(octokit.rest.issues.listComments, {
+  const { logger, config, octokit } = context;
+  const comments = (await octokit.paginate(octokit.rest.issues.listComments, {
     owner: repo.owner.login,
     repo: repo.name,
     issue_number: issue.number,
     per_page: 100,
-  }) as ListCommentsForIssue[];
+  })) as ListCommentsForIssue[];
 
   const botComments = comments.filter((o) => o.user?.type === "Bot");
   const taskDeadlineJsonRegex = /"taskDeadline": "([^"]*)"/g;
   const taskAssigneesJsonRegex = /"taskAssignees": \[([^\]]*)\]/g;
   const assignmentRegex = /Ubiquity - Assignment - start -/gi;
-  const botAssignmentComments = sortAndReturn(botComments.filter((o) => assignmentRegex.test(o?.body || "")), "desc");
+  const botAssignmentComments = sortAndReturn(
+    botComments.filter((o) => assignmentRegex.test(o?.body || "")),
+    "desc"
+  );
   const botFollowup = /this task has been idle for a while. Please provide an update./gi;
   const botFollowupComments = botComments.filter((o) => botFollowup.test(o?.body || ""));
 
@@ -83,7 +77,10 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
 
   const metadata = {
     taskDeadline: taskDeadlineMatch[1],
-    taskAssignees: taskAssigneesMatch[1].split(",").map((o) => o.trim()).map(Number),
+    taskAssignees: taskAssigneesMatch[1]
+      .split(",")
+      .map((o) => o.trim())
+      .map(Number),
   };
 
   if (!metadata.taskAssignees.length) {
@@ -98,7 +95,7 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     logger.info(`No deadline found for ${issue.url}`);
     return false;
   }
-  const deadline = DateTime.fromFormat(metadata?.taskDeadline, "EEE, LLL d, h:mm a 'UTC'")
+  const deadline = DateTime.fromFormat(metadata?.taskDeadline, "EEE, LLL d, h:mm a 'UTC'");
   const now = DateTime.now();
 
   if (!deadline.isValid && !lastCheck.isValid) {
@@ -106,7 +103,7 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     return false;
   }
 
-  const activity = (await getAssigneesActivityForIssue(context, issue)).filter((o) => DateTime.fromISO(o.created_at) > lastCheck)
+  const activity = (await getAssigneesActivityForIssue(context, issue)).filter((o) => DateTime.fromISO(o.created_at) > lastCheck);
 
   let deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
   let reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
@@ -139,28 +136,22 @@ function sortAndReturn(array: ListCommentsForIssue[], direction: "asc" | "desc")
 }
 
 async function unassignUserFromIssue(context: Context, issue: ListIssueForRepo) {
-  const {
-    logger,
-    config,
-  } = context;
+  const { logger, config } = context;
 
   if (config.disqualification <= 0) {
     logger.info("The unassign threshold is <= 0, won't unassign users.");
   } else {
     logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
-    await removeAllAssignees(context, issue)
+    await removeAllAssignees(context, issue);
   }
 }
 
 async function remindAssigneesForIssue(context: Context, issue: ListIssueForRepo) {
-  const {
-    logger,
-    config,
-  } = context;
+  const { logger, config } = context;
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else {
-    await remindAssignees(context, issue)
+    await remindAssignees(context, issue);
   }
 }
 
@@ -188,14 +179,13 @@ async function getAssigneesActivityForIssue(context: Context, issue: ListIssueFo
   }
   const assignees = issue.assignees ? issue.assignees.map((assignee) => assignee.login) : issue.assignee ? [issue.assignee.login] : [];
 
-  return issueEvents.reduce((acc, event) => {
-    if (event.actor && event.actor.login && event.actor.login) {
-
-      if (assignees.includes(event.actor.login))
-        acc.push(event);
-    }
-    return acc;
-  }, [] as GitHubListEvents[])
+  return issueEvents
+    .reduce((acc, event) => {
+      if (event.actor && event.actor.login && event.actor.login) {
+        if (assignees.includes(event.actor.login)) acc.push(event);
+      }
+      return acc;
+    }, [] as GitHubListEvents[])
     .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
 }
 
@@ -211,6 +201,7 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
     .map((o) => o?.login)
     .filter((o) => !!o)
     .join(", @");
+
   await octokit.rest.issues.createComment({
     owner,
     repo,

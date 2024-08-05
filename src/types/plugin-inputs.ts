@@ -2,7 +2,7 @@ import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as Webhook
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
 import ms from "ms";
 
-export type SupportedEvents = "issues.assigned"
+export type SupportedEvents = "issues.assigned";
 
 export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   stateId: string;
@@ -37,14 +37,10 @@ export const userActivityWatcherSettingsSchema = T.Object({
    */
   warning: thresholdType({ default: "3.5 days" }),
   /**
-   * Define how different organizations, users or specific repositories
-   * should be watched. Use the following format:
-   * 
-   * - "ubiquibot" - all repositories in the organization
-   * - "ubiquity/ubiquibot-logger" - specific repository
+   * By default all repositories are watched. Use this option to opt-out from watching specific repositories
+   * within your organization. The value is an array of repository names.
    */
   watch: T.Object({
-    optIn: T.Array(T.String()),
     optOut: T.Array(T.String()),
   }),
   /**
