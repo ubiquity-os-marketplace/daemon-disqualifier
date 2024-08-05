@@ -86,8 +86,15 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
   if (!metadata.taskAssignees.length) {
     logger.error(`No assignees found for ${issue.url}`);
     return false;
-  } else if (metadata.taskAssignees.length && issue.assignees?.length && metadata.taskAssignees.some((a) => !issue.assignees?.map((o) => o.id).includes(a))) {
-    logger.error(`Assignees mismatch found for ${issue.url}`);
+  }
+
+  const assigneeIds = issue.assignees?.map((o) => o.id) || [];
+
+  if (assigneeIds.length && metadata.taskAssignees.some((a) => !assigneeIds.includes(a))) {
+    logger.info(`Assignees mismatch found for ${issue.url}`, {
+      metadata: metadata.taskAssignees,
+      issue: assigneeIds,
+    });
     return false;
   }
 
@@ -95,7 +102,7 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     logger.info(`No deadline found for ${issue.url}`);
     return false;
   }
-  const deadline = DateTime.fromFormat(metadata?.taskDeadline, "EEE, LLL d, h:mm a 'UTC'");
+  const deadline = DateTime.fromISO(new Date(metadata.taskDeadline).toISOString());
   const now = DateTime.now();
 
   if (!deadline.isValid && !lastCheck.isValid) {
@@ -103,20 +110,22 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     return false;
   }
 
-  const activity = (await getAssigneesActivityForIssue(context, issue)).filter((o) => DateTime.fromISO(o.created_at) > lastCheck);
+  const activity = (await getAssigneesActivityForIssue(context, issue)).filter((o) => DateTime.fromISO(new Date(o.created_at).toISOString()) > lastCheck);
 
   let deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
   let reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
 
   if (activity?.length) {
-    const lastActivity = DateTime.fromISO(activity[0].created_at);
+    const lastActivity = DateTime.fromISO(new Date(activity[0].created_at).toISOString());
     deadlineWithThreshold = lastActivity.plus({ milliseconds: config.disqualification });
     reminderWithThreshold = lastActivity.plus({ milliseconds: config.warning });
   }
 
   if (now >= deadlineWithThreshold) {
+    console.log(`now >= deadlineWithThreshold: ${now} >= ${deadlineWithThreshold}`);
     await unassignUserFromIssue(context, issue);
   } else if (now >= reminderWithThreshold) {
+    console.log(`now >= reminderWithThreshold: ${now} >= ${reminderWithThreshold}`);
     await remindAssigneesForIssue(context, issue);
   } else {
     logger.info(
