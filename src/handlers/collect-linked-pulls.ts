@@ -19,6 +19,7 @@ export async function collectLinkedPullRequests(context: Context, issue: IssuePa
     if (!linkedPrUrls) {
       return false;
     }
+
     let isClosingPr = false;
     for (let i = 0; i < linkedPrUrls.length && !isClosingPr; ++i) {
       const idx = linkedPrUrls[i].indexOf("#");
@@ -32,6 +33,7 @@ export async function collectLinkedPullRequests(context: Context, issue: IssuePa
         }
       }
     }
+
     return isGitHubLinkEvent(event) && event.source.issue.pull_request?.merged_at === null && isClosingPr;
   });
 }
@@ -49,7 +51,6 @@ function eliminateDisconnects(issueLinkEvents: GitHubLinkEvent[]) {
 
   issueLinkEvents.forEach((issueEvent: GitHubLinkEvent) => {
     const issueNumber = issueEvent.source.issue.number as number;
-
     if (issueEvent.event === "connected" || issueEvent.event === "cross-referenced") {
       // Only add to connections if there is no corresponding disconnected event
       if (!disconnections.has(issueNumber)) {

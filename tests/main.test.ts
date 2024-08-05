@@ -1,7 +1,6 @@
 import { drop } from "@mswjs/data";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
-import program from "../src/parser/payload";
-import { run, runPlugin } from "../src/run";
+import { runPlugin } from "../src/run";
 import { userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
 import { db } from "./__mocks__/db";
 import { server } from "./__mocks__/node";
@@ -11,8 +10,9 @@ import dotenv from "dotenv";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { Context } from "../src/types/context";
 import mockUsers from "./__mocks__/mock-users";
-import { botAssignmentComment, getIssueHtmlUrl, getIssueUrl, getRepoHtmlUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
+import { botAssignmentComment, getIssueHtmlUrl, getIssueUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
 import { createComment, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
+import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
 
 dotenv.config();
 const octokit = jest.requireActual("@octokit/rest");
@@ -131,7 +131,7 @@ describe("User start/stop", () => {
     expect(comments[comments.length - 1].body).toEqual(JSON.stringify({ body: `@${STRINGS.USER}, this task has been idle for a while. Please provide an update.` }));
   });
 
-  it("Should have nothing do withing the warning period", async () => {
+  it("Should have nothing do within the warning period", async () => {
     const context = createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
@@ -153,6 +153,17 @@ describe("User start/stop", () => {
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+  });
+
+  it.only("Should handle collecting pull requests", async () => {
+    for (let i = 1; i <= 6; i++) {
+      createEvent(getIssueUrl(i));
+    }
+
+    const context = createContext(1, 1);
+    const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
+    const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner as string });
+    console.log("result", result);
   });
 });
 
@@ -181,6 +192,31 @@ async function setupTests() {
 
 function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
+}
+
+function createEvent(url: string) {
+  const testPhrases = [
+    "Closes #1",
+    "Fix #1",
+    "Resolve #1",
+    "Closes #1",
+    "Fixes #1",
+    "Resolves #1",
+    "Closed #1",
+    "Close #1",
+  ]
+
+  return db.issueEvents.create({
+    id: db.issueEvents.count() + 1,
+    source: {
+      issue: {
+        pull_request: {
+          merged_at: Math.random() > 0.5 ? new Date().toISOString() : null,
+        },
+        body: testPhrases[Math.floor(Math.random() * testPhrases.length)] + " " + url,
+      }
+    }
+  });
 }
 
 function createContext(issueId: number, senderId: number): Context {

@@ -8,6 +8,7 @@ export type ListForOrg = RestEndpointMethodTypes["repos"]["listForOrg"]["respons
 export type ListIssueForRepo = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"][0];
 export type ListCommentsForIssue = RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"][0];
 export type GitHubListEvents = RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"][0];
+
 type LinkPullRequestDetail = {
   url: string;
   html_url: string;
