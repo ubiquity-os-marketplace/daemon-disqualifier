@@ -9,7 +9,6 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "dev": "wrangler dev --env dev --port 4000",
     "start": "tsx src/index.ts",
     "prebuild": "dotenv -- cross-env yarn supabase:generate:remote",
     "format:lint": "eslint --fix .",
@@ -70,8 +69,7 @@
     "prettier": "3.3.0",
     "supabase": "1.176.9",
     "ts-jest": "29.1.4",
-    "typescript": "5.4.5",
-    "wrangler": "3.58.0"
+    "typescript": "^5.4.5"
   },
   "lint-staged": {
     "*.ts": [
