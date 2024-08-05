@@ -155,15 +155,11 @@ describe("User start/stop", () => {
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
   });
 
-  it.only("Should handle collecting pull requests", async () => {
-    for (let i = 1; i <= 6; i++) {
-      createEvent(getIssueUrl(i));
-    }
-
+  it("Should handle collecting pull requests", async () => {
     const context = createContext(1, 1);
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner as string });
-    console.log("result", result);
+    expect(result).toHaveLength(1);
   });
 });
 
@@ -192,31 +188,6 @@ async function setupTests() {
 
 function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
-}
-
-function createEvent(url: string) {
-  const testPhrases = [
-    "Closes #1",
-    "Fix #1",
-    "Resolve #1",
-    "Closes #1",
-    "Fixes #1",
-    "Resolves #1",
-    "Closed #1",
-    "Close #1",
-  ]
-
-  return db.issueEvents.create({
-    id: db.issueEvents.count() + 1,
-    source: {
-      issue: {
-        pull_request: {
-          merged_at: Math.random() > 0.5 ? new Date().toISOString() : null,
-        },
-        body: testPhrases[Math.floor(Math.random() * testPhrases.length)] + " " + url,
-      }
-    }
-  });
 }
 
 function createContext(issueId: number, senderId: number): Context {

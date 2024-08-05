@@ -9,19 +9,6 @@ export const db = factory({
     id: primaryKey(Number),
     login: String,
   },
-  issueEvents: {
-    id: primaryKey(Number),
-    source: {
-      issue: {
-        body: String,
-        number: Number,
-        pull_request: nullable({
-          merged_at: nullable(Date),
-        }),
-      }
-    }
-
-  },
   issue: {
     id: primaryKey(Number),
     assignees: Array,
