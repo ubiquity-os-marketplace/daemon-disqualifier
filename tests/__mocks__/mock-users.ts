@@ -4,7 +4,7 @@ export default [
     "login": "ubiquity"
   },
   {
-    "id": 2,
+    "id": 100000000,
     "login": "user2"
   }
 ]

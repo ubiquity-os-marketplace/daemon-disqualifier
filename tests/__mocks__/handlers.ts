@@ -30,6 +30,19 @@ export const handlers = [
     return HttpResponse.json(db.repo.findMany({ where: { owner: { login: { equals: org as string } } } }));
   }),
   http.get("https://api.github.com/repos/:owner/:repo/issues/:id/comments", ({ params: { owner, repo } }) => {
-    return HttpResponse.json(db.issueComments.findMany({ where: { owner: { login: { equals: owner as string } }, repo: { name: { equals: repo as string } } } }));
+    return HttpResponse.json(db.issueComments.getAll());
+  }),
+  http.post("https://api.github.com/repos/:owner/:repo/issues/:id/comments", async ({ params: { owner, repo, id }, request: { body } }) => {
+    const comment = await body?.getReader().read().then((r) => new TextDecoder().decode(r.value));
+    if (!comment) {
+      return HttpResponse.json({ message: "No body" });
+    }
+
+    db.issueComments.create({ issueId: Number(id), body: comment, created_at: new Date().toISOString(), id: db.issueComments.count() + 1, owner: { login: owner as string }, repo: { name: repo as string } });
+    return HttpResponse.json({ message: "Comment created" });
+  }),
+  http.delete("https://api.github.com/repos/:owner/:repo/issues/:id/assignees", ({ params: { owner, repo, id } }) => {
+    db.issue.update({ where: { owner: { login: { equals: owner as string } }, repo: { equals: repo as string }, id: { equals: Number(id) } }, data: { assignees: [] } });
+    return HttpResponse.json({ message: "Assignees removed" });
   }),
 ];

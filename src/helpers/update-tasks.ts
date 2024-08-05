@@ -121,16 +121,13 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     reminderWithThreshold = lastActivity.plus({ milliseconds: config.warning });
   }
 
-  if (now >= deadlineWithThreshold) {
-    console.log(`now >= deadlineWithThreshold: ${now} >= ${deadlineWithThreshold}`);
+  if (now >= deadlineWithThreshold && now >= reminderWithThreshold) {
     await unassignUserFromIssue(context, issue);
   } else if (now >= reminderWithThreshold) {
-    console.log(`now >= reminderWithThreshold: ${now} >= ${reminderWithThreshold}`);
     await remindAssigneesForIssue(context, issue);
   } else {
-    logger.info(
-      `Nothing to do for ${issue.html_url}, still within due-time (now: ${now.toLocaleString(DateTime.DATETIME_MED)}, reminder ${reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED)}, deadline: ${deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED)})`
-    );
+    logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
+    logger.info(`Last check was on ${lastCheck.toISO()}`, { now: now.toLocaleString(DateTime.DATETIME_MED), reminder: reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED), deadline: deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED) });
   }
 }
 
@@ -167,7 +164,7 @@ async function remindAssigneesForIssue(context: Context, issue: ListIssueForRepo
 /**
  * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
  */
-async function getAssigneesActivityForIssue(context: Context, issue: ListIssueForRepo) {
+export async function getAssigneesActivityForIssue(context: Context, issue: ListIssueForRepo) {
   const gitHubUrl = parseIssueUrl(issue.html_url);
   const issueEvents: GitHubListEvents[] = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
     owner: gitHubUrl.owner,

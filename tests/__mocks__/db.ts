@@ -128,6 +128,7 @@ export const db = factory({
     user: {
       login: String,
       id: Number,
+      type: String,
     },
   },
 });

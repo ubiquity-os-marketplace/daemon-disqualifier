@@ -11,7 +11,7 @@ import dotenv from "dotenv";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { Context } from "../src/types/context";
 import mockUsers from "./__mocks__/mock-users";
-import { getIssueUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
+import { botAssignmentComment, getIssueHtmlUrl, getIssueUrl, getRepoHtmlUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
 import { createComment, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 
 dotenv.config();
@@ -83,7 +83,77 @@ describe("User start/stop", () => {
     expect(infoSpy).toHaveBeenCalledTimes(8);
   });
 
+  it("Should eject the user after the disqualification period", async () => {
+    const context = createContext(4, 2);
+    const infoSpy = jest.spyOn(context.logger, "info");
 
+    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(9)), daysPriorToNow(9));
+
+    const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+
+    await runPlugin(context);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the deadline on ${getIssueUrl(2)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Passed the deadline on ${getIssueUrl(3)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
+    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.FILLER_REPO));
+    expect(infoSpy).toHaveBeenCalledTimes(7);
+
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(updatedIssue?.assignees).toEqual([]);
+  });
+
+  it("Should warn the user after the warning period", async () => {
+    const context = createContext(4, 2);
+    const infoSpy = jest.spyOn(context.logger, "info");
+
+    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(5)), daysPriorToNow(5));
+
+    const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+
+    await runPlugin(context);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
+    expect(infoSpy).toHaveBeenNthCalledWith(3, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
+    expect(infoSpy).toHaveBeenNthCalledWith(4, updatingRemindersFor(STRINGS.FILLER_REPO));
+    expect(infoSpy).toHaveBeenCalledTimes(4);
+
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+
+    const comments = db.issueComments.getAll();
+    expect(comments[comments.length - 1].body).toEqual(JSON.stringify({ body: `@${STRINGS.USER}, this task has been idle for a while. Please provide an update.` }));
+  });
+
+  it("Should have nothing do withing the warning period", async () => {
+    const context = createContext(4, 2);
+    const infoSpy = jest.spyOn(context.logger, "info");
+
+    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(2)), daysPriorToNow(2));
+
+    const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+
+    await runPlugin(context);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(5, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(9, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
+    expect(infoSpy).toHaveBeenNthCalledWith(10, updatingRemindersFor(STRINGS.FILLER_REPO));
+    expect(infoSpy).toHaveBeenCalledTimes(10);
+
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+  });
 });
 
 async function setupTests() {
@@ -99,15 +169,18 @@ async function setupTests() {
 
   createIssue(1, []);
   // nothing to do
-  createIssue(2, [STRINGS.USER]);
+  createIssue(2, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(1));
   // warning
-  createIssue(3, [STRINGS.USER]);
+  createIssue(3, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(4));
   // disqualification
-  createIssue(4, [STRINGS.USER]);
+  createIssue(4, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(12));
 
-  createComment(1, 1);
-  createComment(2, 2);
-  createComment(3, 3);
+  createComment(1, 1, STRINGS.UBIQUITY);
+  createComment(2, 2, STRINGS.UBIQUITY);
+}
+
+function daysPriorToNow(days: number) {
+  return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
 function createContext(issueId: number, senderId: number): Context {

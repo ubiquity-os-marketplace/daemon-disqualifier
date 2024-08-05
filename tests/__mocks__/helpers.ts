@@ -12,22 +12,30 @@ export function createRepo(name?: string, id?: number, owner?: string) {
 export function createComment(
     id: number,
     issueId: number,
+    user: string,
+    type: "User" | "Bot" = "User",
     body?: string,
     created_at?: string,
 ) {
-    db.issueComments.create({ id, issueId, body: body || "test", created_at: created_at || new Date(Date.now() - ONE_DAY).toISOString() });
+    db.issueComments.create({
+        id,
+        user: { login: user, type },
+        issueId,
+        body: body || "test",
+        created_at: created_at || new Date(Date.now() - ONE_DAY).toISOString(),
+    });
 }
 
 export function createIssue(
     id: number,
-    assignees: string[],
+    assignees: { login: string, id: number }[],
     owner?: string,
     created_at?: string,
 ) {
     db.issue.create({
         ...issueTemplate,
         id,
-        assignees: assignees.length ? assignees : [STRINGS.UBIQUITY],
+        assignees: assignees.length ? assignees : [{ login: STRINGS.UBIQUITY, id: 1 }],
         created_at: created_at || new Date(Date.now() - ONE_DAY).toISOString(),
         url: getIssueUrl(id),
         html_url: getIssueHtmlUrl(id),
