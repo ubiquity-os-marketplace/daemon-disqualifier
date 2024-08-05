@@ -15,7 +15,10 @@ export const db = factory({
     html_url: String,
     repository_url: String,
     state: String,
-    owner: String,
+    owner: {
+      login: String,
+      id: Number
+    },
     repo: String,
     labels: Array,
     author_association: String,

@@ -24,9 +24,9 @@ export async function updateTasks(context: Context) {
 }
 
 async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
-  const { octokit } = context;
+  const { octokit, payload } = context;
   const issues = (await octokit.paginate(octokit.rest.issues.listForRepo, {
-    owner: context.payload.repository.owner.login,
+    owner: payload.repository.owner.login,
     repo: repo.name,
     per_page: 100,
     state: "open",

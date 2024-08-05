@@ -11,12 +11,10 @@ import dotenv from "dotenv";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { Context } from "../src/types/context";
 import mockUsers from "./__mocks__/mock-users";
-import issueTemplate from "./__mocks__/issue-template";
-import repoTemplate from "./__mocks__/repo-template";
-import { getIssueHtmlUrl, getIssueUrl, getRepoHtmlUrl, getRepoUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
+import { getIssueUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
+import { createComment, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 
 dotenv.config();
-const ONE_DAY = 1000 * 60 * 60 * 24;
 const octokit = jest.requireActual("@octokit/rest");
 
 beforeAll(() => {
@@ -35,14 +33,14 @@ describe("User start/stop", () => {
 
   it("Should parse thresholds", async () => {
     const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
-    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optOut: [STRINGS.PRIVATE_REPO] } });
+    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] } });
     expect(() =>
       Value.Decode(
         userActivityWatcherSettingsSchema,
         Value.Default(userActivityWatcherSettingsSchema, {
           warning: "12 foobars",
           disqualification: "2 days",
-          watch: { optOut: [STRINGS.PRIVATE_REPO] },
+          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
         })
       )
     ).toThrow(TransformDecodeError);
@@ -53,19 +51,39 @@ describe("User start/stop", () => {
     expect(result).toBe(true);
   });
 
-  it.only("Should process update for all repos except optOut", async () => {
+  it("Should process update for all repos except optOut", async () => {
     const context = createContext(2, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, "Getting ubiquity org repositories: 4");
-    expect(infoSpy).toHaveBeenNthCalledWith(2, updatingRemindersFor(STRINGS.TEST_REPO));
-    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(1)));
-    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(2)));
-    expect(infoSpy).toHaveBeenNthCalledWith(5, noAssignmentCommentFor(getIssueUrl(3)));
-    expect(infoSpy).toHaveBeenNthCalledWith(6, noAssignmentCommentFor(getIssueUrl(4)));
-    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.PRIVATE_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(1)));
+    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(2)));
+    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(3)));
+    expect(infoSpy).toHaveBeenNthCalledWith(5, noAssignmentCommentFor(getIssueUrl(4)));
+    expect(infoSpy).toHaveBeenNthCalledWith(6, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
+    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.FILLER_REPO));
+    expect(infoSpy).toHaveBeenCalledTimes(7);
   });
+
+  it("Should include the previously excluded repo", async () => {
+    const context = createContext(2, 1);
+    const infoSpy = jest.spyOn(context.logger, "info");
+    context.config.watch.optOut = [];
+    await runPlugin(context);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(1)));
+    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(2)));
+    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(3)));
+    expect(infoSpy).toHaveBeenNthCalledWith(5, noAssignmentCommentFor(getIssueUrl(4)));
+    expect(infoSpy).toHaveBeenNthCalledWith(6, updatingRemindersFor(STRINGS.PRIVATE_REPO));
+    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
+    expect(infoSpy).toHaveBeenNthCalledWith(8, updatingRemindersFor(STRINGS.FILLER_REPO));
+    expect(infoSpy).toHaveBeenCalledTimes(8);
+  });
+
+
 });
 
 async function setupTests() {
@@ -73,59 +91,23 @@ async function setupTests() {
     db.users.create(item);
   }
 
-  db.repo.create(repoTemplate);
-  db.repo.create({ ...repoTemplate, id: 2, name: "private-repo" });
-  db.repo.create({ ...repoTemplate, id: 3, name: "user-activity-watcher" });
-  db.repo.create({ ...repoTemplate, id: 4, name: "filler-repo" });
-  db.repo.create({
-    ...repoTemplate,
-    id: 5,
-    name: "ubiquibot",
-    owner: { login: STRINGS.UBIQUIBOT },
-    url: getRepoUrl(STRINGS.UBIQUIBOT),
-    html_url: getRepoHtmlUrl(STRINGS.UBIQUIBOT),
-  });
+  createRepo()
+  createRepo(STRINGS.PRIVATE_REPO_NAME, 2);
+  createRepo(STRINGS.USER_ACTIVITY_WATCHER_NAME, 3);
+  createRepo(STRINGS.FILLER_REPO_NAME, 4);
+  createRepo(STRINGS.UBIQUIBOT, 5, STRINGS.UBIQUIBOT);
 
+  createIssue(1, []);
   // nothing to do
-  db.issue.create({
-    ...issueTemplate,
-    id: 1,
-    assignees: [STRINGS.UBIQUITY],
-    created_at: new Date(Date.now() - ONE_DAY).toISOString(),
-    url: getIssueUrl(1),
-    html_url: getIssueHtmlUrl(1),
-  });
-  // nothing to do
-  db.issue.create({
-    ...issueTemplate,
-    id: 2,
-    assignees: [STRINGS.USER],
-    created_at: new Date(Date.now() - ONE_DAY * 2).toISOString(),
-    url: getIssueUrl(2),
-    html_url: getIssueHtmlUrl(2),
-  });
+  createIssue(2, [STRINGS.USER]);
   // warning
-  db.issue.create({
-    ...issueTemplate,
-    id: 3,
-    assignees: [STRINGS.USER],
-    created_at: new Date(Date.now() - ONE_DAY * 4).toISOString(),
-    url: getIssueUrl(3),
-    html_url: getIssueHtmlUrl(3),
-  });
+  createIssue(3, [STRINGS.USER]);
   // disqualification
-  db.issue.create({
-    ...issueTemplate,
-    id: 4,
-    assignees: [STRINGS.USER],
-    created_at: new Date(Date.now() - ONE_DAY * 8).toISOString(),
-    url: getIssueUrl(4),
-    html_url: getIssueHtmlUrl(2),
-  });
+  createIssue(4, [STRINGS.USER]);
 
-  db.issueComments.create({ id: 1, issueId: 1, body: "test", created_at: new Date(Date.now() - ONE_DAY).toISOString() });
-  db.issueComments.create({ id: 2, issueId: 2, body: "test", created_at: new Date(Date.now() - ONE_DAY * 2).toISOString() });
-  db.issueComments.create({ id: 3, issueId: 4, body: "test", created_at: new Date(Date.now() - ONE_DAY * 4).toISOString() });
+  createComment(1, 1);
+  createComment(2, 2);
+  createComment(3, 3);
 }
 
 function createContext(issueId: number, senderId: number): Context {
@@ -142,7 +124,7 @@ function createContext(issueId: number, senderId: number): Context {
     config: {
       disqualification: ONE_DAY * 7,
       warning: ONE_DAY * 3.5,
-      watch: { optOut: [STRINGS.PRIVATE_REPO] },
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
     },
     octokit: new octokit.Octokit(),
     eventName: "issues.assigned",

@@ -23,7 +23,7 @@ export const handlers = [
   }),
 
   http.get("https://api.github.com/repos/:owner/:repo/issues", ({ params: { owner, repo } }) => {
-    return HttpResponse.json(db.issue.findMany({ where: { owner: { equals: owner as string }, repo: { equals: repo as string } } }));
+    return HttpResponse.json(db.issue.findMany({ where: { owner: { login: { equals: owner as string } }, repo: { equals: repo as string } } }));
   }),
 
   http.get("https://api.github.com/orgs/:org/repos", ({ params: { org } }) => {
