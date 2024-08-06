@@ -7,8 +7,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -51,8 +55,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Fixes #2"
       }
@@ -94,11 +102,15 @@
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/141a332505336b39c0d902027e49ce57ff98429d",
     "source": {
       "issue": {
-        "number": 1,
+        "number": 2,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pull/2",
         "pull_request": {
           "merged_at": null
         },
-        "body": "Closes https://github.com/ubiquibot/user-activity-watcher/issues/1"
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Closes https://github.com/ubiquibot/user-activity-watcher/issues/2"
       }
     },
     "author": {
@@ -139,8 +151,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolved #1"
       }
@@ -183,8 +199,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Fixes #1"
       }
@@ -227,8 +247,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Close #1"
       }
@@ -271,10 +295,14 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
         "pull_request": {
           "merged_at": null
         },
-        "body": "Fix #1"
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Fix #2"
       }
     },
     "author": {
@@ -314,11 +342,15 @@
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/f6a065fc93025b4f60cfb179f33c4c4654d5df8b",
     "source": {
       "issue": {
-        "number": 1,
+        "number": 3,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/3",
         "pull_request": {
           "merged_at": null
         },
-        "body": "Resolves #1"
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #3"
       }
     },
     "author": {
@@ -359,10 +391,14 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
         },
-        "body": "Resolves #1"
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #4"
       }
     },
     "author": {
@@ -402,11 +438,15 @@
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/6f19d4d0722dbcfd4e3b59ce1dddb94a550a20ac",
     "source": {
       "issue": {
-        "number": 1,
+        "number": 5,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
         },
-        "body": "Resolves #1"
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #5"
       }
     },
     "author": {
@@ -447,8 +487,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -491,8 +535,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -535,8 +583,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -579,8 +631,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -623,8 +679,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -667,8 +727,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -711,8 +775,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -755,8 +823,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -799,8 +871,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -843,8 +919,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -887,8 +967,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -931,8 +1015,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -975,8 +1063,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -1019,8 +1111,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -1063,8 +1159,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -1107,8 +1207,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -1151,8 +1255,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -1195,8 +1303,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -1239,8 +1351,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }
@@ -1283,8 +1399,12 @@
     "source": {
       "issue": {
         "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
         "pull_request": {
           "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
         },
         "body": "Resolves #1"
       }

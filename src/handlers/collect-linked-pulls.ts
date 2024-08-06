@@ -48,7 +48,6 @@ function eliminateDisconnects(issueLinkEvents: GitHubLinkEvent[]) {
   // Track connections and disconnections
   const connections = new Map<number, GitHubLinkEvent>(); // Use issue/pr number as key for easy access
   const disconnections = new Map<number, GitHubLinkEvent>(); // Track disconnections
-
   issueLinkEvents.forEach((issueEvent: GitHubLinkEvent) => {
     const issueNumber = issueEvent.source.issue.number as number;
     if (issueEvent.event === "connected" || issueEvent.event === "cross-referenced") {

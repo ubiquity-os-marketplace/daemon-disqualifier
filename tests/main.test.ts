@@ -52,7 +52,7 @@ describe("User start/stop", () => {
   });
 
   it("Should process update for all repos except optOut", async () => {
-    const context = createContext(2, 1);
+    const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
     await runPlugin(context);
 
@@ -67,7 +67,7 @@ describe("User start/stop", () => {
   });
 
   it("Should include the previously excluded repo", async () => {
-    const context = createContext(2, 1);
+    const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
     context.config.watch.optOut = [];
     await runPlugin(context);
@@ -155,11 +155,23 @@ describe("User start/stop", () => {
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
   });
 
-  it("Should handle collecting pull requests", async () => {
+  it("Should handle collecting linked PR with # format", async () => {
     const context = createContext(1, 1);
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
-    const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner as string });
+    const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner.login as string });
     expect(result).toHaveLength(1);
+    expect(result[0].source.issue.number).toEqual(1);
+    expect(result[0].source.issue.body).toMatch(/Resolves #1/g);
+  });
+
+  it("Should handle collecting linked PR with URL format", async () => {
+    db.issue.update({ where: { id: { equals: 2 } }, data: { repo: "user-activity-watcher", owner: { login: STRINGS.UBIQUIBOT } } });
+    const context = createContext(2, 1);
+    const issue = db.issue.findFirst({ where: { id: { equals: 2 } } });
+    const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner.login as string });
+    expect(result).toHaveLength(1);
+    expect(result[0].source.issue.number).toEqual(2);
+    expect(result[0].source.issue.body).toMatch(/Closes https:\/\/github.com\/ubiquibot\/user-activity-watcher\/issues\/2/);
   });
 });
 

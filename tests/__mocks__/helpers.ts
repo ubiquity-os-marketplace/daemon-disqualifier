@@ -31,6 +31,7 @@ export function createIssue(
     assignees: { login: string, id: number }[],
     owner?: string,
     created_at?: string,
+    repo?: string,
 ) {
     db.issue.create({
         ...issueTemplate,
@@ -40,5 +41,7 @@ export function createIssue(
         url: getIssueUrl(id),
         html_url: getIssueHtmlUrl(id),
         owner: { login: owner || STRINGS.UBIQUITY },
+        number: id,
+        repo: repo || "test-repo",
     });
 }
