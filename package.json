@@ -46,6 +46,7 @@
     "@cspell/dict-node": "5.0.1",
     "@cspell/dict-software-terms": "3.4.0",
     "@cspell/dict-typescript": "3.1.5",
+    "@jest/globals": "^29.7.0",
     "@mswjs/data": "0.16.1",
     "@types/jest": "29.5.12",
     "@types/luxon": "3.4.2",
