@@ -5,7 +5,7 @@ import { IssuesSearch } from "../types/github-types";
 export type IssueParams = ReturnType<typeof parseIssueUrl>;
 
 function additionalBooleanFilters(issueNumber: number) {
-  return `linked:${issueNumber} in:body "closes #${issueNumber}" OR "closes #${issueNumber}" OR "fixes #${issueNumber}" OR "fix #${issueNumber}" OR "resolves #${issueNumber}"`;
+  return `linked:${issueNumber} in:body "closes #${issueNumber}" OR "Closes #${issueNumber}" OR "fixes #${issueNumber}" OR "Fixes #${issueNumber}" OR "fix #${issueNumber}" OR "resolves #${issueNumber}" OR "Resolves #${issueNumber}"`;
 }
 
 export async function collectLinkedPullRequests(context: Context, issue: IssueParams) {

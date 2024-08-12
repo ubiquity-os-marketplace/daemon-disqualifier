@@ -31,6 +31,7 @@ export function createIssue(
     assignees: { login: string, id: number }[],
     owner?: string,
     created_at?: string,
+    body?: string,
     repo?: string,
 ) {
     db.issue.create({
@@ -43,5 +44,7 @@ export function createIssue(
         owner: { login: owner || STRINGS.UBIQUITY },
         number: id,
         repo: repo || "test-repo",
+        body: body || "test",
+        pull_request: { html_url: `https://github.com/ubiquity/test-repo/pulls/${id}` },
     });
 }

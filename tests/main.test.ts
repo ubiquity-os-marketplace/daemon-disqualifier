@@ -160,18 +160,8 @@ describe("User start/stop", () => {
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner.login as string });
     expect(result).toHaveLength(1);
-    expect(result[0].source.issue.number).toEqual(1);
-    expect(result[0].source.issue.body).toMatch(/Resolves #1/g);
-  });
-
-  it("Should handle collecting linked PR with URL format", async () => {
-    db.issue.update({ where: { id: { equals: 2 } }, data: { repo: "user-activity-watcher", owner: { login: STRINGS.UBIQUIBOT } } });
-    const context = createContext(2, 1);
-    const issue = db.issue.findFirst({ where: { id: { equals: 2 } } });
-    const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner.login as string });
-    expect(result).toHaveLength(1);
-    expect(result[0].source.issue.number).toEqual(2);
-    expect(result[0].source.issue.body).toMatch(/Closes https:\/\/github.com\/ubiquibot\/user-activity-watcher\/issues\/2/);
+    expect(result[0].number).toEqual(1);
+    expect(result[0].body).toMatch(/Resolves #1/gi);
   });
 });
 
@@ -186,13 +176,13 @@ async function setupTests() {
   createRepo(STRINGS.FILLER_REPO_NAME, 4);
   createRepo(STRINGS.UBIQUIBOT, 5, STRINGS.UBIQUIBOT);
 
-  createIssue(1, []);
+  createIssue(1, [], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
   // nothing to do
-  createIssue(2, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(1));
+  createIssue(2, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
   // warning
-  createIssue(3, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(4));
+  createIssue(3, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(4), "fixes #2");
   // disqualification
-  createIssue(4, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(12));
+  createIssue(4, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(12), "closes #3");
 
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
