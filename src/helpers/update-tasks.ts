@@ -129,7 +129,11 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     await remindAssigneesForIssue(context, issue);
   } else {
     logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
-    logger.info(`Last check was on ${lastCheck.toISO()}`, { now: now.toLocaleString(DateTime.DATETIME_MED), reminder: reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED), deadline: deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED) });
+    logger.info(`Last check was on ${lastCheck.toISO()}`, {
+      now: now.toLocaleString(DateTime.DATETIME_MED),
+      reminder: reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED),
+      deadline: deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED),
+    });
   }
 }
 
@@ -176,7 +180,7 @@ export async function getAssigneesActivityForIssue(context: Context, issue: List
   });
   const linkedPullRequests = await collectLinkedPullRequests(context, gitHubUrl);
   for (const linkedPullRequest of linkedPullRequests) {
-    const { owner, repo, issue_number } = parseIssueUrl(linkedPullRequest.source.issue.html_url);
+    const { owner, repo, issue_number } = parseIssueUrl(linkedPullRequest.pull_request?.html_url || "");
     const events = await context.octokit.paginate(context.octokit.rest.issues.listEvents, {
       owner,
       repo,
