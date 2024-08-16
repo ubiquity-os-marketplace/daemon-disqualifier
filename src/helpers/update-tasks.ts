@@ -97,8 +97,11 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     }
     const duration = taskDeadlineMatch[1] || "";
     const durationInMs = ms(duration);
-    if (!durationInMs) {
-      logger.error(`Invalid duration found on ${issue.url}`);
+    if (durationInMs === 0) {
+      // it could mean there was no time label set on the issue
+      // but it could still be workable and priced
+    } else if (durationInMs < 0 || !durationInMs) {
+      logger.error(`Invalid deadline found on ${issue.url}`);
       return false;
     }
     metadata.taskDeadline = DateTime.fromMillis(lastCheck.toMillis() + durationInMs).toISO() || "";
