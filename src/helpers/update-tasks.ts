@@ -17,7 +17,6 @@ export async function updateTasks(context: Context) {
   }
 
   for (const repo of repos) {
-    logger.info(`Updating reminders for ${repo.owner.login}/${repo.name}`);
     await updateReminders(context, repo);
   }
 
@@ -71,10 +70,6 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
   const taskDeadlineMatch = taskDeadlineJsonRegex.exec(botAssignmentComments[0]?.body || "");
   const taskAssigneesMatch = taskAssigneesJsonRegex.exec(botAssignmentComments[0]?.body || "");
 
-  if (!taskDeadlineMatch || !taskAssigneesMatch) {
-    logger.error(`Missing metadata from ${issue.url}`);
-  }
-
   const metadata = {
     taskDeadline: taskDeadlineMatch?.[1] || "",
     taskAssignees: taskAssigneesMatch?.[1]
@@ -94,7 +89,7 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
   }
 
   if (!metadata.taskDeadline) {
-    const taskDeadlineJsonRegex = /"duration": "([^"]*)"/g;
+    const taskDeadlineJsonRegex = /"duration": ([^,]*),/g;
     const taskDeadlineMatch = taskDeadlineJsonRegex.exec(botAssignmentComments[0]?.body || "");
     if (!taskDeadlineMatch) {
       logger.error(`Missing deadline from ${issue.url}`);
@@ -119,10 +114,6 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
     return false;
   }
 
-  if (!metadata.taskDeadline) {
-    logger.info(`No deadline found for ${issue.url}`);
-    return false;
-  }
   const deadline = DateTime.fromISO(metadata.taskDeadline);
   const now = DateTime.now();
 
@@ -156,9 +147,6 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
       deadline: deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED),
     });
   }
-}
-
-async function legacyUpdateReminderForIssue(context: Context, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
 }
 
 function sortAndReturn(array: ListCommentsForIssue[], direction: "asc" | "desc") {
