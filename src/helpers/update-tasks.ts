@@ -4,6 +4,7 @@ import { Context } from "../types/context";
 import { getWatchedRepos } from "./get-watched-repos";
 import { parseIssueUrl } from "./github-url";
 import { GitHubListEvents, ListCommentsForIssue, ListForOrg, ListIssueForRepo } from "../types/github-types";
+import ms from "ms";
 
 export async function updateTasks(context: Context) {
   const { logger } = context;
@@ -72,20 +73,40 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
 
   if (!taskDeadlineMatch || !taskAssigneesMatch) {
     logger.error(`Missing metadata from ${issue.url}`);
-    return false;
   }
 
   const metadata = {
-    taskDeadline: taskDeadlineMatch[1],
-    taskAssignees: taskAssigneesMatch[1]
+    taskDeadline: taskDeadlineMatch?.[1] || "",
+    taskAssignees: taskAssigneesMatch?.[1]
       .split(",")
       .map((o) => o.trim())
       .map(Number),
   };
 
-  if (!metadata.taskAssignees.length) {
-    logger.error(`No assignees found for ${issue.url}`);
+  // supporting legacy format
+  if (!metadata.taskAssignees?.length) {
+    metadata.taskAssignees = issue.assignees ? issue.assignees.map((o) => o.id) : issue.assignee ? [issue.assignee.id] : [];
+  }
+
+  if (!metadata.taskAssignees?.length) {
+    logger.error(`Missing Assignees from ${issue.url}`);
     return false;
+  }
+
+  if (!metadata.taskDeadline) {
+    const taskDeadlineJsonRegex = /"duration": "([^"]*)"/g;
+    const taskDeadlineMatch = taskDeadlineJsonRegex.exec(botAssignmentComments[0]?.body || "");
+    if (!taskDeadlineMatch) {
+      logger.error(`Missing deadline from ${issue.url}`);
+      return false;
+    }
+    const duration = taskDeadlineMatch[1] || "";
+    const durationInMs = ms(duration);
+    if (!durationInMs) {
+      logger.error(`Invalid duration found on ${issue.url}`);
+      return false;
+    }
+    metadata.taskDeadline = DateTime.fromMillis(lastCheck.toMillis() + durationInMs).toISO() || "";
   }
 
   const assigneeIds = issue.assignees?.map((o) => o.id) || [];
@@ -135,6 +156,9 @@ async function updateReminderForIssue(context: Context, repo: ListForOrg["data"]
       deadline: deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED),
     });
   }
+}
+
+async function legacyUpdateReminderForIssue(context: Context, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
 }
 
 function sortAndReturn(array: ListCommentsForIssue[], direction: "asc" | "desc") {
