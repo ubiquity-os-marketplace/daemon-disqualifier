@@ -56,14 +56,11 @@ describe("User start/stop", () => {
     const infoSpy = jest.spyOn(context.logger, "info");
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
-    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(1)));
-    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(2)));
-    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(3)));
-    expect(infoSpy).toHaveBeenNthCalledWith(5, noAssignmentCommentFor(getIssueUrl(4)));
-    expect(infoSpy).toHaveBeenNthCalledWith(6, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
-    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.FILLER_REPO));
-    expect(infoSpy).toHaveBeenCalledTimes(7);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, noAssignmentCommentFor(getIssueUrl(1)));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(2)));
+    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(3)));
+    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(4)));
+    expect(infoSpy).toHaveBeenCalledTimes(4);
   });
 
   it("Should include the previously excluded repo", async () => {
@@ -72,15 +69,11 @@ describe("User start/stop", () => {
     context.config.watch.optOut = [];
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
-    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(1)));
-    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(2)));
-    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(3)));
-    expect(infoSpy).toHaveBeenNthCalledWith(5, noAssignmentCommentFor(getIssueUrl(4)));
-    expect(infoSpy).toHaveBeenNthCalledWith(6, updatingRemindersFor(STRINGS.PRIVATE_REPO));
-    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
-    expect(infoSpy).toHaveBeenNthCalledWith(8, updatingRemindersFor(STRINGS.FILLER_REPO));
-    expect(infoSpy).toHaveBeenCalledTimes(8);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, noAssignmentCommentFor(getIssueUrl(1)));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(2)));
+    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(3)));
+    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(4)));
+    expect(infoSpy).toHaveBeenCalledTimes(4);
   });
 
   it("Should eject the user after the disqualification period", async () => {
@@ -94,14 +87,11 @@ describe("User start/stop", () => {
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the deadline on ${getIssueUrl(2)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Passed the deadline on ${getIssueUrl(3)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueUrl(4)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
-    expect(infoSpy).toHaveBeenNthCalledWith(7, updatingRemindersFor(STRINGS.FILLER_REPO));
-    expect(infoSpy).toHaveBeenCalledTimes(7);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Passed the deadline on ${getIssueUrl(2)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the deadline on ${getIssueUrl(3)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Passed the deadline on ${getIssueUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledTimes(4);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
@@ -118,11 +108,8 @@ describe("User start/stop", () => {
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
-    expect(infoSpy).toHaveBeenNthCalledWith(3, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
-    expect(infoSpy).toHaveBeenNthCalledWith(4, updatingRemindersFor(STRINGS.FILLER_REPO));
-    expect(infoSpy).toHaveBeenCalledTimes(4);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
+    expect(infoSpy).toHaveBeenCalledTimes(1);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -142,14 +129,11 @@ describe("User start/stop", () => {
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, updatingRemindersFor(STRINGS.TEST_REPO));
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(5, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(9, updatingRemindersFor(STRINGS.USER_ACTIVITY_WATCHER));
-    expect(infoSpy).toHaveBeenNthCalledWith(10, updatingRemindersFor(STRINGS.FILLER_REPO));
-    expect(infoSpy).toHaveBeenCalledTimes(10);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledTimes(7);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
