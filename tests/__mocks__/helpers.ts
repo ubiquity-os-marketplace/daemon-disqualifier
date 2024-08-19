@@ -45,6 +45,5 @@ export function createIssue(
         number: id,
         repo: repo || "test-repo",
         body: body || "test",
-        pull_request: { html_url: `https://github.com/ubiquity/test-repo/pulls/${id}` },
     });
 }

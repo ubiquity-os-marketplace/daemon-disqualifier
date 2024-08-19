@@ -45,25 +45,38 @@ export const handlers = [
     db.issue.update({ where: { owner: { login: { equals: owner as string } }, repo: { equals: repo as string }, id: { equals: Number(id) } }, data: { assignees: [] } });
     return HttpResponse.json({ message: "Assignees removed" });
   }),
-  http.get("https://api.github.com/search/issues", ({ request }) => {
-    const query = new URL(request.url);
-    const params = query.searchParams;
-    const q = params.get("q");
-
-    if (!q) {
-      return HttpResponse.json({ message: "No query" });
-    }
-
-    const issueNumber = q.match(/#(\d+)/)?.[1];
-    if (!issueNumber) {
-      return HttpResponse.json({ message: "No issue number" });
-    }
-
-    const issue = db.issue.findFirst({ where: { number: { equals: Number(issueNumber) } } });
-    if (!issue) {
-      return HttpResponse.json({ message: "Issue not found" });
-    }
-
-    return HttpResponse.json(issue);
-  })
+  http.post("https://api.github.com/graphql", () => {
+    return HttpResponse.json({
+      data: {
+        repository: {
+          issue: {
+            closedByPullRequestsReferences: {
+              edges: [
+                {
+                  node: {
+                    url: "https://github.com/ubiquity/test-repo/pull/1",
+                    title: "test",
+                    body: "test",
+                    state: "OPEN",
+                    number: 1,
+                    author: { login: "ubiquity", id: 1 },
+                  },
+                },
+                {
+                  node: {
+                    url: "https://github.com/ubiquity/test-repo/pull/1",
+                    title: "test",
+                    body: "test",
+                    state: "CLOSED",
+                    number: 2,
+                    author: { login: "user2", id: 2 },
+                  },
+                }
+              ],
+            },
+          },
+        },
+      },
+    });
+  }),
 ];

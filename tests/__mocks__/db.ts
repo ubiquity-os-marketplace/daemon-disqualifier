@@ -37,9 +37,6 @@ export const db = factory({
     url: String,
     user: nullable(Object),
     milestone: nullable(Object),
-    pull_request: {
-      html_url: String,
-    },
     assignee: nullable({
       avatar_url: String,
       email: nullable(String),

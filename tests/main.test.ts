@@ -56,11 +56,10 @@ describe("User start/stop", () => {
     const infoSpy = jest.spyOn(context.logger, "info");
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, noAssignmentCommentFor(getIssueUrl(1)));
-    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(2)));
-    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(3)));
-    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(4)));
-    expect(infoSpy).toHaveBeenCalledTimes(4);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, noAssignmentCommentFor(getIssueHtmlUrl(1)));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueHtmlUrl(2)));
+    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueHtmlUrl(3)));
+    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueHtmlUrl(4)));
   });
 
   it("Should include the previously excluded repo", async () => {
@@ -69,29 +68,28 @@ describe("User start/stop", () => {
     context.config.watch.optOut = [];
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, noAssignmentCommentFor(getIssueUrl(1)));
-    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueUrl(2)));
-    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueUrl(3)));
-    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueUrl(4)));
-    expect(infoSpy).toHaveBeenCalledTimes(4);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, noAssignmentCommentFor(getIssueHtmlUrl(1)));
+    expect(infoSpy).toHaveBeenNthCalledWith(2, noAssignmentCommentFor(getIssueHtmlUrl(2)));
+    expect(infoSpy).toHaveBeenNthCalledWith(3, noAssignmentCommentFor(getIssueHtmlUrl(3)));
+    expect(infoSpy).toHaveBeenNthCalledWith(4, noAssignmentCommentFor(getIssueHtmlUrl(4)));
   });
 
   it("Should eject the user after the disqualification period", async () => {
     const context = createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
-    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(9)), daysPriorToNow(9));
+    const timestamp = daysPriorToNow(9);
+    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Passed the deadline on ${getIssueUrl(2)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the deadline on ${getIssueUrl(3)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Passed the deadline on ${getIssueUrl(4)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenCalledTimes(4);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueHtmlUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, assigneeIds: [1], metadata: { taskDeadline: timestamp, taskAssignees: [2] } });
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Passed the deadline on ${getIssueHtmlUrl(1)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the deadline on ${getIssueHtmlUrl(2)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Passed the deadline on ${getIssueHtmlUrl(3)} and no activity is detected, removing assignees.`);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
@@ -101,15 +99,21 @@ describe("User start/stop", () => {
     const context = createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
-    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(5)), daysPriorToNow(5));
+    const timestamp = daysPriorToNow(5);
+
+    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
-    expect(infoSpy).toHaveBeenCalledTimes(1);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueHtmlUrl(1)}`, {
+      caller: STRINGS.LOGS_ANON_CALLER, assigneeIds: [1], metadata: {
+        taskDeadline: timestamp,
+        taskAssignees: [2],
+      }
+    });
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -122,30 +126,53 @@ describe("User start/stop", () => {
     const context = createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
-    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(2)), daysPriorToNow(2));
+    const timestamp = daysPriorToNow(2)
+    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueUrl(1)}`, { caller: STRINGS.LOGS_ANON_CALLER, issue: [1], metadata: [2] });
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenCalledTimes(7);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Assignees mismatch found for ${getIssueHtmlUrl(1)}`, {
+      caller: STRINGS.LOGS_ANON_CALLER,
+      assigneeIds: [1],
+      metadata: {
+        taskDeadline: timestamp,
+        taskAssignees: [2],
+      }
+    });
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
   });
 
-  it("Should handle collecting linked PR with # format", async () => {
+  it("Should handle collecting linked PRs", async () => {
     const context = createContext(1, 1);
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner.login as string });
-    expect(result).toHaveLength(1);
-    expect(result[0].number).toEqual(1);
-    expect(result[0].body).toMatch(/Resolves #1/gi);
+    expect(result).toHaveLength(2);
+    expect(result).toEqual([
+      {
+        url: "https://github.com/ubiquity/test-repo/pull/1",
+        title: "test",
+        body: "test",
+        state: "OPEN",
+        number: 1,
+        author: { login: "ubiquity", id: 1 },
+      },
+      {
+        url: "https://github.com/ubiquity/test-repo/pull/1",
+        title: "test",
+        body: "test",
+        state: "CLOSED",
+        number: 2,
+        author: { login: "user2", id: 2 },
+      }
+    ]);
   });
 });
 
