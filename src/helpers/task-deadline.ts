@@ -18,10 +18,10 @@ export async function handleDeadline(
 
     if (assigneeIds.length && metadata.taskAssignees?.some((a) => !assigneeIds.includes(a))) {
         logger.info(`Assignees mismatch found for ${issue.html_url}`, {
-            metadata: metadata.taskAssignees,
-            issue: assigneeIds,
+            metadata,
+            assigneeIds,
         });
-        return false;
+        // return false;
     }
 
     const deadline = DateTime.fromISO(metadata.taskDeadline);
