@@ -1,17 +1,65 @@
-import { parseIssueUrl } from "../helpers/github-url";
 import { Context } from "../types/context";
-import { IssuesSearch } from "../types/github-types";
+import { PullRequest, User, validate } from "@octokit/graphql-schema";
 
-export type IssueParams = ReturnType<typeof parseIssueUrl>;
-
-// cannot use more than 5 AND / OR / NOT operators in a query
-function additionalBooleanFilters(issueNumber: number) {
-  return `in:body "closes #${issueNumber}" OR "fixes #${issueNumber}" OR "resolves #${issueNumber}"`;
+type closedByPullRequestsReferences = {
+  node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
 }
 
-export async function collectLinkedPullRequests(context: Context, issue: IssueParams) {
-  return (await context.octokit.paginate(context.octokit.rest.search.issuesAndPullRequests, {
-    q: `repo:${issue.owner}/${issue.repo} is:pr is:open linked:issue ${additionalBooleanFilters(issue.issue_number)}`,
-    per_page: 100,
-  })) as IssuesSearch[];
+type IssueWithClosedByPRs = {
+  repository: {
+    issue: {
+      closedByPullRequestsReferences: {
+        edges: closedByPullRequestsReferences[];
+      };
+    };
+  };
+}
+
+const query = `query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    issue(number: $issue_number) {
+      closedByPullRequestsReferences(first: 100, includeClosedPrs: true) {
+        edges {
+          node {
+            url
+            title
+            body
+            state
+            number
+            author {
+              login
+              ... on User {
+                 id: databaseId
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`
+
+const queryErrors = validate(query);
+
+/**
+ * > 1 because the schema package is slightly out of date and does not include the
+ * `closedByPullRequestsReferences` object in the schema as it is a recent addition to the GitHub API.
+ */
+if (queryErrors.length > 1) {
+  throw new Error(`Invalid query: ${queryErrors.join(", ")}`);
+}
+
+export async function collectLinkedPullRequests(context: Context, issue: {
+  owner: string;
+  repo: string;
+  issue_number: number;
+}) {
+  const { owner, repo, issue_number } = issue;
+  const result = await context.octokit.graphql<IssueWithClosedByPRs>(query, {
+    owner,
+    repo,
+    issue_number,
+  });
+
+  return result.repository.issue.closedByPullRequestsReferences.edges.map((edge) => edge.node);
 }
