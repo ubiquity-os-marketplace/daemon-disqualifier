@@ -14,14 +14,7 @@ export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
 }
 
 function thresholdType(options?: StringOptions) {
-  return T.Transform(
-    T.String({
-      // Matches a pattern like [decimal] [unit], e.g. 3.25 hours
-      pattern: /^\s*\d+(\.\d+)?\s+\S+\s*$/.source,
-      errorMessage: "must be a duration, in the format of [decimal] [unit]",
-      ...options,
-    })
-  )
+  return T.Transform(T.String(options))
     .Decode((value) => {
       const milliseconds = ms(value);
       if (milliseconds === undefined) {
@@ -42,11 +35,11 @@ export const userActivityWatcherSettingsSchema = T.Object({
   /**
    * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
    */
-  sendRemindersThreshold: thresholdType({ default: "3.5 days" }),
+  warning: thresholdType({ default: "3.5 days" }),
   /**
    * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
    */
-  unassignUserThreshold: thresholdType({
+  disqualification: thresholdType({
     default: "7 days",
   }),
 });

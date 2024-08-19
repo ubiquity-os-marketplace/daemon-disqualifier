@@ -12,7 +12,7 @@ async function unassignUserFromIssue(context: Context, issue: Database["public"]
     config,
   } = context;
 
-  if (config.unassignUserThreshold <= 0) {
+  if (config.disqualification <= 0) {
     logger.info("The unassign threshold is <= 0, won't unassign users.");
   } else {
     logger.info(`Passed the deadline on ${issue.url} and no activity is detected, removing assignees.`);
@@ -31,7 +31,7 @@ async function remindAssigneesForIssue(context: Context, issue: Database["public
   const now = DateTime.now();
   const deadline = DateTime.fromISO(issue.deadline);
 
-  if (config.sendRemindersThreshold <= 0) {
+  if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else {
     const lastReminder = issue.last_reminder;
@@ -60,10 +60,8 @@ async function updateReminders(context: Context, issue: Database["public"]["Tabl
       payload.issue?.assignees?.find((assignee) => assignee?.login === o.actor.login) && DateTime.fromISO(o.created_at) >= DateTime.fromISO(issue.last_check)
   );
   const deadline = DateTime.fromISO(issue.deadline);
-  const deadlineWithThreshold = deadline.plus({ milliseconds: config.unassignUserThreshold });
-  const reminderWithThreshold = deadline.plus({ milliseconds: config.sendRemindersThreshold });
-
-  console.log(issue.url, now, reminderWithThreshold, deadlineWithThreshold);
+  const deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
+  const reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
 
   if (activity?.length) {
     const lastCheck = DateTime.fromISO(issue.last_check);
