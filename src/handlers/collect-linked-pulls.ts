@@ -11,7 +11,7 @@ function additionalBooleanFilters(issueNumber: number) {
 
 export async function collectLinkedPullRequests(context: Context, issue: IssueParams) {
   return (await context.octokit.paginate(context.octokit.rest.search.issuesAndPullRequests, {
-    q: `repo:${issue.owner}/${issue.repo} is:pr is:open ${additionalBooleanFilters(issue.issue_number)}`,
+    q: `repo:${issue.owner}/${issue.repo} is:pr is:open linked:issue ${additionalBooleanFilters(issue.issue_number)}`,
     per_page: 100,
   })) as IssuesSearch[];
 }
