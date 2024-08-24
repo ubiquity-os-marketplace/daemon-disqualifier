@@ -22,8 +22,12 @@ export async function watchUserActivity(context: Context) {
 
 async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
     const { logger, octokit, payload } = context;
+    const owner = payload.repository.owner?.login;
+    if (!owner) {
+        throw new Error("No owner found in the payload");
+    }
     const issues = (await octokit.paginate(octokit.rest.issues.listForRepo, {
-        owner: payload.repository.owner.login,
+        owner,
         repo: repo.name,
         per_page: 100,
         state: "open",

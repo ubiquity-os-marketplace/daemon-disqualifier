@@ -8,7 +8,11 @@ export async function getWatchedRepos(context: Context) {
     },
   } = context;
   const repoNames = new Set<string>();
-  const orgRepos = await getReposForOrg(context, context.payload.repository.owner.login);
+  const owner = context.payload.repository.owner?.login;
+  if (!owner) {
+    throw new Error("No owner found in the payload");
+  }
+  const orgRepos = await getReposForOrg(context, owner);
   orgRepos.forEach((repo) => repoNames.add(repo.name.toLowerCase()));
 
   for (const repo of optOut) {
