@@ -21,7 +21,6 @@ export async function handleDeadline(
             metadata,
             assigneeIds,
         });
-        // return false;
     }
 
     const deadline = DateTime.fromISO(metadata.taskDeadline);

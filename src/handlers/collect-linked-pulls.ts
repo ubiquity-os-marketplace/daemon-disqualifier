@@ -15,7 +15,8 @@ type IssueWithClosedByPRs = {
   };
 }
 
-const query = `query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
+const query = /* GraphQL */ `
+query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
   repository(owner: $owner, name: $repo) {
     issue(number: $issue_number) {
       closedByPullRequestsReferences(first: 100, includeClosedPrs: true) {
