@@ -1,10 +1,8 @@
 import * as core from "@actions/core";
-import { getEnv } from "./helpers/get-env";
 import program from "./parser/payload";
 import { run } from "./run";
 
-getEnv()
-  .then((env) => run(program, env))
+run(program)
   .then((result) => {
     core?.setOutput("result", result);
   })

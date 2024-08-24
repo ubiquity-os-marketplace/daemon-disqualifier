@@ -1,4 +1,9 @@
 {
   "warning": "3.5 days",
-  "disqualification": "7 days"
+  "disqualification": "7 days",
+  "watch": {
+    "optOut": [
+      "private-repo"
+    ]
+  }
 }
