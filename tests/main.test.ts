@@ -203,15 +203,16 @@ function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
-function createContext(issueId: number, senderId: number): Context {
+function createContext(issueId: number, senderId: number): Context<"issue_comment.created"> {
   return {
     payload: {
-      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as Context["payload"]["issue"],
-      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as Context["payload"]["sender"],
-      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context["payload"]["repository"],
-      action: "assigned",
+      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["issue"],
+      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as Context<"issue_comment.created">["payload"]["sender"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context<"issue_comment.created">["payload"]["repository"],
+      action: "created",
       installation: { id: 1 } as unknown as Context["payload"]["installation"],
       organization: { login: STRINGS.UBIQUITY } as unknown as Context["payload"]["organization"],
+      comment: db.issueComments.findFirst({ where: { issueId: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["comment"],
     },
     logger: new Logs("debug"),
     config: {
@@ -220,6 +221,6 @@ function createContext(issueId: number, senderId: number): Context {
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
     },
     octokit: new octokit.Octokit(),
-    eventName: "issues.assigned",
+    eventName: "issue_comment.created",
   };
 }
