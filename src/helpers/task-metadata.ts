@@ -27,7 +27,7 @@ export async function getTaskMetadata(
         DateTime.fromISO(a.created_at).toMillis() - DateTime.fromISO(b.created_at).toMillis()
     )
 
-    const botFollowup = /this task has been idle for a while. Please provide an update./gi;
+    const botFollowup = /<!-- Ubiquity - Followup - remindAssignees/gi;
     const botFollowupComments = botComments.filter((o) => botFollowup.test(o?.body || ""));
 
     if (!botAssignmentComments.length && !botFollowupComments.length) {
