@@ -1,6 +1,7 @@
 import { Context } from "../types/context";
 import { parseIssueUrl } from "./github-url";
 import { ListIssueForRepo } from "../types/github-types";
+import { createStructuredMetadata } from "./structured-metadata";
 
 export async function unassignUserFromIssue(context: Context, issue: ListIssueForRepo) {
     const { logger, config } = context;
@@ -36,11 +37,17 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
         .filter((o) => !!o)
         .join(", @");
 
+    const logMessage = logger.info(`@${logins}, this task has been idle for a while. Please provide an update.\n\n`, {
+        taskAssignees: issue.assignees.map((o) => o?.id),
+    });
+
+    const metadata = createStructuredMetadata("Followup", logMessage);
+
     await octokit.rest.issues.createComment({
         owner,
         repo,
         issue_number,
-        body: `@${logins}, this task has been idle for a while. Please provide an update.`,
+        body: [logMessage.logMessage.raw, metadata].join("\n"),
     });
     return true;
 }
