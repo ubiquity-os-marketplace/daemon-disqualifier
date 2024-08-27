@@ -13,6 +13,7 @@ import mockUsers from "./__mocks__/mock-users";
 import { botAssignmentComment, getIssueHtmlUrl, getIssueUrl, noAssignmentCommentFor, STRINGS, updatingRemindersFor } from "./__mocks__/strings";
 import { createComment, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
+import { createStructuredMetadata } from "../src/helpers/structured-metadata";
 
 dotenv.config();
 const octokit = jest.requireActual("@octokit/rest");
@@ -119,7 +120,9 @@ describe("User start/stop", () => {
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     const comments = db.issueComments.getAll();
-    expect(comments[comments.length - 1].body).toEqual(JSON.stringify({ body: `@${STRINGS.USER}, this task has been idle for a while. Please provide an update.` }));
+    const latestComment = comments[comments.length - 1];
+    const partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -"
+    expect(latestComment.body).toContain(partialComment);
   });
 
   it("Should have nothing do within the warning period", async () => {
