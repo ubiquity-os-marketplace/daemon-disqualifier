@@ -27,12 +27,6 @@ export async function getAssigneesActivityForIssue(context: Context, issue: List
         issueEvents.push(...events);
     }
 
-    return issueEvents
-        .reduce((acc, event) => {
-            if (event.actor && event.actor.id) {
-                if (assigneeIds.includes(event.actor.id)) acc.push(event);
-            }
-            return acc;
-        }, [] as GitHubListEvents[])
+    return issueEvents.filter((o) => o.actor && o.actor.id && assigneeIds.includes(o.actor.id))
         .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
 }
