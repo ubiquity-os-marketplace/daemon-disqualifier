@@ -2,21 +2,21 @@ import { DateTime } from "luxon";
 import { Context } from "../types/context";
 import { ListForOrg, ListIssueForRepo } from "../types/github-types";
 import { remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
-import { handleDeadline } from "./task-deadline";
-import { handleCommentsAndMetadata } from "./task-metadata";
+import { getDeadlineWithThreshold } from "./task-deadline";
+import { getTaskMetadata } from "./task-metadata";
 
 export async function updateTaskReminder(context: Context, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
   const { logger } = context;
 
   let metadata, lastCheck, deadlineWithThreshold, reminderWithThreshold, now;
 
-  const handledMetadata = await handleCommentsAndMetadata(context, repo, issue);
+  const handledMetadata = await getTaskMetadata(context, repo, issue);
 
   if (handledMetadata) {
     metadata = handledMetadata.metadata;
     lastCheck = handledMetadata.lastCheck;
 
-    const handledDeadline = await handleDeadline(context, metadata, issue, lastCheck);
+    const handledDeadline = await getDeadlineWithThreshold(context, metadata, issue, lastCheck);
     if (handledDeadline) {
       deadlineWithThreshold = handledDeadline.deadlineWithThreshold;
       reminderWithThreshold = handledDeadline.reminderWithThreshold;

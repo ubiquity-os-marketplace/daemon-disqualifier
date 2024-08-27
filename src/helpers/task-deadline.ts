@@ -3,7 +3,7 @@ import { Context } from "../types/context";
 import { ListIssueForRepo } from "../types/github-types";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 
-export async function handleDeadline(
+export async function getDeadlineWithThreshold(
     context: Context,
     metadata: {
         taskDeadline: string;

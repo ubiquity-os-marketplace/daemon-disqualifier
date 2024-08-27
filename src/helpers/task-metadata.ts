@@ -3,7 +3,7 @@ import { Context } from "../types/context";
 import { ListCommentsForIssue, ListForOrg, ListIssueForRepo } from "../types/github-types";
 import ms from "ms";
 
-export async function handleCommentsAndMetadata(
+export async function getTaskMetadata(
     context: Context,
     repo: ListForOrg["data"][0],
     issue: ListIssueForRepo
