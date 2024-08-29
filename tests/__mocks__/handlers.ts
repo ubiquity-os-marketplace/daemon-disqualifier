@@ -8,22 +8,6 @@ import issueTimeline from "./routes/get-timeline.json";
  * Intercepts the routes and returns a custom payload
  */
 export const handlers = [
-  http.get("http://127.0.0.1:54321/rest/v1/issues", () => {
-    const repos = db.issues.getAll();
-    return HttpResponse.json(repos);
-  }),
-  http.post("http://127.0.0.1:54321/rest/v1/issues", async ({ request }) => {
-    const body = await request.json();
-
-    if (typeof body === "object") {
-      const newItem = {
-        ...body,
-        id: db.issues.count() + 1,
-      };
-      db.issues.create(newItem);
-    }
-    return HttpResponse.json({});
-  }),
   http.get("https://api.github.com/repos/:owner/:repo/issues/:id/events", () => {
     return HttpResponse.json(issueEventsGet);
   }),
@@ -34,15 +18,65 @@ export const handlers = [
     return HttpResponse.json(issueTimeline);
   }),
 
-  http.get("https://api.github.com/:org/repos", () => {
-    return HttpResponse.json(db.repos.getAll());
+  http.get("https://api.github.com/:org/repos", ({ params: { org } }) => {
+    return HttpResponse.json(db.repo.findMany({ where: { owner: { login: { equals: org as string } } } }));
   }),
 
-  http.get("https://api.github.com/repos/:owner/:repo/issues", () => {
-    return HttpResponse.json(db.issues.getAll());
+  http.get("https://api.github.com/repos/:owner/:repo/issues", ({ params: { owner, repo } }) => {
+    return HttpResponse.json(db.issue.findMany({ where: { owner: { login: { equals: owner as string } }, repo: { equals: repo as string } } }));
   }),
 
-  http.get("https://api.github.com/orgs/:org/repos", () => {
-    return HttpResponse.json(db.repos.getAll());
+  http.get("https://api.github.com/orgs/:org/repos", ({ params: { org } }) => {
+    return HttpResponse.json(db.repo.findMany({ where: { owner: { login: { equals: org as string } } } }));
+  }),
+  http.get("https://api.github.com/repos/:owner/:repo/issues/:id/comments", ({ params: { owner, repo } }) => {
+    return HttpResponse.json(db.issueComments.getAll());
+  }),
+  http.post("https://api.github.com/repos/:owner/:repo/issues/:id/comments", async ({ params: { owner, repo, id }, request: { body } }) => {
+    const comment = await body?.getReader().read().then((r) => new TextDecoder().decode(r.value));
+    if (!comment) {
+      return HttpResponse.json({ message: "No body" });
+    }
+
+    db.issueComments.create({ issueId: Number(id), body: comment, created_at: new Date().toISOString(), id: db.issueComments.count() + 1, owner: { login: owner as string }, repo: { name: repo as string } });
+    return HttpResponse.json({ message: "Comment created" });
+  }),
+  http.delete("https://api.github.com/repos/:owner/:repo/issues/:id/assignees", ({ params: { owner, repo, id } }) => {
+    db.issue.update({ where: { owner: { login: { equals: owner as string } }, repo: { equals: repo as string }, id: { equals: Number(id) } }, data: { assignees: [] } });
+    return HttpResponse.json({ message: "Assignees removed" });
+  }),
+  http.post("https://api.github.com/graphql", () => {
+    return HttpResponse.json({
+      data: {
+        repository: {
+          issue: {
+            closedByPullRequestsReferences: {
+              edges: [
+                {
+                  node: {
+                    url: "https://github.com/ubiquity/test-repo/pull/1",
+                    title: "test",
+                    body: "test",
+                    state: "OPEN",
+                    number: 1,
+                    author: { login: "ubiquity", id: 1 },
+                  },
+                },
+                {
+                  node: {
+                    url: "https://github.com/ubiquity/test-repo/pull/1",
+                    title: "test",
+                    body: "test",
+                    state: "CLOSED",
+                    number: 2,
+                    author: { login: "user2", id: 2 },
+                  },
+                }
+              ],
+            },
+          },
+        },
+      },
+    });
   }),
 ];
