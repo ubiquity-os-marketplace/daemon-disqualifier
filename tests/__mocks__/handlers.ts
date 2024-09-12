@@ -1,6 +1,5 @@
 import { http, HttpResponse } from "msw";
 import { db } from "./db";
-import issueEventsGet from "./routes/get-events.json";
 import issuesLabelsGet from "./routes/get-labels.json";
 import issueTimeline from "./routes/get-timeline.json";
 
@@ -9,7 +8,7 @@ import issueTimeline from "./routes/get-timeline.json";
  */
 export const handlers = [
   http.get("https://api.github.com/repos/:owner/:repo/issues/:id/events", () => {
-    return HttpResponse.json(issueEventsGet);
+    return HttpResponse.json(db.event.getAll());
   }),
   http.get("https://api.github.com/repos/:owner/:repo/issues/:id/labels", () => {
     return HttpResponse.json(issuesLabelsGet);
@@ -37,7 +36,6 @@ export const handlers = [
     if (!comment) {
       return HttpResponse.json({ message: "No body" });
     }
-
     db.issueComments.create({ issueId: Number(id), body: comment, created_at: new Date().toISOString(), id: db.issueComments.count() + 1, owner: { login: owner as string }, repo: { name: repo as string } });
     return HttpResponse.json({ message: "Comment created" });
   }),

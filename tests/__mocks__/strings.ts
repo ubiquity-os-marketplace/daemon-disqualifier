@@ -55,6 +55,10 @@ export function botAssignmentComment(assigneeId: number, deadlineStr: string) {
 -->`;
 }
 
+export function lastCheckWasOn(deadlineStr: string) {
+    return `Last check was on ${deadlineStr}`;
+}
+
 export function updatingRemindersFor(repo: string) {
     return `Updating reminders for ${repo}`;
 }
