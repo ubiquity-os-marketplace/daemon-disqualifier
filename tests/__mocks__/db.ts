@@ -17,7 +17,7 @@ export const db = factory({
     state: String,
     owner: {
       login: String,
-      id: Number
+      id: Number,
     },
     repo: String,
     labels: Array,

@@ -111,7 +111,7 @@ describe("User start/stop", () => {
 
     const comments = db.issueComments.getAll();
     const latestComment = comments[comments.length - 1];
-    const partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -"
+    const partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
     expect(latestComment.body).toContain(partialComment);
   });
 
@@ -119,7 +119,7 @@ describe("User start/stop", () => {
     const context = createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
-    const timestamp = daysPriorToNow(2)
+    const timestamp = daysPriorToNow(2);
     createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
@@ -138,7 +138,11 @@ describe("User start/stop", () => {
   it("Should handle collecting linked PRs", async () => {
     const context = createContext(1, 1);
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
-    const result = await collectLinkedPullRequests(context, { issue_number: issue?.number as number, repo: issue?.repo as string, owner: issue?.owner.login as string });
+    const result = await collectLinkedPullRequests(context, {
+      issue_number: issue?.number as number,
+      repo: issue?.repo as string,
+      owner: issue?.owner.login as string,
+    });
     expect(result).toHaveLength(2);
     expect(result).toEqual([
       {
@@ -156,7 +160,7 @@ describe("User start/stop", () => {
         state: "CLOSED",
         number: 2,
         author: { login: "user2", id: 2 },
-      }
+      },
     ]);
   });
 });
@@ -166,7 +170,7 @@ async function setupTests() {
     db.users.create(item);
   }
 
-  createRepo()
+  createRepo();
   createRepo(STRINGS.PRIVATE_REPO_NAME, 2);
   createRepo(STRINGS.USER_ACTIVITY_WATCHER_NAME, 3);
   createRepo(STRINGS.FILLER_REPO_NAME, 4);
@@ -184,7 +188,7 @@ async function setupTests() {
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
 
-  createEvent()
+  createEvent();
 }
 
 function daysPriorToNow(days: number) {
