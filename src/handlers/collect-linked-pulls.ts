@@ -3,7 +3,7 @@ import { PullRequest, User, validate } from "@octokit/graphql-schema";
 
 type closedByPullRequestsReferences = {
   node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
-}
+};
 
 type IssueWithClosedByPRs = {
   repository: {
@@ -13,24 +13,25 @@ type IssueWithClosedByPRs = {
       };
     };
   };
-}
+};
 
 const query = /* GraphQL */ `
-query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
-  repository(owner: $owner, name: $repo) {
-    issue(number: $issue_number) {
-      closedByPullRequestsReferences(first: 100, includeClosedPrs: true) {
-        edges {
-          node {
-            url
-            title
-            body
-            state
-            number
-            author {
-              login
-              ... on User {
-                 id: databaseId
+  query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
+    repository(owner: $owner, name: $repo) {
+      issue(number: $issue_number) {
+        closedByPullRequestsReferences(first: 100, includeClosedPrs: true) {
+          edges {
+            node {
+              url
+              title
+              body
+              state
+              number
+              author {
+                login
+                ... on User {
+                  id: databaseId
+                }
               }
             }
           }
@@ -38,7 +39,7 @@ query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: 
       }
     }
   }
-}`
+`;
 
 const queryErrors = validate(query);
 
@@ -50,11 +51,14 @@ if (queryErrors.length > 1) {
   throw new Error(`Invalid query: ${queryErrors.join(", ")}`);
 }
 
-export async function collectLinkedPullRequests(context: Context, issue: {
-  owner: string;
-  repo: string;
-  issue_number: number;
-}) {
+export async function collectLinkedPullRequests(
+  context: Context,
+  issue: {
+    owner: string;
+    repo: string;
+    issue_number: number;
+  }
+) {
   const { owner, repo, issue_number } = issue;
   const result = await context.octokit.graphql<IssueWithClosedByPRs>(query, {
     owner,

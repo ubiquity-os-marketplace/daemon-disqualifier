@@ -2,7 +2,7 @@ import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as Webhook
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
 import ms from "ms";
 
-export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push"
+export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push";
 
 export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   stateId: string;
