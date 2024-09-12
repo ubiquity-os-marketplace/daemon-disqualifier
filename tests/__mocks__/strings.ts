@@ -14,6 +14,7 @@ export const STRINGS = {
   TEST_REPO_URL: "https://api.github.com/repos/ubiquity/test-repo/issues/1",
   TEST_REPO_HTML_URL: "https://github.com/ubiquity/test-repo/issues/1",
   LOGS_ANON_CALLER: "_Logs.<anonymous>",
+  USING_ASSIGNMENT_EVENT: "No last check found, using assignment event",
 };
 
 export function botAssignmentComment(assigneeId: number, deadlineStr: string) {

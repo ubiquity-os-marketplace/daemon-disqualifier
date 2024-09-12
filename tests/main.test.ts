@@ -56,11 +56,17 @@ describe("User start/stop", () => {
     const infoSpy = jest.spyOn(context.logger, "info");
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(5, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).not.toHaveBeenNthCalledWith(9, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
+    // The logs skipped just contain the timestamp infos: "last check was on...."
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(5, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(8, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(10, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(11, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
+    expect(infoSpy).not.toHaveBeenNthCalledWith(14, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
   });
 
   it("Should include the previously excluded repo", async () => {
@@ -68,11 +74,16 @@ describe("User start/stop", () => {
     const infoSpy = jest.spyOn(context.logger, "info");
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(5, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(5, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(8, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(10, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(11, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(13, STRINGS.USING_ASSIGNMENT_EVENT);
+    expect(infoSpy).toHaveBeenNthCalledWith(14, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
   });
 
   it("Should eject the user after the disqualification period", async () => {
