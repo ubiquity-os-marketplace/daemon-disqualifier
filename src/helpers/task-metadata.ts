@@ -39,7 +39,7 @@ export async function getTaskMetadata(
 
     // if we don't have a lastCheck yet, use the assignment event
     if (!lastCheck) {
-        console.log("No last check found, using assignment event");
+        logger.info("No last check found, using assignment event");
         const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
             owner: repo.owner.login,
             repo: repo.name,
