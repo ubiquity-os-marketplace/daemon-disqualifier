@@ -59,7 +59,7 @@ export const userActivityWatcherSettingsSchema = T.Object({
   /**
    * List of events to consider as valid activity on a task
    */
-  eventWhitelist: T.Array(T.Optional(T.Enum(eventWhitelist))),
+  eventWhitelist: T.Array(T.String({ default: Object.values(eventWhitelist) })),
 });
 
 export type UserActivityWatcherSettings = StaticDecode<typeof userActivityWatcherSettingsSchema>;

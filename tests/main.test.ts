@@ -33,7 +33,12 @@ describe("User start/stop", () => {
 
   it("Should parse thresholds", async () => {
     const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
-    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] } });
+    expect(settings).toEqual({
+      warning: 302400000,
+      disqualification: 604800000,
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+      eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+    });
     expect(() =>
       Value.Decode(
         userActivityWatcherSettingsSchema,
@@ -41,6 +46,7 @@ describe("User start/stop", () => {
           warning: "12 foobars",
           disqualification: "2 days",
           watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+          eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
         })
       )
     ).toThrow(TransformDecodeError);
@@ -98,9 +104,9 @@ describe("User start/stop", () => {
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the deadline on ${getIssueHtmlUrl(2)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Passed the deadline on ${getIssueHtmlUrl(3)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Passed the deadline on ${getIssueHtmlUrl(1)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Passed the deadline on ${getIssueHtmlUrl(2)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the deadline on ${getIssueHtmlUrl(3)} and no activity is detected, removing assignees.`);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
@@ -222,6 +228,7 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       disqualification: ONE_DAY * 7,
       warning: ONE_DAY * 3.5,
       watch: { optOut },
+      eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created",

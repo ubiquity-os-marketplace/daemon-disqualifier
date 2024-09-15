@@ -3,5 +3,6 @@
   "disqualification": "7 days",
   "watch": {
     "optOut": ["private-repo"]
-  }
+  },
+  "eventWhitelist": ["review_requested", "ready_for_review", "commented", "committed"]
 }
