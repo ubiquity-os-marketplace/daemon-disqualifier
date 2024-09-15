@@ -27,10 +27,10 @@ export async function getAssigneesActivityForIssue(context: Context, issue: List
     issueEvents.push(...events);
   }
 
-  return filterEvents(issueEvents, assigneeIds, context);
+  return filterEvents(issueEvents, assigneeIds);
 }
 
-function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[], context: Context) {
+function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]) {
   const userIdMap = new Map<string, number>();
 
   let assigneeEvents = [];
@@ -50,18 +50,15 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
       createdAt = event.created_at;
     } else if (event.event === "committed") {
       const commitAuthor = "author" in event ? event.author : null;
-      const commitCommitter = "committer" in event ? event.committer : null;
+      const commitCommiter = "committer" in event ? event.committer : null;
 
-      if (commitAuthor && commitCommitter && commitAuthor.name === commitCommitter.name) {
-        actorLogin = commitAuthor.name.toLowerCase();
-        if (!userIdMap.has(actorLogin)) {
-          const { id, name } = parseGitHubEmail(commitAuthor.email);
-          actorLogin = name.toLowerCase();
-          userIdMap.set(actorLogin, id);
-        }
-        actorId = userIdMap.get(actorLogin);
-        createdAt = commitCommitter.date;
-        eventName = "committed";
+      if (commitAuthor || commitCommiter) {
+        assigneeEvents.push({
+          event: eventName,
+          created_at: createdAt,
+        });
+
+        continue;
       }
     }
 
@@ -69,7 +66,6 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
       assigneeEvents.push({
         event: eventName,
         created_at: createdAt,
-        actor: actorLogin,
       });
     }
   }
@@ -77,16 +73,4 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
   return assigneeEvents.sort((a, b) => {
     return DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis();
   });
-}
-
-// 0000000+userLogin@users.noreply.github.com
-function parseGitHubEmail(email: string) {
-  const idName = email.split("@")[0];
-
-  const [id, name] = idName.split("+");
-
-  return {
-    id: parseInt(id),
-    name,
-  };
 }
