@@ -20,7 +20,7 @@ export async function watchUserActivity(context: Context) {
   return true;
 }
 
-async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
+export async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
   const { logger, octokit, payload } = context;
   const owner = payload.repository.owner?.login;
   if (!owner) {
