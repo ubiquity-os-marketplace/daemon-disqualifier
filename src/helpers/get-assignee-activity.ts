@@ -27,10 +27,10 @@ export async function getAssigneesActivityForIssue(context: Context, issue: List
     issueEvents.push(...events);
   }
 
-  return await filterEvents(issueEvents, assigneeIds, context);
+  return filterEvents(issueEvents, assigneeIds, context);
 }
 
-async function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[], context: Context) {
+function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[], context: Context) {
   const userIdMap = new Map<string, number>();
 
   let assigneeEvents = [];
@@ -75,14 +75,8 @@ async function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: nu
   }
 
   return assigneeEvents.sort((a, b) => {
-    return getTime(b) - getTime(a);
+    return DateTime.fromISO(a.created_at).toMillis() - DateTime.fromISO(b.created_at).toMillis();
   });
-}
-
-function getTime(event: GitHubTimelineEvents) {
-  if ("created_at" in event) return DateTime.fromISO(event.created_at).toMillis();
-  if ("committer" in event) return DateTime.fromISO(event.committer.date).toMillis();
-  return 0;
 }
 
 // 0000000+userLogin@users.noreply.github.com

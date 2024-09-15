@@ -15,4 +15,3 @@ cypress/screenshots
 /tests/http/http-client.private.env.json
 .wrangler
 test-dashboard.md
-test-script.ts

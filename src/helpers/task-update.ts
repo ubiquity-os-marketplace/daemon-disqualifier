@@ -29,16 +29,17 @@ export async function updateTaskReminder(context: Context, repo: ListForOrg["dat
     return false;
   }
 
+  logger.info(`Last check was on ${lastCheck.toLocaleString(DateTime.DATETIME_MED)}`, {
+    now: now.toLocaleString(DateTime.DATETIME_MED),
+    reminder: reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED),
+    deadline: deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED),
+  });
+
   if (now >= deadlineWithThreshold) {
     await unassignUserFromIssue(context, issue);
   } else if (now >= reminderWithThreshold) {
     await remindAssigneesForIssue(context, issue);
   } else {
     logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
-    logger.info(`Last check was on ${lastCheck.toISO()}`, {
-      now: now.toLocaleString(DateTime.DATETIME_MED),
-      reminder: reminderWithThreshold.toLocaleString(DateTime.DATETIME_MED),
-      deadline: deadlineWithThreshold.toLocaleString(DateTime.DATETIME_MED),
-    });
   }
 }
