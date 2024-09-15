@@ -75,7 +75,7 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
   }
 
   return assigneeEvents.sort((a, b) => {
-    return DateTime.fromISO(a.created_at).toMillis() - DateTime.fromISO(b.created_at).toMillis();
+    return DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis();
   });
 }
 
