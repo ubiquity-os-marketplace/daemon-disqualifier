@@ -12,7 +12,10 @@ export async function getDeadlineWithThreshold(
   issue: ListIssueForRepo,
   lastCheck: DateTime
 ) {
-  const { logger, config } = context;
+  const {
+    logger,
+    config: { disqualification, warning, eventWhitelist },
+  } = context;
 
   const assigneeIds = issue.assignees?.map((o) => o.id) || [];
 
@@ -35,13 +38,17 @@ export async function getDeadlineWithThreshold(
     return DateTime.fromISO(o.created_at) > lastCheck;
   });
 
-  let deadlineWithThreshold = deadline.plus({ milliseconds: config.disqualification });
-  let reminderWithThreshold = deadline.plus({ milliseconds: config.warning });
+  const filteredActivity = activity.filter((o) => {
+    return eventWhitelist.includes(o.event || "");
+  });
 
-  if (activity?.length) {
-    const lastActivity = DateTime.fromISO(activity[0].created_at);
-    deadlineWithThreshold = lastActivity.plus({ milliseconds: config.disqualification });
-    reminderWithThreshold = lastActivity.plus({ milliseconds: config.warning });
+  let deadlineWithThreshold = deadline.plus({ milliseconds: disqualification });
+  let reminderWithThreshold = deadline.plus({ milliseconds: warning });
+
+  if (filteredActivity?.length) {
+    const lastActivity = DateTime.fromISO(filteredActivity[0].created_at);
+    deadlineWithThreshold = lastActivity.plus({ milliseconds: disqualification });
+    reminderWithThreshold = lastActivity.plus({ milliseconds: warning });
   }
 
   return { deadlineWithThreshold, reminderWithThreshold, now };

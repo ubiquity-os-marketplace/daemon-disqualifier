@@ -31,6 +31,13 @@ function thresholdType(options?: StringOptions) {
     });
 }
 
+const eventWhitelist = {
+  review_requested: "review_requested",
+  ready_for_review: "ready_for_review",
+  commented: "commented",
+  committed: "committed",
+};
+
 export const userActivityWatcherSettingsSchema = T.Object({
   /**
    * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
@@ -49,6 +56,10 @@ export const userActivityWatcherSettingsSchema = T.Object({
   disqualification: thresholdType({
     default: "7 days",
   }),
+  /**
+   * List of events to consider as valid activity on a task
+   */
+  eventWhitelist: T.Array(T.Optional(T.Enum(eventWhitelist))),
 });
 
 export type UserActivityWatcherSettings = StaticDecode<typeof userActivityWatcherSettingsSchema>;

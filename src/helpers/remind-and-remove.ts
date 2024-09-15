@@ -43,12 +43,12 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
 
   const metadata = createStructuredMetadata("Followup", logMessage);
 
-  // await octokit.rest.issues.createComment({
-  //   owner,
-  //   repo,
-  //   issue_number,
-  //   body: [logMessage.logMessage.raw, metadata].join("\n"),
-  // });
+  await octokit.rest.issues.createComment({
+    owner,
+    repo,
+    issue_number,
+    body: [logMessage.logMessage.raw, metadata].join("\n"),
+  });
   return true;
 }
 
@@ -61,11 +61,11 @@ async function removeAllAssignees(context: Context, issue: ListIssueForRepo) {
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
-  // await octokit.rest.issues.removeAssignees({
-  //   owner,
-  //   repo,
-  //   issue_number,
-  //   assignees: logins,
-  // });
+  await octokit.rest.issues.removeAssignees({
+    owner,
+    repo,
+    issue_number,
+    assignees: logins,
+  });
   return true;
 }
