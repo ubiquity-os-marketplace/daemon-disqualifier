@@ -35,18 +35,24 @@ export async function getDeadlineWithThreshold(
   }
 
   const activity = (await getAssigneesActivityForIssue(context, issue, assigneeIds)).filter((o) => {
+    if (!o.created_at) {
+      return false;
+    }
     return DateTime.fromISO(o.created_at) > lastCheck;
   });
 
   const filteredActivity = activity.filter((o) => {
-    return eventWhitelist.includes(o.event || "");
+    if (!o.event) {
+      return false;
+    }
+    return eventWhitelist.includes(o.event);
   });
 
   let deadlineWithThreshold = deadline.plus({ milliseconds: disqualification });
   let reminderWithThreshold = deadline.plus({ milliseconds: warning });
 
   if (filteredActivity?.length) {
-    const lastActivity = DateTime.fromISO(filteredActivity[0].created_at);
+    const lastActivity = filteredActivity[0].created_at ? DateTime.fromISO(filteredActivity[0].created_at) : deadline;
     deadlineWithThreshold = lastActivity.plus({ milliseconds: disqualification });
     reminderWithThreshold = lastActivity.plus({ milliseconds: warning });
   }

@@ -38,7 +38,7 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
   for (const event of issueEvents) {
     let actorId = null;
     let actorLogin = null;
-    let createdAt = "UNKNOWN";
+    let createdAt = null;
     let eventName = event.event;
 
     if ("actor" in event && event.actor) {
@@ -71,6 +71,9 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
   }
 
   return assigneeEvents.sort((a, b) => {
+    if (!a.created_at || !b.created_at) {
+      return 0;
+    }
     return DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis();
   });
 }
