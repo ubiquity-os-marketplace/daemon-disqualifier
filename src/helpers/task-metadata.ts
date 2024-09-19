@@ -73,6 +73,7 @@ export async function getTaskMetadata(
 
   if (!metadata.taskAssignees?.length) {
     logger.error(`Missing Assignees from ${issue.html_url}`);
+    return false;
   }
 
   const durationInMs = parseTimeLabel(issue.labels);
