@@ -1,7 +1,7 @@
 import { drop } from "@mswjs/data";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { runPlugin } from "../src/run";
-import { userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
+import { UserActivityWatcherSettings, userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
 import { db } from "./__mocks__/db";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
@@ -13,6 +13,7 @@ import mockUsers from "./__mocks__/mock-users";
 import { botAssignmentComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
+import ms from "ms";
 
 dotenv.config();
 const octokit = jest.requireActual("@octokit/rest");
@@ -50,6 +51,29 @@ describe("User start/stop", () => {
         })
       )
     ).toThrow(TransformDecodeError);
+  });
+  it("Should define eventWhitelist defaults if omitted", () => {
+    const settings = Value.Default(userActivityWatcherSettingsSchema, {
+      warning: "12 days",
+      disqualification: "2 days",
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+    });
+    const decodedSettings = Value.Decode(userActivityWatcherSettingsSchema, settings);
+    expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
+  });
+  it("Should define all defaults if omitted", () => {
+    const settings = Value.Default(userActivityWatcherSettingsSchema, {
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] }, // has no default
+    }) as UserActivityWatcherSettings;
+
+    const decodedSettings = Value.Decode(userActivityWatcherSettingsSchema, settings);
+
+    expect(decodedSettings).toEqual({
+      warning: ms("3.5 days"),
+      disqualification: ms("7 days"),
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+      eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+    });
   });
   it("Should run", async () => {
     const context = createContext(1, 1);

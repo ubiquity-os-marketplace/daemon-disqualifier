@@ -60,7 +60,7 @@ export const userActivityWatcherSettingsSchema = T.Object(
     /**
      * List of events to consider as valid activity on a task
      */
-    eventWhitelist: T.Array(T.String({ default: Object.values(eventWhitelist) })),
+    eventWhitelist: T.Array(T.String(), { default: Object.values(eventWhitelist) }),
   },
   { default: {} }
 );
