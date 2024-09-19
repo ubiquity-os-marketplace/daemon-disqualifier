@@ -50,9 +50,9 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
       createdAt = event.created_at;
     } else if (event.event === "committed") {
       const commitAuthor = "author" in event ? event.author : null;
-      const commitCommiter = "committer" in event ? event.committer : null;
+      const commitCommitter = "committer" in event ? event.committer : null;
 
-      if (commitAuthor || commitCommiter) {
+      if (commitAuthor || commitCommitter) {
         assigneeEvents.push({
           event: eventName,
           created_at: createdAt,

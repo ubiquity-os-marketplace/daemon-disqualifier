@@ -38,28 +38,31 @@ const eventWhitelist = {
   committed: "committed",
 };
 
-export const userActivityWatcherSettingsSchema = T.Object({
-  /**
-   * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
-   */
-  warning: thresholdType({ default: "3.5 days" }),
-  /**
-   * By default all repositories are watched. Use this option to opt-out from watching specific repositories
-   * within your organization. The value is an array of repository names.
-   */
-  watch: T.Object({
-    optOut: T.Array(T.String()),
-  }),
-  /**
-   * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
-   */
-  disqualification: thresholdType({
-    default: "7 days",
-  }),
-  /**
-   * List of events to consider as valid activity on a task
-   */
-  eventWhitelist: T.Array(T.String({ default: Object.values(eventWhitelist) })),
-}, { default: {} });
+export const userActivityWatcherSettingsSchema = T.Object(
+  {
+    /**
+     * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
+     */
+    warning: thresholdType({ default: "3.5 days" }),
+    /**
+     * By default all repositories are watched. Use this option to opt-out from watching specific repositories
+     * within your organization. The value is an array of repository names.
+     */
+    watch: T.Object({
+      optOut: T.Array(T.String()),
+    }),
+    /**
+     * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
+     */
+    disqualification: thresholdType({
+      default: "7 days",
+    }),
+    /**
+     * List of events to consider as valid activity on a task
+     */
+    eventWhitelist: T.Array(T.String({ default: Object.values(eventWhitelist) })),
+  },
+  { default: {} }
+);
 
 export type UserActivityWatcherSettings = StaticDecode<typeof userActivityWatcherSettingsSchema>;
