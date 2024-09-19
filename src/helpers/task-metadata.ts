@@ -22,38 +22,47 @@ export async function getTaskMetadata(
   const assignmentRegex = /Ubiquity - Assignment - start -/gi;
   const botAssignmentComments = botComments
     .filter((o) => assignmentRegex.test(o?.body || ""))
-    .sort((a, b) => DateTime.fromISO(a.created_at).toMillis() - DateTime.fromISO(b.created_at).toMillis());
+    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
 
   // Has the bot previously reminded them?
   const botFollowup = /<!-- Ubiquity - Followup - remindAssignees/gi;
   const botFollowupComments = botComments
     .filter((o) => botFollowup.test(o?.body || ""))
-    .sort((a, b) => DateTime.fromISO(a.created_at).toMillis() - DateTime.fromISO(b.created_at).toMillis());
+    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
 
   // `lastCheck` represents the last time the bot intervened in the issue, separate from the activity tracking of a user.
   const lastCheckComment = botFollowupComments[0]?.created_at ? botFollowupComments[0] : botAssignmentComments[0];
   let lastCheck = lastCheckComment?.created_at ? DateTime.fromISO(lastCheckComment.created_at) : null;
 
-  // if we don't have a lastCheck yet, use the assignment event
-  if (!lastCheck) {
-    logger.info("No last check found, using assignment event");
-    const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
-      owner: repo.owner.login,
-      repo: repo.name,
-      issue_number: issue.number,
-    });
+  // incase their was self-assigning after the lastCheck
+  const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
+    owner: repo.owner.login,
+    repo: repo.name,
+    issue_number: issue.number,
+  });
 
-    const assignmentEvent = assignmentEvents.find((o) => o.event === "assigned");
-    if (assignmentEvent) {
-      lastCheck = DateTime.fromISO(assignmentEvent.created_at);
-    } else {
-      logger.error(`Failed to find last check for ${issue.html_url}`);
-      return false;
-    }
+  const assignedEvents = assignmentEvents
+    .filter((o) => o.event === "assigned")
+    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
+
+  const latestUserAssignment = assignedEvents.find((o) => o.actor?.type === "User");
+  const latestBotAssignment = assignedEvents.find((o) => o.actor?.type === "Bot");
+
+  let mostRecentAssignmentEvent = latestUserAssignment || latestBotAssignment;
+
+  if (latestUserAssignment && latestBotAssignment && DateTime.fromISO(latestUserAssignment.created_at) > DateTime.fromISO(latestBotAssignment.created_at)) {
+    mostRecentAssignmentEvent = latestUserAssignment;
+  } else {
+    mostRecentAssignmentEvent = latestBotAssignment;
+  }
+
+  if (mostRecentAssignmentEvent && (!lastCheck || DateTime.fromISO(mostRecentAssignmentEvent.created_at) > lastCheck)) {
+    lastCheck = DateTime.fromISO(mostRecentAssignmentEvent.created_at);
+    logger.debug(`Using assignment event`, { mostRecentAssignmentEvent });
   }
 
   if (!lastCheck) {
-    logger.error(`Failed to find last check for ${issue.html_url}`);
+    logger.error(`No last check found for ${issue.html_url}`);
     return false;
   }
 
@@ -64,7 +73,6 @@ export async function getTaskMetadata(
 
   if (!metadata.taskAssignees?.length) {
     logger.error(`Missing Assignees from ${issue.html_url}`);
-    return false;
   }
 
   const durationInMs = parseTimeLabel(issue.labels);

@@ -84,36 +84,31 @@ describe("User start/stop", () => {
   it("Should process update for all repos except optOut", async () => {
     const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
-    await runPlugin(context);
+    createComment(5, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
+    createEvent(2, daysPriorToNow(1));
 
-    // The logs skipped just contain the timestamp infos: "last check was on...."
+    await expect(runPlugin(context)).resolves.toBe(true);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(10, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(12, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).not.toHaveBeenNthCalledWith(14, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(8, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
+    expect(infoSpy).not.toHaveBeenNthCalledWith(10, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
   });
 
   it("Should include the previously excluded repo", async () => {
     const context = createContext(1, 1, []);
     const infoSpy = jest.spyOn(context.logger, "info");
-    await runPlugin(context);
+    createComment(5, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
+    createEvent(2, daysPriorToNow(1));
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(10, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(12, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(13, STRINGS.USING_ASSIGNMENT_EVENT);
-    expect(infoSpy).toHaveBeenNthCalledWith(15, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
+    await expect(runPlugin(context)).resolves.toBe(true);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(8, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(10, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
   });
 
   it("Should eject the user after the disqualification period", async () => {
@@ -122,6 +117,7 @@ describe("User start/stop", () => {
 
     const timestamp = daysPriorToNow(9);
     createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
+    createEvent(2, timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -229,7 +225,7 @@ async function setupTests() {
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
 
-  createEvent();
+  createEvent(1);
 }
 
 function daysPriorToNow(days: number) {
