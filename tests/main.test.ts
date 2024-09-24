@@ -81,34 +81,42 @@ describe("User start/stop", () => {
     expect(result).toBe(true);
   });
 
-  it("Should process update for all repos except optOut", async () => {
+  it("Should process updates for all repos except optOut", async () => {
     const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
-    createComment(5, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
+    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
     createEvent(2, daysPriorToNow(1));
 
     await expect(runPlugin(context)).resolves.toBe(true);
 
     expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(8, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).not.toHaveBeenNthCalledWith(10, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+      taskAssignees: [2],
+      caller: STRINGS.LOGS_ANON_CALLER,
+    });
+    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
   it("Should include the previously excluded repo", async () => {
     const context = createContext(1, 1, []);
     const infoSpy = jest.spyOn(context.logger, "info");
-    createComment(5, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
+    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
     createEvent(2, daysPriorToNow(1));
 
     await expect(runPlugin(context)).resolves.toBe(true);
 
     expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(8, `Nothing to do for ${getIssueHtmlUrl(4)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(10, `Nothing to do for https://github.com/ubiquity/private-repo/issues/5, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+      taskAssignees: [2],
+      caller: STRINGS.LOGS_ANON_CALLER,
+    });
+    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
   it("Should eject the user after the disqualification period", async () => {
@@ -116,7 +124,7 @@ describe("User start/stop", () => {
     const infoSpy = jest.spyOn(context.logger, "info");
 
     const timestamp = daysPriorToNow(9);
-    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
+    createComment(3, 4, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
     createEvent(2, timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
@@ -124,26 +132,30 @@ describe("User start/stop", () => {
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Passed the deadline on ${getIssueHtmlUrl(1)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Passed the deadline on ${getIssueHtmlUrl(2)} and no activity is detected, removing assignees.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the deadline on ${getIssueHtmlUrl(3)} and no activity is detected, removing assignees.`);
-
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+      taskAssignees: [2],
+      caller: STRINGS.LOGS_ANON_CALLER,
+    });
+    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
 
   it("Should warn the user after the warning period", async () => {
-    const context = createContext(4, 2);
+    const context = createContext(3, 2);
     const timestamp = daysPriorToNow(5);
 
-    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
+    createComment(3, 2, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
-    const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     await runPlugin(context);
 
-    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     const comments = db.issueComments.getAll();
@@ -153,23 +165,21 @@ describe("User start/stop", () => {
   });
 
   it("Should have nothing do within the warning period", async () => {
-    const context = createContext(4, 2);
+    const context = createContext(1, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
     const timestamp = daysPriorToNow(2);
-    createComment(3, 3, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
+    createComment(3, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
-    const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
-    expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+    const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
 
     await runPlugin(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Nothing to do for ${getIssueHtmlUrl(3)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
 
-    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
-    expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 1 } } });
+    expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
   });
 
   it("Should handle collecting linked PRs", async () => {
