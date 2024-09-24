@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 import { Context } from "../types/context";
 import { ListIssueForRepo } from "../types/github-types";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
+import { TimelineEvents } from "../types/plugin-inputs";
 
 /**
  * Retrieves the deadline with the threshold for the issue.
@@ -52,7 +53,7 @@ export async function getDeadlineWithThreshold(
     if (!o.event) {
       return false;
     }
-    return eventWhitelist.includes(o.event);
+    return eventWhitelist.includes(o.event as TimelineEvents);
   });
 
   // adding the buffer onto the already established issueStart + timeLabelDuration

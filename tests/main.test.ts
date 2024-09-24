@@ -14,6 +14,7 @@ import { botAssignmentComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/stri
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
 import ms from "ms";
+import { TypeBoxError } from "@sinclair/typebox";
 
 dotenv.config();
 const octokit = jest.requireActual("@octokit/rest");
@@ -31,7 +32,19 @@ describe("User start/stop", () => {
   beforeEach(async () => {
     await setupTests();
   });
-
+  it("should throw an error if the whitelist events are incorrect", () => {
+    expect(() =>
+      Value.Decode(
+        userActivityWatcherSettingsSchema,
+        Value.Default(userActivityWatcherSettingsSchema, {
+          warning: "12 days",
+          disqualification: "2 days",
+          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+          eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+        })
+      )
+    ).toThrow(TypeBoxError);
+  });
   it("Should parse thresholds", async () => {
     const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
     expect(settings).toEqual({
@@ -47,10 +60,25 @@ describe("User start/stop", () => {
           warning: "12 foobars",
           disqualification: "2 days",
           watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
-          eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
         })
       )
     ).toThrow(TransformDecodeError);
+  });
+  it("Should correctly transform the eventWhitelist", () => {
+    const settings = Value.Default(userActivityWatcherSettingsSchema, {
+      warning: "12 days",
+      disqualification: "2 days",
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+      eventWhitelist: [
+        "pull_request.review_requested",
+        "pull_request.ready_for_review",
+        "pull_request_review_comment.created",
+        "issue_comment.created",
+        "push",
+      ],
+    });
+    const decodedSettings = Value.Decode(userActivityWatcherSettingsSchema, settings);
+    expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
   });
   it("Should define eventWhitelist defaults if omitted", () => {
     const settings = Value.Default(userActivityWatcherSettingsSchema, {
@@ -67,6 +95,8 @@ describe("User start/stop", () => {
     }) as UserActivityWatcherSettings;
 
     const decodedSettings = Value.Decode(userActivityWatcherSettingsSchema, settings);
+
+    console.log("decodedSettings", decodedSettings);
 
     expect(decodedSettings).toEqual({
       warning: ms("3.5 days"),
