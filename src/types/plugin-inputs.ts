@@ -31,12 +31,28 @@ function thresholdType(options?: StringOptions) {
     });
 }
 
-const eventWhitelist = {
-  review_requested: "review_requested",
-  ready_for_review: "ready_for_review",
-  commented: "commented",
-  committed: "committed",
-};
+const eventWhitelist = [
+  "pull_request.review_requested",
+  "pull_request.ready_for_review",
+  "pull_request_review_comment.created",
+  "issue_comment.created",
+  "push",
+]
+
+type WhitelistEvents = typeof eventWhitelist[number];
+type TimelineEvents = "review_requested" | "ready_for_review" | "commented" | "committed";
+
+function mapWebhookToEvent(webhook: string) {
+  const roleMap: Map<WhitelistEvents, TimelineEvents> = new Map([
+    ["pull_request.review_requested", "review_requested"],
+    ["pull_request.ready_for_review", "ready_for_review"],
+    ["pull_request_review_comment.created", "commented"],
+    ["issue_comment.created", "commented"],
+    ["push", "committed"],
+  ]);
+
+  return roleMap.get(webhook);
+}
 
 export const userActivityWatcherSettingsSchema = T.Object(
   {
@@ -60,7 +76,30 @@ export const userActivityWatcherSettingsSchema = T.Object(
     /**
      * List of events to consider as valid activity on a task
      */
-    eventWhitelist: T.Array(T.String(), { default: Object.values(eventWhitelist) }),
+    eventWhitelist: T.Transform(T.Array(T.String(), { default: eventWhitelist })).Decode((value) => {
+      const validEvents = Object.values(eventWhitelist);
+      let eventsStripped = []
+      for (const event of value) {
+        if (!validEvents.includes(event)) {
+          throw new TypeBoxError(`Invalid event [${event}]`);
+        }
+
+        eventsStripped.push(mapWebhookToEvent(event));
+      }
+
+      return eventsStripped as TimelineEvents[];
+    })
+      .Encode((value) => value.map((event) => {
+        const roleMap: Map<TimelineEvents, WhitelistEvents> = new Map([
+          ["review_requested", "pull_request.review_requested"],
+          ["ready_for_review", "pull_request.ready_for_review"],
+          ["commented", "pull_request_review_comment.created"],
+          ["commented", "issue_comment.created"],
+          ["committed", "push"],
+        ]);
+
+        return roleMap.get(event as TimelineEvents) as WhitelistEvents;
+      })),
   },
   { default: {} }
 );
