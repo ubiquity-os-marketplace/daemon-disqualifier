@@ -40,7 +40,8 @@
     "dotenv": "16.4.5",
     "luxon": "3.4.4",
     "ms": "2.1.3",
-    "tsx": "4.11.2"
+    "tsx": "4.11.2",
+    "typebox-validators": "0.3.5"
   },
   "devDependencies": {
     "@commitlint/cli": "19.3.0",

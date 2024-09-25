@@ -1,6 +1,7 @@
 import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
 import ms from "ms";
+import { StandardValidator } from "typebox-validators";
 
 export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push";
 
@@ -51,4 +52,12 @@ export const userActivityWatcherSettingsSchema = T.Object({
   }),
 });
 
+export const pluginSettingsValidator = new StandardValidator(userActivityWatcherSettingsSchema);
+
 export type UserActivityWatcherSettings = StaticDecode<typeof userActivityWatcherSettingsSchema>;
+
+export const envSchema = T.Object({});
+
+export const envValidator = new StandardValidator(envSchema);
+
+export type Env = StaticDecode<typeof envSchema>;
