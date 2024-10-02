@@ -27,21 +27,23 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const path = require('path');
+            import { promises as fs } from 'fs';
+            import path from 'path';
 
-            const { pluginSettingsSchema } = require('./src/types/plugin-inputs.js');
+            import { pluginSettingsSchema } from './dist/types.js';  // Ensure the `.js` extension is included
 
-            const manifestPath = path.resolve("${{ github.workspace }}", './manifest.json');
-            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            (async () => {
+              const manifestPath = path.resolve("${{ github.workspace }}", './manifest.json');
+              const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
 
-            const configuration = JSON.stringify(pluginSettingsSchema);
+              const configuration = JSON.stringify(pluginSettingsSchema);
 
-            manifest["configuration"] = JSON.parse(configuration);
+              manifest["configuration"] = JSON.parse(configuration);
 
-            const updatedManifest = JSON.stringify(manifest, null, 2)
-            console.log('Updated manifest:', updatedManifest);
-            fs.writeFileSync(manifestPath, updatedManifest);
+              const updatedManifest = JSON.stringify(manifest, null, 2);
+              console.log('Updated manifest:', updatedManifest);
+              await fs.writeFile(manifestPath, updatedManifest);
+            })();
 
       - name: Commit and Push generated types
         run: |
