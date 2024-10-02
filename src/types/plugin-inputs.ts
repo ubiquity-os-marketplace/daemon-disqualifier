@@ -9,7 +9,7 @@ export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   stateId: string;
   eventName: T;
   eventPayload: WebhookEvent<T>["payload"];
-  settings: UserActivityWatcherSettings;
+  settings: PluginSettings;
   authToken: string;
   ref: string;
 }
@@ -32,7 +32,7 @@ function thresholdType(options?: StringOptions) {
     });
 }
 
-export const userActivityWatcherSettingsSchema = T.Object({
+export const pluginSettingsSchema = T.Object({
   /**
    * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
    */
@@ -52,9 +52,9 @@ export const userActivityWatcherSettingsSchema = T.Object({
   }),
 });
 
-export const pluginSettingsValidator = new StandardValidator(userActivityWatcherSettingsSchema);
+export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
 
-export type UserActivityWatcherSettings = StaticDecode<typeof userActivityWatcherSettingsSchema>;
+export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;
 
 export const envSchema = T.Object({});
 

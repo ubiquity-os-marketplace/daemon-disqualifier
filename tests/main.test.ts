@@ -1,7 +1,7 @@
 import { drop } from "@mswjs/data";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { runPlugin } from "../src/run";
-import { userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
+import { pluginSettingsSchema } from "../src/types/plugin-inputs";
 import { db } from "./__mocks__/db";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
@@ -32,12 +32,12 @@ describe("User start/stop", () => {
   });
 
   it("Should parse thresholds", async () => {
-    const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
+    const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
     expect(settings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] } });
     expect(() =>
       Value.Decode(
-        userActivityWatcherSettingsSchema,
-        Value.Default(userActivityWatcherSettingsSchema, {
+        pluginSettingsSchema,
+        Value.Default(pluginSettingsSchema, {
           warning: "12 foobars",
           disqualification: "2 days",
           watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
