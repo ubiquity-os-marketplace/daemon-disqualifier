@@ -2,7 +2,7 @@
   "name": "user-activity-watcher",
   "version": "1.0.0",
   "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
-  "main": "src/worker.ts",
+  "main": "src/index.ts",
   "author": "Ubiquity DAO",
   "license": "MIT",
   "type": "module",
