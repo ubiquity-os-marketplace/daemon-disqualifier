@@ -29,15 +29,13 @@ jobs:
           script: |
             import { promises as fs } from 'fs';
             import path from 'path';
-
-            import { pluginSettingsSchema } from './dist/types.js';  // Ensure the `.js` extension is included
+            import { pluginSettingsSchema } from './src/types/plugin-inputs.js';
 
             (async () => {
               const manifestPath = path.resolve("${{ github.workspace }}", './manifest.json');
               const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
 
               const configuration = JSON.stringify(pluginSettingsSchema);
-
               manifest["configuration"] = JSON.parse(configuration);
 
               const updatedManifest = JSON.stringify(manifest, null, 2);
