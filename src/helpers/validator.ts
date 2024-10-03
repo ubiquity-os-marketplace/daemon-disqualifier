@@ -36,7 +36,7 @@ export function validateAndDecodeSchemas(rawEnv: object, rawSettings: object) {
   }
 }
 
-export async function returnDataToKernel(repoToken: string, stateId: string, output: object, eventType = "return_data_to_ubiquibot_kernel") {
+export async function returnDataToKernel(repoToken: string, stateId: string, output: object, eventType = "return-data-to-ubiquity-os-kernel") {
   const octokit = new Octokit({ auth: repoToken });
   return octokit.repos.createDispatchEvent({
     owner: github.context.repo.owner,
