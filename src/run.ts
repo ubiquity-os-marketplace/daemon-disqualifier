@@ -1,4 +1,5 @@
 import { Octokit } from "@octokit/rest";
+import { returnDataToKernel } from "./helpers/validator";
 import { Context } from "./types/context";
 import { PluginInputs } from "./types/plugin-inputs";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
@@ -14,7 +15,7 @@ export async function run(inputs: PluginInputs) {
     logger: new Logs("verbose"),
   };
   await runPlugin(context);
-  return JSON.stringify({ status: 200 });
+  return returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
 }
 
 export async function runPlugin(context: Context) {
