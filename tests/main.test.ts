@@ -1,86 +1,296 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect } from "@jest/globals";
 import { drop } from "@mswjs/data";
+import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
-import { ValidationException } from "typebox-validators";
-import { getEnv } from "../src/helpers/get-env";
-import { parseDurationString } from "../src/helpers/time";
-import program from "../src/parser/payload";
-import { run } from "../src/run";
-import envConfigSchema from "../src/types/env-type";
-import { userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
-import { db as mockDb } from "./__mocks__/db";
-import dbSeed from "./__mocks__/db-seed.json";
+import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import dotenv from "dotenv";
+import ms from "ms";
+import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
+import { runPlugin } from "../src/run";
+import { Context } from "../src/types/context";
+import { pluginSettingsSchema } from "../src/types/plugin-inputs";
+import { db } from "./__mocks__/db";
+import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
+import mockUsers from "./__mocks__/mock-users";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
+import { botAssignmentComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
+dotenv.config();
+const octokit = jest.requireActual("@octokit/rest");
+
+beforeAll(() => {
+  server.listen();
+});
+afterEach(() => {
+  drop(db);
+  server.resetHandlers();
+});
 afterAll(() => server.close());
 
-jest.mock("../src/parser/payload", () => {
-  // Require is needed because mock cannot access elements out of scope
-  const cfg = require("./__mocks__/results/valid-configuration.json");
-  return {
-    stateId: 1,
-    eventName: "issues.assigned",
-    authToken: process.env.GITHUB_TOKEN,
-    ref: "",
-    eventPayload: {
-      issue: { html_url: "https://github.com/ubiquibot/user-activity-watcher/issues/1", number: 1, assignees: [{ login: "ubiquibot" }] },
-      repository: {
-        owner: {
-          login: "ubiquibot",
-        },
-        name: "user-activity-watcher",
-      },
-    },
-    settings: cfg,
-  };
-});
-
-describe("Run tests", () => {
-  beforeAll(() => {
-    drop(mockDb);
-    for (const item of dbSeed.issues) {
-      mockDb.issues.create(item);
-    }
+describe("User start/stop", () => {
+  beforeEach(async () => {
+    await setupTests();
   });
-
-  it("Should fail on invalid environment", async () => {
-    const oldEnv = { ...process.env };
-    // @ts-expect-error Testing for invalid env
-    delete process.env.SUPABASE_URL;
-    // @ts-expect-error Testing for invalid env
-    delete process.env.SUPABASE_KEY;
-    await expect(getEnv()).rejects.toEqual(new ValidationException("The environment is" + " invalid."));
-    process.env = oldEnv;
-  });
-  it("Should parse thresholds", async () => {
-    const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
-    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000 });
+  it("should throw an error if the whitelist events are incorrect", () => {
     expect(() =>
       Value.Decode(
-        userActivityWatcherSettingsSchema,
-        Value.Default(userActivityWatcherSettingsSchema, {
+        pluginSettingsSchema,
+        Value.Default(pluginSettingsSchema, {
+          warning: "12 days",
+          disqualification: "2 days",
+          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+          eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+        })
+      )
+    ).toThrow(TypeBoxError);
+  });
+  it("Should parse thresholds", async () => {
+    const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
+    expect(pluginSettings).toEqual({
+      warning: 302400000,
+      disqualification: 604800000,
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+      eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+    });
+    expect(() =>
+      Value.Decode(
+        pluginSettingsSchema,
+        Value.Default(pluginSettingsSchema, {
           warning: "12 foobars",
           disqualification: "2 days",
+          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
         })
       )
     ).toThrow(TransformDecodeError);
   });
-  it("Should run", async () => {
-    const result = await run(program, Value.Decode(envConfigSchema, process.env));
-    expect(JSON.parse(result)).toEqual({ status: "ok" });
+  it("Should correctly transform the eventWhitelist", () => {
+    const settings = Value.Default(pluginSettingsSchema, {
+      warning: "12 days",
+      disqualification: "2 days",
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+      eventWhitelist: [
+        "pull_request.review_requested",
+        "pull_request.ready_for_review",
+        "pull_request_review_comment.created",
+        "issue_comment.created",
+        "push",
+      ],
+    });
+    const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
+    expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
   });
-  it("Should parse time", () => {
-    expect(parseDurationString("Time: <1 Day").get("days")).toEqual(1);
-    expect(parseDurationString("Time: <1 Days").get("days")).toEqual(1);
-    expect(parseDurationString("Time: <1 Week").get("weeks")).toEqual(1);
-    expect(parseDurationString("Time: <1 Weeks").get("weeks")).toEqual(1);
-    expect(parseDurationString("Time: <4 Hour").get("hours")).toEqual(4);
-    expect(parseDurationString("Time: <4 Hours").get("hours")).toEqual(4);
-    expect(parseDurationString("Time: <8 Week").get("months")).toEqual(2);
-    expect(parseDurationString("Time: <8 Weeks").get("months")).toEqual(2);
-    expect(parseDurationString("Time: <3 Month").get("months")).toEqual(3);
-    expect(parseDurationString("Time: <3 Months").get("months")).toEqual(3);
+  it("Should define eventWhitelist defaults if omitted", () => {
+    const settings = Value.Default(pluginSettingsSchema, {
+      warning: "12 days",
+      disqualification: "2 days",
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+    });
+    const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
+    expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
+  });
+  it("Should define all defaults if omitted", () => {
+    const settings = Value.Default(pluginSettingsSchema, {
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] }, // has no default
+    });
+
+    const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
+
+    console.log("decodedSettings", decodedSettings);
+
+    expect(decodedSettings).toEqual({
+      warning: ms("3.5 days"),
+      disqualification: ms("7 days"),
+      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+      eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+    });
+  });
+  it("Should run", async () => {
+    const context = createContext(1, 1);
+    const result = await runPlugin(context);
+    expect(result).toBe(true);
+  });
+
+  it("Should process updates for all repos except optOut", async () => {
+    const context = createContext(1, 1);
+    const infoSpy = jest.spyOn(context.logger, "info");
+    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
+    createEvent(2, daysPriorToNow(1));
+
+    await expect(runPlugin(context)).resolves.toBe(true);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+      taskAssignees: [2],
+      caller: STRINGS.LOGS_ANON_CALLER,
+    });
+    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
+  });
+
+  it("Should include the previously excluded repo", async () => {
+    const context = createContext(1, 1, []);
+    const infoSpy = jest.spyOn(context.logger, "info");
+    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
+    createEvent(2, daysPriorToNow(1));
+
+    await expect(runPlugin(context)).resolves.toBe(true);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+      taskAssignees: [2],
+      caller: STRINGS.LOGS_ANON_CALLER,
+    });
+    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
+  });
+
+  it("Should eject the user after the disqualification period", async () => {
+    const context = createContext(4, 2);
+    const infoSpy = jest.spyOn(context.logger, "info");
+
+    const timestamp = daysPriorToNow(9);
+    createComment(3, 4, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
+    createEvent(2, timestamp);
+
+    const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+
+    await runPlugin(context);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+      taskAssignees: [2],
+      caller: STRINGS.LOGS_ANON_CALLER,
+    });
+    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(updatedIssue?.assignees).toEqual([]);
+  });
+
+  it("Should warn the user after the warning period", async () => {
+    const context = createContext(3, 2);
+    const timestamp = daysPriorToNow(5);
+
+    createComment(3, 2, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
+
+    const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+
+    await runPlugin(context);
+
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 3 } } });
+    expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
+
+    const comments = db.issueComments.getAll();
+    const latestComment = comments[comments.length - 1];
+    const partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
+    expect(latestComment.body).toContain(partialComment);
+  });
+
+  it("Should have nothing do within the warning period", async () => {
+    const context = createContext(1, 2);
+    const infoSpy = jest.spyOn(context.logger, "info");
+
+    const timestamp = daysPriorToNow(2);
+    createComment(3, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
+
+    const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
+
+    await runPlugin(context);
+
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 1 } } });
+    expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
+  });
+
+  it("Should handle collecting linked PRs", async () => {
+    const context = createContext(1, 1);
+    const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
+    const result = await collectLinkedPullRequests(context, {
+      issue_number: issue?.number as number,
+      repo: issue?.repo as string,
+      owner: issue?.owner.login as string,
+    });
+    expect(result).toHaveLength(2);
+    expect(result).toEqual([
+      {
+        url: "https://github.com/ubiquity/test-repo/pull/1",
+        title: "test",
+        body: "test",
+        state: "OPEN",
+        number: 1,
+        author: { login: "ubiquity", id: 1 },
+      },
+      {
+        url: "https://github.com/ubiquity/test-repo/pull/1",
+        title: "test",
+        body: "test",
+        state: "CLOSED",
+        number: 2,
+        author: { login: "user2", id: 2 },
+      },
+    ]);
   });
 });
+
+async function setupTests() {
+  for (const item of mockUsers) {
+    db.users.create(item);
+  }
+
+  createRepo();
+  createRepo(STRINGS.PRIVATE_REPO_NAME, 2);
+  createRepo(STRINGS.USER_ACTIVITY_WATCHER_NAME, 3);
+  createRepo(STRINGS.FILLER_REPO_NAME, 4);
+  createRepo(STRINGS.UBIQUIBOT, 5, STRINGS.UBIQUIBOT);
+
+  createIssue(1, [], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
+  // nothing to do
+  createIssue(2, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
+  // warning
+  createIssue(3, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(4), "fixes #2");
+  // disqualification
+  createIssue(4, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(12), "closes #3");
+  createIssue(5, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(12), "closes #1", STRINGS.PRIVATE_REPO_NAME);
+
+  createComment(1, 1, STRINGS.UBIQUITY);
+  createComment(2, 2, STRINGS.UBIQUITY);
+
+  createEvent(1);
+}
+
+function daysPriorToNow(days: number) {
+  return new Date(Date.now() - ONE_DAY * days).toISOString();
+}
+
+function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): Context<"issue_comment.created"> {
+  return {
+    payload: {
+      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["issue"],
+      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as Context<"issue_comment.created">["payload"]["sender"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context<"issue_comment.created">["payload"]["repository"],
+      action: "created",
+      installation: { id: 1 } as unknown as Context["payload"]["installation"],
+      organization: { login: STRINGS.UBIQUITY } as unknown as Context["payload"]["organization"],
+      comment: db.issueComments.findFirst({ where: { issueId: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["comment"],
+    },
+    logger: new Logs("debug"),
+    config: {
+      disqualification: ONE_DAY * 7,
+      warning: ONE_DAY * 3.5,
+      watch: { optOut },
+      eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+    },
+    octokit: new octokit.Octokit(),
+    eventName: "issue_comment.created",
+  };
+}

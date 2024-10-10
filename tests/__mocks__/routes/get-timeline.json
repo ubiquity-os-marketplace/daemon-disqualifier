@@ -4,6 +4,19 @@
     "node_id": "C_kwDOMDzQsNoAKDJjM2YwNzQxYTJlODJjYzc4ZTM0N2Y1YjQxYWVjOTJjM2RjNjg4MDE",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/2c3f0741a2e82cc78e347f5b41aec92c3dc68801",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/2c3f0741a2e82cc78e347f5b41aec92c3dc68801",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -32,13 +45,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "561ebf525573ce65d70c7f8fb0214ed1342c1032",
     "node_id": "C_kwDOMDzQsNoAKDU2MWViZjUyNTU3M2NlNjVkNzBjN2Y4ZmIwMjE0ZWQxMzQyYzEwMzI",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/561ebf525573ce65d70c7f8fb0214ed1342c1032",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/561ebf525573ce65d70c7f8fb0214ed1342c1032",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Fixes #2"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -67,13 +93,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "141a332505336b39c0d902027e49ce57ff98429d",
     "node_id": "C_kwDOMDzQsNoAKDE0MWEzMzI1MDUzMzZiMzljMGQ5MDIwMjdlNDljZTU3ZmY5ODQyOWQ",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/141a332505336b39c0d902027e49ce57ff98429d",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/141a332505336b39c0d902027e49ce57ff98429d",
+    "source": {
+      "issue": {
+        "number": 2,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pull/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Closes https://github.com/ubiquibot/user-activity-watcher/issues/2"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -102,13 +141,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "499d25491a0781b900556adb5f8ddb5e61338c09",
     "node_id": "C_kwDOMDzQsNoAKDQ5OWQyNTQ5MWEwNzgxYjkwMDU1NmFkYjVmOGRkYjVlNjEzMzhjMDk",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/499d25491a0781b900556adb5f8ddb5e61338c09",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/499d25491a0781b900556adb5f8ddb5e61338c09",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolved #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -137,13 +189,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "83d1e7794823d168189a6ecb99d45d9a8b88b76c",
     "node_id": "C_kwDOMDzQsNoAKDgzZDFlNzc5NDgyM2QxNjgxODlhNmVjYjk5ZDQ1ZDlhOGI4OGI3NmM",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/83d1e7794823d168189a6ecb99d45d9a8b88b76c",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/83d1e7794823d168189a6ecb99d45d9a8b88b76c",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Fixes #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -172,13 +237,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "037f7f3eaa2d25a2f5034537e46e16c63c03da8b",
     "node_id": "C_kwDOMDzQsNoAKDAzN2Y3ZjNlYWEyZDI1YTJmNTAzNDUzN2U0NmUxNmM2M2MwM2RhOGI",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/037f7f3eaa2d25a2f5034537e46e16c63c03da8b",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/037f7f3eaa2d25a2f5034537e46e16c63c03da8b",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Close #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -207,13 +285,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "417b2784352e983469c995e38833f950dc198af5",
     "node_id": "C_kwDOMDzQsNoAKDQxN2IyNzg0MzUyZTk4MzQ2OWM5OTVlMzg4MzNmOTUwZGMxOThhZjU",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/417b2784352e983469c995e38833f950dc198af5",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/417b2784352e983469c995e38833f950dc198af5",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/1",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Fix #2"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -242,13 +333,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "f6a065fc93025b4f60cfb179f33c4c4654d5df8b",
     "node_id": "C_kwDOMDzQsNoAKGY2YTA2NWZjOTMwMjViNGY2MGNmYjE3OWYzM2M0YzQ2NTRkNWRmOGI",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/f6a065fc93025b4f60cfb179f33c4c4654d5df8b",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/f6a065fc93025b4f60cfb179f33c4c4654d5df8b",
+    "source": {
+      "issue": {
+        "number": 3,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/3",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #3"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -277,13 +381,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "fb4be189de5c07794d05099acc9b61991f9813bf",
     "node_id": "C_kwDOMDzQsNoAKGZiNGJlMTg5ZGU1YzA3Nzk0ZDA1MDk5YWNjOWI2MTk5MWY5ODEzYmY",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/fb4be189de5c07794d05099acc9b61991f9813bf",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/fb4be189de5c07794d05099acc9b61991f9813bf",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #4"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -312,13 +429,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "6f19d4d0722dbcfd4e3b59ce1dddb94a550a20ac",
     "node_id": "C_kwDOMDzQsNoAKDZmMTlkNGQwNzIyZGJjZmQ0ZTNiNTljZTFkZGRiOTRhNTUwYTIwYWM",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/6f19d4d0722dbcfd4e3b59ce1dddb94a550a20ac",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/6f19d4d0722dbcfd4e3b59ce1dddb94a550a20ac",
+    "source": {
+      "issue": {
+        "number": 5,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #5"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -347,13 +477,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "2b1aaee984aee68973f4fb387465ca9b0807766a",
     "node_id": "C_kwDOMDzQsNoAKDJiMWFhZWU5ODRhZWU2ODk3M2Y0ZmIzODc0NjVjYTliMDgwNzc2NmE",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/2b1aaee984aee68973f4fb387465ca9b0807766a",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/2b1aaee984aee68973f4fb387465ca9b0807766a",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -382,13 +525,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "d5824e5e2e6fd5d87dea2165189654cc1ef3ffd3",
     "node_id": "C_kwDOMDzQsNoAKGQ1ODI0ZTVlMmU2ZmQ1ZDg3ZGVhMjE2NTE4OTY1NGNjMWVmM2ZmZDM",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/d5824e5e2e6fd5d87dea2165189654cc1ef3ffd3",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/d5824e5e2e6fd5d87dea2165189654cc1ef3ffd3",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -417,13 +573,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "connected"
   },
   {
     "sha": "f256464e5c7fe5aff9275af1dc8d123b43a3a2bc",
     "node_id": "C_kwDOMDzQsNoAKGYyNTY0NjRlNWM3ZmU1YWZmOTI3NWFmMWRjOGQxMjNiNDNhM2EyYmM",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/f256464e5c7fe5aff9275af1dc8d123b43a3a2bc",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/f256464e5c7fe5aff9275af1dc8d123b43a3a2bc",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -452,13 +621,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "a1f914df8a63d77a9e808b5a9224c0dcb5f86baa",
     "node_id": "C_kwDOMDzQsNoAKGExZjkxNGRmOGE2M2Q3N2E5ZTgwOGI1YTkyMjRjMGRjYjVmODZiYWE",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/a1f914df8a63d77a9e808b5a9224c0dcb5f86baa",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/a1f914df8a63d77a9e808b5a9224c0dcb5f86baa",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -487,13 +669,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "bb6a38644d22f86009b9142e56a2e4d2b33b8eff",
     "node_id": "C_kwDOMDzQsNoAKGJiNmEzODY0NGQyMmY4NjAwOWI5MTQyZTU2YTJlNGQyYjMzYjhlZmY",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/bb6a38644d22f86009b9142e56a2e4d2b33b8eff",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/bb6a38644d22f86009b9142e56a2e4d2b33b8eff",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "github-actions[bot]",
       "email": "github-actions[bot]@users.noreply.github.com",
@@ -522,13 +717,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "86d6aee1b28f9fb8f9a9b7c871c1880cd376e9fa",
     "node_id": "C_kwDOMDzQsNoAKDg2ZDZhZWUxYjI4ZjlmYjhmOWE5YjdjODcxYzE4ODBjZDM3NmU5ZmE",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/86d6aee1b28f9fb8f9a9b7c871c1880cd376e9fa",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/86d6aee1b28f9fb8f9a9b7c871c1880cd376e9fa",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -557,13 +765,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "d8bab65d4f721339bed9918be06bd3bcbf8cc80d",
     "node_id": "C_kwDOMDzQsNoAKGQ4YmFiNjVkNGY3MjEzMzliZWQ5OTE4YmUwNmJkM2JjYmY4Y2M4MGQ",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/d8bab65d4f721339bed9918be06bd3bcbf8cc80d",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/d8bab65d4f721339bed9918be06bd3bcbf8cc80d",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "github-actions[bot]",
       "email": "github-actions[bot]@users.noreply.github.com",
@@ -592,13 +813,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "0f257468779dca54f9da5c15c66f6d5a56cedc14",
     "node_id": "C_kwDOMDzQsNoAKDBmMjU3NDY4Nzc5ZGNhNTRmOWRhNWMxNWM2NmY2ZDVhNTZjZWRjMTQ",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/0f257468779dca54f9da5c15c66f6d5a56cedc14",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/0f257468779dca54f9da5c15c66f6d5a56cedc14",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -627,13 +861,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "dce9745932f9adc27b7f8004e0352b2d62f600bb",
     "node_id": "C_kwDOMDzQsNoAKGRjZTk3NDU5MzJmOWFkYzI3YjdmODAwNGUwMzUyYjJkNjJmNjAwYmI",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/dce9745932f9adc27b7f8004e0352b2d62f600bb",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/dce9745932f9adc27b7f8004e0352b2d62f600bb",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -662,13 +909,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "68c72e35f80eea8fa7319ebf2e68e536fb41dc33",
     "node_id": "C_kwDOMDzQsNoAKDY4YzcyZTM1ZjgwZWVhOGZhNzMxOWViZjJlNjhlNTM2ZmI0MWRjMzM",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/68c72e35f80eea8fa7319ebf2e68e536fb41dc33",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/68c72e35f80eea8fa7319ebf2e68e536fb41dc33",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -697,13 +957,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "b1c379a1792a93f2ebd2112039790a45c5eab1f6",
     "node_id": "C_kwDOMDzQsNoAKGIxYzM3OWExNzkyYTkzZjJlYmQyMTEyMDM5NzkwYTQ1YzVlYWIxZjY",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/b1c379a1792a93f2ebd2112039790a45c5eab1f6",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/b1c379a1792a93f2ebd2112039790a45c5eab1f6",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -732,13 +1005,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "4014c0b6ac7a5a6c6a421542758d68b13171a27c",
     "node_id": "C_kwDOMDzQsNoAKDQwMTRjMGI2YWM3YTVhNmM2YTQyMTU0Mjc1OGQ2OGIxMzE3MWEyN2M",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/4014c0b6ac7a5a6c6a421542758d68b13171a27c",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/4014c0b6ac7a5a6c6a421542758d68b13171a27c",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -767,13 +1053,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "aeba8b437baa5f7178c44cfae09a565d1335e3bf",
     "node_id": "C_kwDOMDzQsNoAKGFlYmE4YjQzN2JhYTVmNzE3OGM0NGNmYWUwOWE1NjVkMTMzNWUzYmY",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/aeba8b437baa5f7178c44cfae09a565d1335e3bf",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/aeba8b437baa5f7178c44cfae09a565d1335e3bf",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -802,13 +1101,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "47b64a93175c4b452059e50568c9427507dd92ac",
     "node_id": "C_kwDOMDzQsNoAKDQ3YjY0YTkzMTc1YzRiNDUyMDU5ZTUwNTY4Yzk0Mjc1MDdkZDkyYWM",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/47b64a93175c4b452059e50568c9427507dd92ac",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/47b64a93175c4b452059e50568c9427507dd92ac",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -837,13 +1149,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "7deda8b1d00b6e6c3b003be0fd7490fe7dac3992",
     "node_id": "C_kwDOMDzQsNoAKDdkZWRhOGIxZDAwYjZlNmMzYjAwM2JlMGZkNzQ5MGZlN2RhYzM5OTI",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/7deda8b1d00b6e6c3b003be0fd7490fe7dac3992",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/7deda8b1d00b6e6c3b003be0fd7490fe7dac3992",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -872,13 +1197,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "c2fbb92c9f02679766efecfb5f801559e9b1e5ba",
     "node_id": "C_kwDOMDzQsNoAKGMyZmJiOTJjOWYwMjY3OTc2NmVmZWNmYjVmODAxNTU5ZTliMWU1YmE",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/c2fbb92c9f02679766efecfb5f801559e9b1e5ba",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/c2fbb92c9f02679766efecfb5f801559e9b1e5ba",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -907,13 +1245,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "f97acec24cff4bcc60487c6d06c0e66c65059dba",
     "node_id": "C_kwDOMDzQsNoAKGY5N2FjZWMyNGNmZjRiY2M2MDQ4N2M2ZDA2YzBlNjZjNjUwNTlkYmE",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/f97acec24cff4bcc60487c6d06c0e66c65059dba",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/f97acec24cff4bcc60487c6d06c0e66c65059dba",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -942,13 +1293,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "1eb4e1aab67a2946d5fcdd517f248523ef62e5af",
     "node_id": "C_kwDOMDzQsNoAKDFlYjRlMWFhYjY3YTI5NDZkNWZjZGQ1MTdmMjQ4NTIzZWY2MmU1YWY",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/1eb4e1aab67a2946d5fcdd517f248523ef62e5af",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/1eb4e1aab67a2946d5fcdd517f248523ef62e5af",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -977,13 +1341,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "e191bb71302a0612a541e8059b34b24ccef277a5",
     "node_id": "C_kwDOMDzQsNoAKGUxOTFiYjcxMzAyYTA2MTJhNTQxZTgwNTliMzRiMjRjY2VmMjc3YTU",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/e191bb71302a0612a541e8059b34b24ccef277a5",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/e191bb71302a0612a541e8059b34b24ccef277a5",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "ubiquibot",
       "email": "ubiquibot@ubq.fi",
@@ -1012,13 +1389,26 @@
       "signature": null,
       "payload": null
     },
-    "event": "committed"
+    "event": "cross-referenced"
   },
   {
     "sha": "be21381a33d906f1cb04e216dcf70a119a35ef7a",
     "node_id": "C_kwDOMDzQsNoAKGJlMjEzODFhMzNkOTA2ZjFjYjA0ZTIxNmRjZjcwYTExOWEzNWVmN2E",
     "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/git/commits/be21381a33d906f1cb04e216dcf70a119a35ef7a",
     "html_url": "https://github.com/ubiquibot/user-activity-watcher/commit/be21381a33d906f1cb04e216dcf70a119a35ef7a",
+    "source": {
+      "issue": {
+        "number": 1,
+        "html_url": "https://github.com/ubiquity/user-activity-watcher/pulls/2",
+        "pull_request": {
+          "merged_at": null
+        },
+        "owner": {
+          "login": "ubiquity"
+        },
+        "body": "Resolves #1"
+      }
+    },
     "author": {
       "name": "github-actions[bot]",
       "email": "41898282+github-actions[bot]@users.noreply.github.com",
@@ -1047,6 +1437,6 @@
       "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJmXlkPCRC1aQ7uu5UhlAAAh0YQAFV1gc8M2QWmvmR9TK6zhDlM\ni9Yjk9q92ZyyauNcTv4nv1tCm9FRbG+HcomH8mxDiysY1GvPGhNoiKXYeIyueQY6\nGA8dOd6S/OBbLTOKyor7iXyJTz8iaW1GuCPKvoEt9CKcc5rHgx9QX/Q9+VM9SH5d\npgIMOCaCgwxHXtVXURic+zY1FSRSr83b30OmLxRIQkWQx3QtS+eQzxWls4DaRtuz\nJxc+V1igl90s/fAO/5zrVAFSrl/4loFXmGC3VBEdDB/kLSfdJqdevLC3bcdK0NEr\ntJ4RppK2QRf+wl6VNUgmTisfcmPoIH9WhALdcbzHzyAcP9qgM+yPXeyYKMPXuMbw\nZgFkpRtGWJ8YsGwHLAYtGvRmTfKrzntSy1UlWD8bNOR7IkVvOG8iECN6tTm8YIUw\nXS33KxNeurNhdEgVJtwIvCmz4866nkAm3jV8rcGANrM+EdzuclFeA4qNLoump4S0\nr8lz1syX/pf2HUL5uaLJfLRJvNTo+T8obF6Qpaj2AnPfMJMdZkSDZcvhKc5l1T+w\n50NvAj389LWhgxixlr3caYzlt+EpqT2u/TIL3ZyLKrVJ/Qojt/m813inQDdYdUUp\naCIF5nUP+E04F4vRMyg9+gODAeVnN4j82+Qv22v/hwPOqpGxUKCHmbh4YnAhqDjY\nAJTCJ320ZROttEPNXJEE\n=rj+7\n-----END PGP SIGNATURE-----\n",
       "payload": "tree 76e639aa66bc0a51fcc0a149dbe16eac3bfff79c\nparent e191bb71302a0612a541e8059b34b24ccef277a5\nauthor github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com> 1717459215 +0000\ncommitter GitHub <noreply@github.com> 1717459215 +0000\n\nchore(main): release 1.0.0"
     },
-    "event": "committed"
+    "event": "cross-referenced"
   }
 ]
