@@ -41,14 +41,13 @@ export function createIssue(id: number, assignees: { login: string; id: number }
   });
 }
 
-export function createEvent() {
+export function createEvent(id: number, created_at = new Date(Date.now() - ONE_DAY).toISOString()) {
   db.event.create({
-    id: 1,
+    id,
     actor: {
       id: 1,
       type: "User",
       login: "ubiquity",
-      name: null,
     },
     owner: "ubiquity",
     repo: "test-repo",
@@ -56,7 +55,7 @@ export function createEvent() {
     event: "assigned",
     commit_id: null,
     commit_url: "https://github.com/ubiquity/test-repo/commit/1",
-    created_at: new Date(Date.now() - ONE_DAY).toISOString(),
+    created_at,
     assignee: {
       login: "ubiquity",
     },
