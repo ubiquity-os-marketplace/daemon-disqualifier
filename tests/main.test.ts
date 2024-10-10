@@ -47,9 +47,7 @@ describe("User start/stop", () => {
   });
   it("Should parse thresholds", async () => {
     const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
-    expect(pluginSettings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] } });
-    const userActivitySettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
-    expect(userActivitySettings).toEqual({
+    expect(pluginSettings).toEqual({
       warning: 302400000,
       disqualification: 604800000,
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
