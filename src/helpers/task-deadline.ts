@@ -62,7 +62,7 @@ export async function getDeadlineWithThreshold(
 
   // if there is any activity that has happened after the deadline, we need to adjust the deadlineWithThreshold
   if (filteredActivity?.length) {
-    // use the most recent activity or the intial deadline
+    // use the most recent activity or the initial deadline
     const lastActivity = filteredActivity[0].created_at ? DateTime.fromISO(filteredActivity[0].created_at) : deadline;
     if (!lastActivity.isValid) {
       logger.error(`Invalid date found on last activity for ${issue.html_url}`);
