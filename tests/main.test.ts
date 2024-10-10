@@ -1,7 +1,11 @@
 import { drop } from "@mswjs/data";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { runPlugin } from "../src/run";
+<<<<<<< HEAD
 import { UserActivityWatcherSettings, userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
+=======
+import { pluginSettingsSchema } from "../src/types/plugin-inputs";
+>>>>>>> development
 import { db } from "./__mocks__/db";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
@@ -46,6 +50,7 @@ describe("User start/stop", () => {
     ).toThrow(TypeBoxError);
   });
   it("Should parse thresholds", async () => {
+<<<<<<< HEAD
     const settings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
     expect(settings).toEqual({
       warning: 302400000,
@@ -53,10 +58,14 @@ describe("User start/stop", () => {
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
     });
+=======
+    const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
+    expect(settings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] } });
+>>>>>>> development
     expect(() =>
       Value.Decode(
-        userActivityWatcherSettingsSchema,
-        Value.Default(userActivityWatcherSettingsSchema, {
+        pluginSettingsSchema,
+        Value.Default(pluginSettingsSchema, {
           warning: "12 foobars",
           disqualification: "2 days",
           watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },

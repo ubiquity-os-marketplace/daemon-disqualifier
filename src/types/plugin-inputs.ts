@@ -1,6 +1,7 @@
 import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
 import ms from "ms";
+import { StandardValidator } from "typebox-validators";
 
 export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push";
 
@@ -8,7 +9,7 @@ export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   stateId: string;
   eventName: T;
   eventPayload: WebhookEvent<T>["payload"];
-  settings: UserActivityWatcherSettings;
+  settings: PluginSettings;
   authToken: string;
   ref: string;
 }
@@ -31,6 +32,7 @@ function thresholdType(options?: StringOptions) {
     });
 }
 
+<<<<<<< HEAD
 const eventWhitelist = [
   "pull_request.review_requested",
   "pull_request.ready_for_review",
@@ -120,5 +122,34 @@ export const userActivityWatcherSettingsSchema = T.Object(
   },
   { default: {} }
 );
+=======
+export const pluginSettingsSchema = T.Object({
+  /**
+   * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
+   */
+  warning: thresholdType({ default: "3.5 days" }),
+  /**
+   * By default all repositories are watched. Use this option to opt-out from watching specific repositories
+   * within your organization. The value is an array of repository names.
+   */
+  watch: T.Object({
+    optOut: T.Array(T.String()),
+  }),
+  /**
+   * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
+   */
+  disqualification: thresholdType({
+    default: "7 days",
+  }),
+});
+>>>>>>> development
 
-export type UserActivityWatcherSettings = StaticDecode<typeof userActivityWatcherSettingsSchema>;
+export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
+
+export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;
+
+export const envSchema = T.Object({});
+
+export const envValidator = new StandardValidator(envSchema);
+
+export type Env = StaticDecode<typeof envSchema>;
