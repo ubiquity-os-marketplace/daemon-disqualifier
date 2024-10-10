@@ -32,26 +32,6 @@ function thresholdType(options?: StringOptions) {
     });
 }
 
-export const pluginSettingsSchema = T.Object({
-  /**
-   * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
-   */
-  warning: thresholdType({ default: "3.5 days" }),
-  /**
-   * By default all repositories are watched. Use this option to opt-out from watching specific repositories
-   * within your organization. The value is an array of repository names.
-   */
-  watch: T.Object({
-    optOut: T.Array(T.String()),
-  }),
-  /**
-   * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
-   */
-  disqualification: thresholdType({
-    default: "7 days",
-  }),
-});
-
 const eventWhitelist = [
   "pull_request.review_requested",
   "pull_request.ready_for_review",
@@ -81,7 +61,7 @@ function mapWebhookToEvent(webhook: WhitelistEvents) {
   return roleMap.get(webhook);
 }
 
-export const userActivityWatcherSettingsSchema = T.Object(
+export const pluginSettingsSchema = T.Object(
   {
     /**
      * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days

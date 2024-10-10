@@ -8,7 +8,7 @@ import ms from "ms";
 import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
 import { runPlugin } from "../src/run";
 import { Context } from "../src/types/context";
-import { pluginSettingsSchema, userActivityWatcherSettingsSchema } from "../src/types/plugin-inputs";
+import { pluginSettingsSchema } from "../src/types/plugin-inputs";
 import { db } from "./__mocks__/db";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
@@ -35,8 +35,8 @@ describe("User start/stop", () => {
   it("should throw an error if the whitelist events are incorrect", () => {
     expect(() =>
       Value.Decode(
-        userActivityWatcherSettingsSchema,
-        Value.Default(userActivityWatcherSettingsSchema, {
+        pluginSettingsSchema,
+        Value.Default(pluginSettingsSchema, {
           warning: "12 days",
           disqualification: "2 days",
           watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
@@ -48,7 +48,7 @@ describe("User start/stop", () => {
   it("Should parse thresholds", async () => {
     const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
     expect(pluginSettings).toEqual({ warning: 302400000, disqualification: 604800000, watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] } });
-    const userActivitySettings = Value.Decode(userActivityWatcherSettingsSchema, Value.Default(userActivityWatcherSettingsSchema, cfg));
+    const userActivitySettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
     expect(userActivitySettings).toEqual({
       warning: 302400000,
       disqualification: 604800000,
@@ -67,7 +67,7 @@ describe("User start/stop", () => {
     ).toThrow(TransformDecodeError);
   });
   it("Should correctly transform the eventWhitelist", () => {
-    const settings = Value.Default(userActivityWatcherSettingsSchema, {
+    const settings = Value.Default(pluginSettingsSchema, {
       warning: "12 days",
       disqualification: "2 days",
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
@@ -79,24 +79,24 @@ describe("User start/stop", () => {
         "push",
       ],
     });
-    const decodedSettings = Value.Decode(userActivityWatcherSettingsSchema, settings);
+    const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
     expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
   });
   it("Should define eventWhitelist defaults if omitted", () => {
-    const settings = Value.Default(userActivityWatcherSettingsSchema, {
+    const settings = Value.Default(pluginSettingsSchema, {
       warning: "12 days",
       disqualification: "2 days",
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
     });
-    const decodedSettings = Value.Decode(userActivityWatcherSettingsSchema, settings);
+    const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
     expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
   });
   it("Should define all defaults if omitted", () => {
-    const settings = Value.Default(userActivityWatcherSettingsSchema, {
+    const settings = Value.Default(pluginSettingsSchema, {
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] }, // has no default
     });
 
-    const decodedSettings = Value.Decode(userActivityWatcherSettingsSchema, settings);
+    const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
 
     console.log("decodedSettings", decodedSettings);
 
