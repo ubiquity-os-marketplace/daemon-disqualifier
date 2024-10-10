@@ -7,6 +7,7 @@
     "push"
   ],
   "configuration": {
+    "default": {},
     "type": "object",
     "properties": {
       "warning": {
@@ -30,12 +31,26 @@
       "disqualification": {
         "default": "7 days",
         "type": "string"
+      },
+      "eventWhitelist": {
+        "default": [
+          "pull_request.review_requested",
+          "pull_request.ready_for_review",
+          "pull_request_review_comment.created",
+          "issue_comment.created",
+          "push"
+        ],
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
       }
     },
     "required": [
       "warning",
       "watch",
-      "disqualification"
+      "disqualification",
+      "eventWhitelist"
     ]
   }
 }
