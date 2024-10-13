@@ -14,6 +14,7 @@ export async function run(inputs: PluginInputs) {
     octokit,
     logger: new Logs("verbose"),
   };
+  context.logger.debug("Will run with the following configuration:", { configuration: context.config });
   await runPlugin(context);
   return returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
 }

@@ -68,9 +68,12 @@ export const pluginSettingsSchema = T.Object(
      * By default, all repositories are watched. Use this option to opt-out from watching specific repositories
      * within your organization. The value is an array of repository names.
      */
-    watch: T.Object({
-      optOut: T.Array(T.String()),
-    }),
+    watch: T.Object(
+      {
+        optOut: T.Array(T.String(), { default: [] }),
+      },
+      { default: {} }
+    ),
     /**
      * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
      */
