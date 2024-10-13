@@ -38,14 +38,9 @@ const eventWhitelist = [
   "pull_request_review_comment.created",
   "issue_comment.created",
   "push",
-];
+] as const;
 
-type WhitelistEvents =
-  | "push"
-  | "pull_request.review_requested"
-  | "pull_request.ready_for_review"
-  | "pull_request_review_comment.created"
-  | "issue_comment.created";
+type WhitelistEvents = (typeof eventWhitelist)[number];
 
 export type TimelineEvents = "review_requested" | "ready_for_review" | "commented" | "committed";
 
@@ -61,6 +56,8 @@ function mapWebhookToEvent(webhook: WhitelistEvents) {
   return roleMap.get(webhook);
 }
 
+const EventWhitelistType = T.Union(eventWhitelist.map((event) => T.Literal(event)));
+
 export const pluginSettingsSchema = T.Object(
   {
     /**
@@ -68,7 +65,7 @@ export const pluginSettingsSchema = T.Object(
      */
     warning: thresholdType({ default: "3.5 days" }),
     /**
-     * By default all repositories are watched. Use this option to opt-out from watching specific repositories
+     * By default, all repositories are watched. Use this option to opt-out from watching specific repositories
      * within your organization. The value is an array of repository names.
      */
     watch: T.Object({
@@ -83,41 +80,12 @@ export const pluginSettingsSchema = T.Object(
     /**
      * List of events to consider as valid activity on a task
      */
-    eventWhitelist: T.Transform(T.Array(T.String(), { default: eventWhitelist }))
-      .Decode((value) => {
-        const validEvents = Object.values(eventWhitelist);
-        let eventsStripped: TimelineEvents[] = [];
-        for (const event of value) {
-          if (!validEvents.includes(event)) {
-            throw new TypeBoxError(`Invalid event [${event}]`);
-          }
-
-          const mappedEvent = mapWebhookToEvent(event as WhitelistEvents);
-
-          if (!mappedEvent) {
-            throw new TypeBoxError(`Invalid event [${event}]`);
-          }
-
-          if (!eventsStripped.includes(mappedEvent)) {
-            eventsStripped.push(mappedEvent);
-          }
-        }
-
-        return eventsStripped as TimelineEvents[];
-      })
-      .Encode((value) =>
-        value.map((event) => {
-          const roleMap: Map<TimelineEvents, WhitelistEvents> = new Map([
-            ["review_requested", "pull_request.review_requested"],
-            ["ready_for_review", "pull_request.ready_for_review"],
-            ["commented", "pull_request_review_comment.created"],
-            ["commented", "issue_comment.created"],
-            ["committed", "push"],
-          ]);
-
-          return roleMap.get(event as TimelineEvents) as WhitelistEvents;
-        })
-      ),
+    eventWhitelist: T.Array(EventWhitelistType, {
+      default: eventWhitelist,
+      transform: (value: WhitelistEvents[]) => {
+        return Array.from(new Set(value.map(mapWebhookToEvent)));
+      },
+    }),
   },
   { default: {} }
 );
