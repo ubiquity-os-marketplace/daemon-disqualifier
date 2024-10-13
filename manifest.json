@@ -42,7 +42,28 @@
         ],
         "type": "array",
         "items": {
-          "type": "string"
+          "anyOf": [
+            {
+              "const": "pull_request.review_requested",
+              "type": "string"
+            },
+            {
+              "const": "pull_request.ready_for_review",
+              "type": "string"
+            },
+            {
+              "const": "pull_request_review_comment.created",
+              "type": "string"
+            },
+            {
+              "const": "issue_comment.created",
+              "type": "string"
+            },
+            {
+              "const": "push",
+              "type": "string"
+            }
+          ]
         }
       }
     },
