@@ -43,4 +43,9 @@ yarn test
       optOut:
         - "repoName"
         - "repoName2"
+    eventWhitelist: # these are the tail of the webhook event i.e pull_request.review_requested
+      - "review_requested"
+      - "ready_for_review"
+      - "commented"
+      - "committed"
 ```
