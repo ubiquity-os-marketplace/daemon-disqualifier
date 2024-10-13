@@ -15,9 +15,11 @@
         "type": "string"
       },
       "watch": {
+        "default": {},
         "type": "object",
         "properties": {
           "optOut": {
+            "default": [],
             "type": "array",
             "items": {
               "type": "string"
