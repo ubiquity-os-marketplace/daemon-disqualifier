@@ -5,12 +5,5 @@ outputs:
     description: "Actions taken by the watcher."
     value: ${{ steps.main.outputs.result }}
 runs:
-  using: "composite"
-  steps:
-    - run: |
-        yarn --cwd ${{ github.action_path }} --production=true
-      id: install
-      shell: bash
-    - run: yarn --cwd ${{ github.action_path }} start
-      shell: bash
-      id: main
+  using: "node20"
+  main: "dist/index.js"
