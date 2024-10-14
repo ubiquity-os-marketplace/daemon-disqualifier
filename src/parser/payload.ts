@@ -1,7 +1,7 @@
 import * as github from "@actions/github";
 import { config } from "dotenv";
 import { validateAndDecodeSchemas } from "../helpers/validator";
-import { PluginInputs } from "../types/plugin-inputs";
+import { PluginInputs } from "../types/plugin-input";
 
 config();
 
