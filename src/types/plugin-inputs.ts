@@ -89,13 +89,13 @@ export const pluginSettingsSchema = T.Object(
         let eventsStripped: TimelineEvent[] = [];
         for (const event of value) {
           if (!validEvents.includes(event as WhitelistEvent)) {
-            throw new TypeBoxError(`Invalid event [${event}]`);
+            throw new TypeBoxError(`Invalid event [${event}] (unknown event)`);
           }
 
           const mappedEvent = mapWebhookToEvent(event as WhitelistEvent);
 
           if (!mappedEvent) {
-            throw new TypeBoxError(`Invalid event [${event}]`);
+            throw new TypeBoxError(`Invalid event [${event}] (unmapped event)`);
           }
 
           if (!eventsStripped.includes(mappedEvent)) {

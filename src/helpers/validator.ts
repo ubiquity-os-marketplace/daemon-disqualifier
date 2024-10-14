@@ -6,7 +6,6 @@ import { Env, envSchema, envValidator, pluginSettingsValidator, PluginSettings, 
 export function validateAndDecodeSchemas(rawSettings: object, rawEnv: object) {
   const errors: ValueError[] = [];
 
-  console.log(rawSettings, rawEnv);
   const env = Value.Default(envSchema, rawEnv) as Env;
   if (!envValidator.test(env)) {
     for (const error of envValidator.errors(env)) {

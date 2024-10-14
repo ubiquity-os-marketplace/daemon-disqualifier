@@ -16,6 +16,9 @@ on:
       ref:
         description: "Ref"
 
+permissions:
+  contents: write
+
 jobs:
   compute:
     name: User Activity Watcher
