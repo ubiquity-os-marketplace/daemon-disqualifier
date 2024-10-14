@@ -1,5 +1,5 @@
 {
-  "name": "user-activity-watcher",
+  "name": "@ubiquity-os/daemon-disqualifier",
   "version": "1.0.0",
   "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
   "main": "src/index.ts",

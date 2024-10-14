@@ -1,9 +1,9 @@
 import * as github from "@actions/github";
 import { Octokit } from "@octokit/rest";
 import { TransformDecodeCheckError, TransformDecodeError, Value, ValueError } from "@sinclair/typebox/value";
-import { Env, envSchema, envValidator, pluginSettingsValidator, PluginSettings, pluginSettingsSchema } from "../types/plugin-inputs";
+import { Env, envSchema, envValidator, pluginSettingsValidator, PluginSettings, pluginSettingsSchema } from "../types/plugin-input";
 
-export function validateAndDecodeSchemas(rawEnv: object, rawSettings: object) {
+export function validateAndDecodeSchemas(rawSettings: object, rawEnv: object) {
   const errors: ValueError[] = [];
 
   const env = Value.Default(envSchema, rawEnv) as Env;
