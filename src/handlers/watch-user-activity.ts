@@ -14,7 +14,7 @@ export async function watchUserActivity(context: Context) {
   }
 
   for (const repo of repos) {
-    logger.info(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
+    logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
     await updateReminders(context, repo);
   }
 
