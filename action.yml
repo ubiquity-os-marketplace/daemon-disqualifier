@@ -2,17 +2,17 @@ name: "Watch Activity"
 description: "Watch user's activity."
 inputs:
   stateId:
-    description: "State Id"
+    description: "State Id to keep track on the Kernel side"
   eventName:
-    description: "Event Name"
+    description: "Event Name that triggered the run"
   eventPayload:
-    description: "Event Payload"
+    description: "Event Payload for the plugin"
   settings:
-    description: "Settings"
+    description: "Settings for the plugin"
   authToken:
-    description: "Auth Token"
+    description: "Auth Token to auth as the Kernel"
   ref:
-    description: "Ref"
+    description: "GitHub branch reference for the run"
 outputs:
   result:
     description: "Actions taken by the watcher."
