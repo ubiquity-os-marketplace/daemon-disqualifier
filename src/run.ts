@@ -12,7 +12,7 @@ export async function run(inputs: PluginInputs) {
     payload: inputs.eventPayload,
     config: inputs.settings,
     octokit,
-    logger: new Logs("verbose"),
+    logger: new Logs("debug"),
   };
   context.logger.debug("Will run with the following configuration:", { configuration: context.config });
   await runPlugin(context);

@@ -2,8 +2,6 @@ import * as core from "@actions/core";
 import program from "./parser/payload";
 import { run } from "./run";
 
-console.log("hello!");
-
 run(program)
   .then((result) => {
     console.log("Done.");
