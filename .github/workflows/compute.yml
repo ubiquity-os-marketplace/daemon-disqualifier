@@ -16,11 +16,9 @@ on:
       ref:
         description: "Ref"
 
-permissions:
-  contents: write
-
 jobs:
   compute:
+    permissions: write-all
     name: User Activity Watcher
     runs-on: ubuntu-latest
     env:
