@@ -40,12 +40,12 @@ const eventWhitelist = [
   "push",
 ] as const;
 
-type WhitelistEvents = (typeof eventWhitelist)[number];
+type WhitelistEvent = (typeof eventWhitelist)[number];
 
-export type TimelineEvents = "review_requested" | "ready_for_review" | "commented" | "committed";
+export type TimelineEvent = "review_requested" | "ready_for_review" | "commented" | "committed";
 
-function mapWebhookToEvent(webhook: WhitelistEvents) {
-  const roleMap: Map<WhitelistEvents, TimelineEvents> = new Map([
+function mapWebhookToEvent(webhook: WhitelistEvent) {
+  const roleMap: Map<WhitelistEvent, TimelineEvent> = new Map([
     ["pull_request.review_requested", "review_requested"],
     ["pull_request.ready_for_review", "ready_for_review"],
     ["pull_request_review_comment.created", "commented"],
@@ -83,12 +83,41 @@ export const pluginSettingsSchema = T.Object(
     /**
      * List of events to consider as valid activity on a task
      */
-    eventWhitelist: T.Array(EventWhitelistType, {
-      default: eventWhitelist,
-      transform: (value: WhitelistEvents[]) => {
-        return Array.from(new Set(value.map(mapWebhookToEvent)));
-      },
-    }),
+    eventWhitelist: T.Transform(T.Array(T.String(), { default: eventWhitelist }))
+      .Decode((value) => {
+        const validEvents = Object.values(eventWhitelist);
+        let eventsStripped: TimelineEvent[] = [];
+        for (const event of value) {
+          if (!validEvents.includes(event as WhitelistEvent)) {
+            throw new TypeBoxError(`Invalid event [${event}]`);
+          }
+
+          const mappedEvent = mapWebhookToEvent(event as WhitelistEvent);
+
+          if (!mappedEvent) {
+            throw new TypeBoxError(`Invalid event [${event}]`);
+          }
+
+          if (!eventsStripped.includes(mappedEvent)) {
+            eventsStripped.push(mappedEvent);
+          }
+        }
+
+        return eventsStripped as TimelineEvent[];
+      })
+      .Encode((value) =>
+        value.map((event) => {
+          const roleMap: Map<TimelineEvent, WhitelistEvent> = new Map([
+            ["review_requested", "pull_request.review_requested"],
+            ["ready_for_review", "pull_request.ready_for_review"],
+            ["commented", "pull_request_review_comment.created"],
+            ["commented", "issue_comment.created"],
+            ["committed", "push"],
+          ]);
+
+          return roleMap.get(event as TimelineEvent) as WhitelistEvent;
+        })
+      ),
   },
   { default: {} }
 );
