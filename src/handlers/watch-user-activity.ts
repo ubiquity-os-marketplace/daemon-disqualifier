@@ -14,6 +14,7 @@ export async function watchUserActivity(context: Context) {
   }
 
   for (const repo of repos) {
+    // uusd.ubq.fi
     logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
     await updateReminders(context, repo);
   }
@@ -34,13 +35,14 @@ async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
     state: "open",
   })) as ListIssueForRepo[];
 
-  for (const issue of issues) {
+  for (const issue of issues.filter((o) => o.html_url === "https://github.com/ubiquity/uusd.ubq.fi/issues/1")) {
     // I think we can safely ignore the following
     if (issue.draft || issue.pull_request || issue.locked || issue.state !== "open") {
       continue;
     }
 
     if (issue.assignees?.length || issue.assignee) {
+      // uusd-ubq-fi
       logger.debug(`Checking assigned issue: ${issue.html_url}`);
       await updateTaskReminder(context, repo, issue);
     }

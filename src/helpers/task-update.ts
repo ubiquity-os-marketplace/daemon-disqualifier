@@ -35,10 +35,10 @@ export async function updateTaskReminder(context: Context, repo: ListForOrg["dat
 
   if (now >= deadlineWithThreshold) {
     // if the issue is past due, we should unassign the user
-    await unassignUserFromIssue(context, issue);
+    // await unassignUserFromIssue(context, issue);
   } else if (now >= reminderWithThreshold) {
     // if the issue is within the reminder threshold, we should remind the assignees
-    await remindAssigneesForIssue(context, issue);
+    // await remindAssigneesForIssue(context, issue);
   } else {
     logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
   }
