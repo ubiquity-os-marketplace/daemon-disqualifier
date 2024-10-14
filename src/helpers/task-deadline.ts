@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import { Context } from "../types/context";
 import { ListIssueForRepo } from "../types/github-types";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
-import { TimelineEvent } from "../types/plugin-inputs";
+import { TimelineEvent } from "../types/plugin-input";
 
 /**
  * Retrieves the deadline with the threshold for the issue.

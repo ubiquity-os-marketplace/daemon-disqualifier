@@ -1,7 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import { returnDataToKernel } from "./helpers/validator";
 import { Context } from "./types/context";
-import { PluginInputs } from "./types/plugin-inputs";
+import { PluginInputs } from "./types/plugin-input";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { watchUserActivity } from "./handlers/watch-user-activity";
 

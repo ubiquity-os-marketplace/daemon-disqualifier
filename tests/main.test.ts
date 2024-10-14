@@ -8,7 +8,7 @@ import ms from "ms";
 import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
 import { runPlugin } from "../src/run";
 import { Context } from "../src/types/context";
-import { pluginSettingsSchema } from "../src/types/plugin-inputs";
+import { pluginSettingsSchema } from "../src/types/plugin-input";
 import { db } from "./__mocks__/db";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
