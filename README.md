@@ -44,8 +44,9 @@ yarn test
         - "repoName"
         - "repoName2"
     eventWhitelist: # these are the tail of the webhook event i.e pull_request.review_requested
-      - "review_requested"
-      - "ready_for_review"
-      - "commented"
-      - "committed"
+      - "pull_request.review_requested"
+      - "pull_request.ready_for_review"
+      - "pull_request_review_comment.created"
+      - "issue_comment.created"
+      - "push"
 ```
