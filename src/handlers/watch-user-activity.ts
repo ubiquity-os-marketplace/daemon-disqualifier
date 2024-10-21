@@ -14,7 +14,6 @@ export async function watchUserActivity(context: ContextPlugin) {
 
   await Promise.all(
     repos.map(async (repo) => {
-      // uusd.ubq.fi
       logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
       await updateReminders(context, repo);
     })
@@ -37,22 +36,19 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
   })) as ListIssueForRepo[];
 
   await Promise.all(
-    issues
-      .filter((o) => o.html_url === "https://github.com/ubiquity/uusd.ubq.fi/issues/1")
-      .map(async (issue) => {
-        // I think we can safely ignore the following
-        if (issue.draft || issue.pull_request || issue.locked || issue.state !== "open") {
-          logger.debug("Skipping issue due to the issue state.", { issue });
-          return;
-        }
+    issues.map(async (issue) => {
+      // I think we can safely ignore the following
+      if (issue.draft || issue.pull_request || issue.locked || issue.state !== "open") {
+        logger.debug("Skipping issue due to the issue state.", { issue });
+        return;
+      }
 
-        if (issue.assignees?.length || issue.assignee) {
-          // uusd-ubq-fi
-          logger.debug(`Checking assigned issue: ${issue.html_url}`);
-          await updateReminder(context, repo, issue);
-        } else {
-          logger.info("Skipping issue because no user is assigned.", { issue });
-        }
-      })
+      if (issue.assignees?.length || issue.assignee) {
+        logger.debug(`Checking assigned issue: ${issue.html_url}`);
+        await updateReminder(context, repo, issue);
+      } else {
+        logger.info("Skipping issue because no user is assigned.", { issue });
+      }
+    })
   );
 }
