@@ -38,10 +38,10 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
 
   if (now >= deadlineWithThreshold) {
     // if the issue is past due, we should unassign the user
-    // await unassignUserFromIssue(context, issue);
+    await unassignUserFromIssue(context, issue);
   } else if (now >= reminderWithThreshold) {
     // if the issue is within the reminder threshold, we should remind the assignees
-    // await remindAssigneesForIssue(context, issue);
+    await remindAssigneesForIssue(context, issue);
   } else {
     logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
   }
@@ -70,10 +70,10 @@ export async function updateReminder(context: ContextPlugin, repo: ListForOrg["d
           .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
     );
 
-    const assignedEvent = assignmentEvents.pop();
+    const assignedEvent = assignmentEvents.shift();
     const activityEvent = (await getAssigneesActivityForIssue(context, issue, handledMetadata.taskAssignees))
       .filter((o) => eventWhitelist.includes(o.event as TimelineEvent))
-      .pop();
+      .shift();
 
     if (!assignedEvent) {
       throw new Error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
@@ -89,8 +89,10 @@ export async function updateReminder(context: ContextPlugin, repo: ListForOrg["d
       mostRecentActivityDate = DateTime.fromISO(assignedEvent.created_at);
     }
 
-    const lastReminderComment = (await getCommentsFromMetadata(context, issue.number, repo.owner.login, repo.name, FOLLOWUP_HEADER)).pop();
-    const disqualificationDifference = disqualification - warning;
+    const lastReminderComment = (await getCommentsFromMetadata(context, issue.number, repo.owner.login, repo.name, FOLLOWUP_HEADER))
+      .filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate)
+      .shift();
+    const disqualificationTimeDifference = disqualification - warning;
 
     logger.info(`Handling metadata and deadline for ${issue.html_url}`, {
       now: now.toLocaleString(DateTime.DATETIME_MED),
@@ -100,13 +102,14 @@ export async function updateReminder(context: ContextPlugin, repo: ListForOrg["d
 
     if (lastReminderComment) {
       const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
-      if (lastReminderTime.plus(disqualificationDifference) >= now) {
+      mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
+      if (mostRecentActivityDate.plus({ milliseconds: disqualificationTimeDifference }) <= now) {
         await unassignUserFromIssue(context, issue);
       } else {
         logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`);
       }
     } else {
-      if (mostRecentActivityDate.plus({ milliseconds: warning }) >= now) {
+      if (mostRecentActivityDate.plus({ milliseconds: warning }) <= now) {
         await remindAssigneesForIssue(context, issue);
       } else {
         logger.info(`No reminder to send for ${issue.html_url}, still within due time.`);

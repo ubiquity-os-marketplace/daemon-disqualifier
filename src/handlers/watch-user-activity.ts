@@ -39,7 +39,12 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
     issues.map(async (issue) => {
       // I think we can safely ignore the following
       if (issue.draft || issue.pull_request || issue.locked || issue.state !== "open") {
-        logger.debug("Skipping issue due to the issue state.", { issue });
+        logger.debug(`Skipping issue ${issue.html_url} due to the issue not meeting the right criteria.`, {
+          draft: issue.draft,
+          pullRequest: !!issue.pull_request,
+          locked: issue.locked,
+          state: issue.state,
+        });
         return;
       }
 
@@ -47,7 +52,7 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
         logger.debug(`Checking assigned issue: ${issue.html_url}`);
         await updateReminder(context, repo, issue);
       } else {
-        logger.info("Skipping issue because no user is assigned.", { issue });
+        logger.info(`Skipping issue ${issue.html_url} because no user is assigned.`);
       }
     })
   );
