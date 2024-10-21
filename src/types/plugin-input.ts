@@ -1,5 +1,6 @@
 import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
+import { Context } from "@ubiquity-os/ubiquity-os-kernel";
 import ms from "ms";
 import { StandardValidator } from "typebox-validators";
 
@@ -13,6 +14,8 @@ export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
   authToken: string;
   ref: string;
 }
+
+export type ContextPlugin = Context<PluginSettings, Env, SupportedEvents>;
 
 function thresholdType(options?: StringOptions) {
   return T.Transform(T.String(options))

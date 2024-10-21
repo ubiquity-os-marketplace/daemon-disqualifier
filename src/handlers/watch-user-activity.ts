@@ -1,16 +1,15 @@
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { updateTaskReminder } from "../helpers/task-update";
-import { Context } from "../types/context";
 import { ListForOrg, ListIssueForRepo } from "../types/github-types";
+import { ContextPlugin } from "../types/plugin-input";
 
-export async function watchUserActivity(context: Context) {
+export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
   const repos = await getWatchedRepos(context);
 
   if (!repos?.length) {
-    logger.info("No watched repos have been found, no work to do.");
-    return false;
+    return { message: logger.info("No watched repos have been found, no work to do.").logMessage.raw };
   }
 
   for (const repo of repos) {
@@ -19,10 +18,10 @@ export async function watchUserActivity(context: Context) {
     await updateReminders(context, repo);
   }
 
-  return true;
+  return { message: "OK" };
 }
 
-async function updateReminders(context: Context, repo: ListForOrg["data"][0]) {
+async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][0]) {
   const { logger, octokit, payload } = context;
   const owner = payload.repository.owner?.login;
   if (!owner) {

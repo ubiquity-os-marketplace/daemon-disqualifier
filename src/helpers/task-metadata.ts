@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
-import { Context } from "../types/context";
-import { ListForOrg, ListIssueForRepo } from "../types/github-types";
 import ms from "ms";
+import { ListForOrg, ListIssueForRepo } from "../types/github-types";
+import { ContextPlugin } from "../types/plugin-input";
 
 /**
  * Retrieves assignment events from the timeline of an issue and calculates the deadline based on the time label.
@@ -11,7 +11,7 @@ import ms from "ms";
  * It returns who is assigned and the initial calculated deadline (start + time label duration).
  */
 export async function getTaskAssignmentDetails(
-  context: Context,
+  context: ContextPlugin,
   repo: ListForOrg["data"][0],
   issue: ListIssueForRepo
 ): Promise<{ startPlusLabelDuration: string; taskAssignees: number[] } | false> {

@@ -1,5 +1,5 @@
-import { Context } from "../types/context";
 import { PullRequest, User, validate } from "@octokit/graphql-schema";
+import { ContextPlugin } from "../types/plugin-input";
 
 type closedByPullRequestsReferences = {
   node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
@@ -52,7 +52,7 @@ if (queryErrors.length > 1) {
 }
 
 export async function collectLinkedPullRequests(
-  context: Context,
+  context: ContextPlugin,
   issue: {
     owner: string;
     repo: string;

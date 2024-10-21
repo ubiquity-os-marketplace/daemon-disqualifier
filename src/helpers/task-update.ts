@@ -1,11 +1,10 @@
 import { DateTime } from "luxon";
-import { Context } from "../types/context";
 import { ListForOrg, ListIssueForRepo } from "../types/github-types";
-import { remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
+import { ContextPlugin } from "../types/plugin-input";
 import { getDeadlineWithThreshold } from "./task-deadline";
 import { getTaskAssignmentDetails } from "./task-metadata";
 
-export async function updateTaskReminder(context: Context, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
+export async function updateTaskReminder(context: ContextPlugin, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
   const { logger } = context;
 
   let deadlineWithThreshold, reminderWithThreshold;

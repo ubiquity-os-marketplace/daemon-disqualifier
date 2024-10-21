@@ -1,20 +1,19 @@
 import { DateTime } from "luxon";
-import { Context } from "../types/context";
 import { ListIssueForRepo } from "../types/github-types";
+import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
-import { TimelineEvent } from "../types/plugin-input";
 
 /**
  * Retrieves the deadline with the threshold for the issue.
  *
  * Uses `startPlusLabelDuration` to set a base deadline and then checks for any activity that has happened after that.
  *
- * If activity if detected after the deadline, it will adjust the `deadlineWithThreshold` to the most recent activity.
+ * If activity is detected after the deadline, it will adjust the `deadlineWithThreshold` to the most recent activity.
  *
  * Recent activity is determined by the `eventWhitelist`.
  */
 export async function getDeadlineWithThreshold(
-  context: Context,
+  context: ContextPlugin,
   metadata: {
     startPlusLabelDuration: string | null;
     taskAssignees: number[] | undefined;

@@ -1,13 +1,13 @@
 import { DateTime } from "luxon";
 import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
-import { Context } from "../types/context";
-import { parseIssueUrl } from "./github-url";
 import { GitHubTimelineEvents, ListIssueForRepo } from "../types/github-types";
+import { ContextPlugin } from "../types/plugin-input";
+import { parseIssueUrl } from "./github-url";
 
 /**
  * Retrieves all the activity for users that are assigned to the issue. Also takes into account linked pull requests.
  */
-export async function getAssigneesActivityForIssue(context: Context, issue: ListIssueForRepo, assigneeIds: number[]) {
+export async function getAssigneesActivityForIssue(context: ContextPlugin, issue: ListIssueForRepo, assigneeIds: number[]) {
   const gitHubUrl = parseIssueUrl(issue.html_url);
   const issueEvents: GitHubTimelineEvents[] = await context.octokit.paginate(context.octokit.rest.issues.listEventsForTimeline, {
     owner: gitHubUrl.owner,
