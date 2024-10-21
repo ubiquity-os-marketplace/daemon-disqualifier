@@ -3,6 +3,7 @@ import { createActionsPlugin } from "@ubiquity-os/ubiquity-os-kernel";
 import { run } from "./run";
 import { Env, envSchema, PluginSettings, pluginSettingsSchema, SupportedEvents } from "./types/plugin-input";
 
+console.log("public key", process.env.KERNEL_PUBLIC_KEY);
 createActionsPlugin<PluginSettings, Env, SupportedEvents>(
   (context) => {
     return run(context);
