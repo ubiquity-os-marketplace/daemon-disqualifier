@@ -33,11 +33,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.10.0"
-
       - run: ${{ toJSON(inputs) }}
         shell: cat {0}
 
