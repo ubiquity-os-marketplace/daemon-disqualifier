@@ -1,10 +1,10 @@
 ### POST request to run the plugin
-POST http://localhost:4000
+POST http://localhost:3000
 Content-Type: application/json
 
 {
   "stateId": "some-state-id",
-  "eventName": "some-event-name",
+  "eventName": "issues.closed",
   "eventPayload": {
     "repository": {
       "owner": {
@@ -20,5 +20,6 @@ Content-Type: application/json
     "disqualification": "7 days"
   },
   "authToken": "{{GITHUB_TOKEN}}",
-  "ref": "some-ref"
+  "ref": "development",
+  "signature": "1234"
 }

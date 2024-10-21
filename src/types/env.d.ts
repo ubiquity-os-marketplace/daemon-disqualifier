@@ -1,11 +1,11 @@
-import { LOG_LEVEL } from "@ubiquity-dao/ubiquibot-logger";
+import { LogLevel } from "@ubiquity-os/ubiquity-os-logger";
 
 export {};
 
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      LOG_LEVEL?: LOG_LEVEL;
+      LOG_LEVEL?: LogLevel;
     }
   }
 }

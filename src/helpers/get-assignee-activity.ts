@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { collectLinkedPullRequests } from "../handlers/collect-linked-pulls";
+import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { GitHubTimelineEvents, ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { parseIssueUrl } from "./github-url";
@@ -48,14 +48,15 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
       }
       actorId = userIdMap.get(actorLogin);
       createdAt = event.created_at;
-    } else if (event.event === "committed") {
+    } else if ((event.event === "committed" || event.event === "commented") && "author" in event) {
       const commitAuthor = "author" in event ? event.author : null;
       const commitCommitter = "committer" in event ? event.committer : null;
 
       if (commitAuthor || commitCommitter) {
         assigneeEvents.push({
           event: eventName,
-          created_at: createdAt,
+          created_at: event.author.date,
+          author: event.author.email,
         });
 
         continue;
@@ -66,6 +67,7 @@ function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]
       assigneeEvents.push({
         event: eventName,
         created_at: createdAt,
+        author: actorLogin,
       });
     }
   }

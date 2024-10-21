@@ -2,10 +2,10 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect } from "@j
 import { drop } from "@mswjs/data";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
-import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import dotenv from "dotenv";
 import ms from "ms";
-import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
+import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
 import { run } from "../src/run";
 import { Context } from "../src/types/context";
 import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";

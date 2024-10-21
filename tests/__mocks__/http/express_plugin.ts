@@ -1,31 +1,24 @@
-import express from "express";
-import { validateAndDecodeSchemas } from "../../../src/helpers/validator";
-import { run } from "../../../src/run";
-import { PluginInputs } from "../../../src/types/plugin-input";
+import { serve } from "@hono/node-server";
+import { createPlugin } from "@ubiquity-os/ubiquity-os-kernel";
+import { LOG_LEVEL } from "@ubiquity-os/ubiquity-os-logger";
 import manifest from "../../../manifest.json";
+import { run } from "../../../src/run";
+import { Env, envSchema, PluginSettings, pluginSettingsSchema, SupportedEvents } from "../../../src/types/plugin-input";
 
-const app = express();
-const port = 4000;
-
-app.use(express.json());
-
-app.post("/", async (req, res) => {
-  try {
-    const inputs = req.body;
-    const { decodedSettings } = validateAndDecodeSchemas(inputs.settings, process.env);
-    inputs.settings = decodedSettings;
-    const result = await run(inputs);
-    res.json(result);
-  } catch (error) {
-    console.error("Error running plugin:", error);
-    res.status(500).send("Internal Server Error");
+createPlugin<PluginSettings, Env, SupportedEvents>(
+  async (context) => {
+    const result = await run(context);
+    console.log(JSON.stringify(result));
+    return result;
+  },
+  //@ts-expect-error err
+  manifest,
+  {
+    envSchema: envSchema,
+    settingsSchema: pluginSettingsSchema,
+    logLevel: LOG_LEVEL.DEBUG,
   }
-});
-
-app.get("/manifest.json", (req, res) => {
-  res.json(manifest);
-});
-
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+).then((server) => {
+  console.log("Server starting...");
+  return serve(server);
 });

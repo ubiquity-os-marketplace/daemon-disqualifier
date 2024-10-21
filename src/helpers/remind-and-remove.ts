@@ -1,9 +1,10 @@
-import { Context } from "../types/context";
-import { parseIssueUrl } from "./github-url";
+import { FOLLOWUP_HEADER } from "../types/context";
 import { ListIssueForRepo } from "../types/github-types";
+import { ContextPlugin } from "../types/plugin-input";
+import { parseIssueUrl } from "./github-url";
 import { createStructuredMetadata } from "./structured-metadata";
 
-export async function unassignUserFromIssue(context: Context, issue: ListIssueForRepo) {
+export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
   const { logger, config } = context;
 
   if (config.disqualification <= 0) {
@@ -14,7 +15,7 @@ export async function unassignUserFromIssue(context: Context, issue: ListIssueFo
   }
 }
 
-export async function remindAssigneesForIssue(context: Context, issue: ListIssueForRepo) {
+export async function remindAssigneesForIssue(context: ContextPlugin, issue: ListIssueForRepo) {
   const { logger, config } = context;
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
@@ -24,7 +25,7 @@ export async function remindAssigneesForIssue(context: Context, issue: ListIssue
   }
 }
 
-async function remindAssignees(context: Context, issue: ListIssueForRepo) {
+async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
@@ -41,7 +42,7 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
     taskAssignees: issue.assignees.map((o) => o?.id),
   });
 
-  const metadata = createStructuredMetadata("Followup", logMessage);
+  const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
 
   await octokit.rest.issues.createComment({
     owner,
@@ -52,7 +53,7 @@ async function remindAssignees(context: Context, issue: ListIssueForRepo) {
   return true;
 }
 
-async function removeAllAssignees(context: Context, issue: ListIssueForRepo) {
+async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
