@@ -6,9 +6,9 @@ import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import dotenv from "dotenv";
 import ms from "ms";
 import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
-import { runPlugin } from "../src/run";
+import { run } from "../src/run";
 import { Context } from "../src/types/context";
-import { pluginSettingsSchema } from "../src/types/plugin-input";
+import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
 import { db } from "./__mocks__/db";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
@@ -107,7 +107,7 @@ describe("User start/stop", () => {
   });
   it("Should run", async () => {
     const context = createContext(1, 1);
-    const result = await runPlugin(context);
+    const result = await run(context);
     expect(result).toBe(true);
   });
 
@@ -117,7 +117,7 @@ describe("User start/stop", () => {
     createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
     createEvent(2, daysPriorToNow(1));
 
-    await expect(runPlugin(context)).resolves.toBe(true);
+    await expect(run(context)).resolves.toBe(true);
 
     expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
@@ -136,7 +136,7 @@ describe("User start/stop", () => {
     createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
     createEvent(2, daysPriorToNow(1));
 
-    await expect(runPlugin(context)).resolves.toBe(true);
+    await expect(run(context)).resolves.toBe(true);
 
     expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
@@ -160,7 +160,7 @@ describe("User start/stop", () => {
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
-    await runPlugin(context);
+    await run(context);
 
     expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
@@ -183,7 +183,7 @@ describe("User start/stop", () => {
     const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
-    await runPlugin(context);
+    await run(context);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -204,7 +204,7 @@ describe("User start/stop", () => {
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
 
-    await runPlugin(context);
+    await run(context);
 
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
 
@@ -272,7 +272,7 @@ function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
-function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): Context<"issue_comment.created"> {
+function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): ContextPlugin {
   return {
     payload: {
       issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["issue"],
@@ -292,5 +292,6 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created",
+    env: {},
   };
 }
