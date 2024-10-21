@@ -11,5 +11,6 @@ createActionsPlugin<PluginSettings, Env, SupportedEvents>(
     envSchema: envSchema,
     settingsSchema: pluginSettingsSchema,
     logLevel: process.env.LOG_LEVEL || LOG_LEVEL.INFO,
+    kernelPublicKey: process.env.KERNEL_PUBLIC_KEY,
   }
 ).catch(console.error);
