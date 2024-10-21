@@ -1,41 +1,5 @@
 {
   "name": "User activity watcher",
   "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
-  "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push"],
-  "configuration": {
-    "default": {},
-    "type": "object",
-    "properties": {
-      "warning": {
-        "default": "3.5 days",
-        "type": "string"
-      },
-      "watch": {
-        "default": {},
-        "type": "object",
-        "properties": {
-          "optOut": {
-            "default": [],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["optOut"]
-      },
-      "disqualification": {
-        "default": "7 days",
-        "type": "string"
-      },
-      "eventWhitelist": {
-        "default": ["pull_request.review_requested", "pull_request.ready_for_review", "pull_request_review_comment.created", "issue_comment.created", "push"],
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    },
-    "required": ["warning", "watch", "disqualification", "eventWhitelist"]
-  }
+  "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push"]
 }
