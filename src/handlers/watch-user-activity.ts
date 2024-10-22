@@ -1,5 +1,5 @@
 import { getWatchedRepos } from "../helpers/get-watched-repos";
-import { updateReminder } from "../helpers/task-update";
+import { updateTaskReminder } from "../helpers/task-update";
 import { ListForOrg, ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 
@@ -50,7 +50,7 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
 
       if (issue.assignees?.length || issue.assignee) {
         logger.debug(`Checking assigned issue: ${issue.html_url}`);
-        await updateReminder(context, repo, issue);
+        await updateTaskReminder(context, repo, issue);
       } else {
         logger.info(`Skipping issue ${issue.html_url} because no user is assigned.`);
       }
