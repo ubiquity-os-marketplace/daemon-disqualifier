@@ -57,20 +57,16 @@ export async function updateReminder(context: ContextPlugin, repo: ListForOrg["d
   const now = DateTime.local();
 
   if (handledMetadata) {
-    const assignmentEvents = await octokit.paginate(
-      octokit.rest.issues.listEvents,
-      {
-        owner: repo.owner.login,
-        repo: repo.name,
-        issue_number: issue.number,
-      },
-      (response) =>
-        response.data
-          .filter((o) => o.event === "assigned" && handledMetadata.taskAssignees.includes(o.actor.id))
-          .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
-    );
+    const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
+      owner: repo.owner.login,
+      repo: repo.name,
+      issue_number: issue.number,
+    });
 
-    const assignedEvent = assignmentEvents.shift();
+    const assignedEvent = assignmentEvents
+      .filter((o) => o.event === "assigned" && handledMetadata.taskAssignees.includes(o.actor.id))
+      .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
+      .shift();
     const activityEvent = (await getAssigneesActivityForIssue(context, issue, handledMetadata.taskAssignees))
       .filter((o) => eventWhitelist.includes(o.event as TimelineEvent))
       .shift();
@@ -96,6 +92,7 @@ export async function updateReminder(context: ContextPlugin, repo: ListForOrg["d
 
     logger.info(`Handling metadata and deadline for ${issue.html_url}`, {
       now: now.toLocaleString(DateTime.DATETIME_MED),
+      assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
       lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
       mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
     });

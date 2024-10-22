@@ -19,7 +19,7 @@ const query = /* GraphQL */ `
   query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
     repository(owner: $owner, name: $repo) {
       issue(number: $issue_number) {
-        closedByPullRequestsReferences(first: 100, includeClosedPrs: true) {
+        closedByPullRequestsReferences(first: 100, includeClosedPrs: false) {
           edges {
             node {
               url

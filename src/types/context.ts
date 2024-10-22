@@ -12,3 +12,4 @@ export interface Context<T extends SupportedEvents = SupportedEvents> {
 }
 
 export const FOLLOWUP_HEADER = "Followup";
+export const UNASSIGN_HEADER = "Unassign";

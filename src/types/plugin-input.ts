@@ -73,6 +73,10 @@ export const pluginSettingsSchema = T.Object(
       default: "7 days",
     }),
     /**
+     * Whether a pull request is required for the given issue on disqualify.
+     */
+    pullRequestRequired: T.Boolean({ default: true }),
+    /**
      * List of events to consider as valid activity on a task
      */
     eventWhitelist: T.Transform(T.Array(T.String(), { default: eventWhitelist }))
