@@ -1,8 +1,11 @@
+import { RestEndpointMethodTypes } from "@octokit/rest";
 import { DateTime } from "luxon";
 import { FOLLOWUP_HEADER } from "../types/context";
 import { ListForOrg, ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
+import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
+import { parseIssueUrl } from "./github-url";
 import { remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getDeadlineWithThreshold } from "./task-deadline";
@@ -85,9 +88,18 @@ export async function updateReminder(context: ContextPlugin, repo: ListForOrg["d
       mostRecentActivityDate = DateTime.fromISO(assignedEvent.created_at);
     }
 
-    const lastReminderComment = (await getCommentsFromMetadata(context, issue.number, repo.owner.login, repo.name, FOLLOWUP_HEADER))
-      .filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate)
-      .shift();
+    const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"] = [];
+    const linkedPrs = await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login });
+    for (const linkedPr of linkedPrs) {
+      const linkedPrIssue = parseIssueUrl(linkedPr.url);
+      const lastReminderComment = (await getCommentsFromMetadata(context, linkedPrIssue.issue_number, linkedPrIssue.owner, linkedPrIssue.repo, FOLLOWUP_HEADER))
+        .filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate)
+        .shift();
+      if (lastReminderComment) {
+        lastReminders.push(lastReminderComment);
+      }
+    }
+    const lastReminderComment = lastReminders.filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate).shift();
     const disqualificationTimeDifference = disqualification - warning;
 
     logger.info(`Handling metadata and deadline for ${issue.html_url}`, {

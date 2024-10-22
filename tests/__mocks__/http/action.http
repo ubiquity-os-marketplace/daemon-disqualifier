@@ -8,16 +8,16 @@ Content-Type: application/json
   "eventPayload": {
     "repository": {
       "owner": {
-        "login": "ubiquity"
+        "login": "{{REPO_LOGIN}}"
       }
     }
   },
   "settings": {
-    "warning": "3.5 days",
+    "warning": "1 minute",
     "watch": {
       "optOut": []
     },
-    "disqualification": "7 days"
+    "disqualification": "2 minutes"
   },
   "authToken": "{{GITHUB_TOKEN}}",
   "ref": "development",
