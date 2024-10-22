@@ -10,6 +10,10 @@ import { remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-rem
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getTaskAssignmentDetails } from "./task-metadata";
 
+const getMostRecentActivityDate = (assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime => {
+  return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
+};
+
 export async function updateTaskReminder(context: ContextPlugin, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
   const {
     octokit,
@@ -19,70 +23,65 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
   const now = DateTime.local();
 
-  if (handledMetadata) {
-    const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
-      owner: repo.owner.login,
-      repo: repo.name,
-      issue_number: issue.number,
-    });
+  if (!handledMetadata) return;
 
-    const assignedEvent = assignmentEvents
-      .filter((o) => o.event === "assigned" && handledMetadata.taskAssignees.includes(o.actor.id))
-      .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
+  const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
+    owner: repo.owner.login,
+    repo: repo.name,
+    issue_number: issue.number,
+  });
+
+  const assignedEvent = assignmentEvents
+    .filter((o) => o.event === "assigned" && handledMetadata.taskAssignees.includes(o.actor.id))
+    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
+    .shift();
+
+  if (!assignedEvent) {
+    throw new Error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
+  }
+
+  const activityEvent = (await getAssigneesActivityForIssue(context, issue, handledMetadata.taskAssignees))
+    .filter((o) => eventWhitelist.includes(o.event as TimelineEvent))
+    .shift();
+
+  const assignedDate = DateTime.fromISO(assignedEvent.created_at);
+  const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
+  let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
+
+  const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"] = [];
+  const linkedPrs = await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login });
+  for (const linkedPr of linkedPrs) {
+    const linkedPrIssue = parseIssueUrl(linkedPr.url);
+    const lastReminderComment = (await getCommentsFromMetadata(context, linkedPrIssue.issue_number, linkedPrIssue.owner, linkedPrIssue.repo, FOLLOWUP_HEADER))
+      .filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate)
       .shift();
-    const activityEvent = (await getAssigneesActivityForIssue(context, issue, handledMetadata.taskAssignees))
-      .filter((o) => eventWhitelist.includes(o.event as TimelineEvent))
-      .shift();
-
-    if (!assignedEvent) {
-      throw new Error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
-    }
-
-    let mostRecentActivityDate: DateTime;
-
-    if (assignedEvent?.created_at && activityEvent?.created_at) {
-      const assignedDate = DateTime.fromISO(assignedEvent.created_at);
-      const activityDate = DateTime.fromISO(activityEvent.created_at);
-      mostRecentActivityDate = assignedDate > activityDate ? assignedDate : activityDate;
-    } else {
-      mostRecentActivityDate = DateTime.fromISO(assignedEvent.created_at);
-    }
-
-    const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"] = [];
-    const linkedPrs = await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login });
-    for (const linkedPr of linkedPrs) {
-      const linkedPrIssue = parseIssueUrl(linkedPr.url);
-      const lastReminderComment = (await getCommentsFromMetadata(context, linkedPrIssue.issue_number, linkedPrIssue.owner, linkedPrIssue.repo, FOLLOWUP_HEADER))
-        .filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate)
-        .shift();
-      if (lastReminderComment) {
-        lastReminders.push(lastReminderComment);
-      }
-    }
-    const lastReminderComment = lastReminders.filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate).shift();
-    const disqualificationTimeDifference = disqualification - warning;
-
-    logger.info(`Handling metadata and deadline for ${issue.html_url}`, {
-      now: now.toLocaleString(DateTime.DATETIME_MED),
-      assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
-      lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
-      mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
-    });
-
     if (lastReminderComment) {
-      const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
-      mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
-      if (mostRecentActivityDate.plus({ milliseconds: disqualificationTimeDifference }) <= now) {
-        await unassignUserFromIssue(context, issue);
-      } else {
-        logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`);
-      }
+      lastReminders.push(lastReminderComment);
+    }
+  }
+  const lastReminderComment = lastReminders.filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate).shift();
+  const disqualificationTimeDifference = disqualification - warning;
+
+  logger.info(`Handling metadata and deadline for ${issue.html_url}`, {
+    now: now.toLocaleString(DateTime.DATETIME_MED),
+    assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
+    lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
+    mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+  });
+
+  if (lastReminderComment) {
+    const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
+    mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
+    if (mostRecentActivityDate.plus({ milliseconds: disqualificationTimeDifference }) <= now) {
+      await unassignUserFromIssue(context, issue);
     } else {
-      if (mostRecentActivityDate.plus({ milliseconds: warning }) <= now) {
-        await remindAssigneesForIssue(context, issue);
-      } else {
-        logger.info(`No reminder to send for ${issue.html_url}, still within due time.`);
-      }
+      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`);
+    }
+  } else {
+    if (mostRecentActivityDate.plus({ milliseconds: warning }) <= now) {
+      await remindAssigneesForIssue(context, issue);
+    } else {
+      logger.info(`No reminder to send for ${issue.html_url}, still within due time.`);
     }
   }
 }
