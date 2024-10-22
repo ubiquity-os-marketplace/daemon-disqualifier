@@ -27,6 +27,10 @@
         "default": "7 days",
         "type": "string"
       },
+      "pullRequestRequired": {
+        "default": true,
+        "type": "boolean"
+      },
       "eventWhitelist": {
         "default": ["pull_request.review_requested", "pull_request.ready_for_review", "pull_request_review_comment.created", "issue_comment.created", "push"],
         "type": "array",
