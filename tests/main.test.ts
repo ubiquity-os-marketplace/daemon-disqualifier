@@ -122,14 +122,14 @@ describe("User start/stop", () => {
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
     expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
@@ -141,14 +141,14 @@ describe("User start/stop", () => {
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
@@ -166,14 +166,14 @@ describe("User start/stop", () => {
 
     await run(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(4, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
