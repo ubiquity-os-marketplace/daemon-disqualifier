@@ -41,11 +41,11 @@ export function createIssue(id: number, assignees: { login: string; id: number }
   });
 }
 
-export function createEvent(id: number, created_at = new Date(Date.now() - ONE_DAY).toISOString()) {
+export function createEvent(id: number, actorId = 1, created_at = new Date(Date.now() - ONE_DAY).toISOString()) {
   db.event.create({
     id,
     actor: {
-      id: 1,
+      id: actorId,
       type: "User",
       login: "ubiquity",
     },

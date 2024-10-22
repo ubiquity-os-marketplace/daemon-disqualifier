@@ -23,13 +23,13 @@ beforeAll(() => {
   server.listen();
 });
 afterEach(() => {
-  drop(db);
   server.resetHandlers();
 });
 afterAll(() => server.close());
 
 describe("User start/stop", () => {
   beforeEach(async () => {
+    drop(db);
     await setupTests();
   });
   it("should throw an error if the whitelist events are incorrect", () => {
@@ -46,8 +46,9 @@ describe("User start/stop", () => {
     ).toThrow(TypeBoxError);
   });
   it("Should parse thresholds", async () => {
-    const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
+    const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, { ...cfg }));
     expect(pluginSettings).toEqual({
+      pullRequestRequired: true,
       warning: 302400000,
       disqualification: 604800000,
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
@@ -108,17 +109,18 @@ describe("User start/stop", () => {
   });
   it("Should run", async () => {
     const context = createContext(1, 1);
+    createEvent(2, 2);
     const result = await run(context);
-    expect(result).toBe(true);
+    expect(result).toEqual({ message: "OK" });
   });
 
   it("Should process updates for all repos except optOut", async () => {
     const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
     createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
-    createEvent(2, daysPriorToNow(1));
+    createEvent(2, 2);
 
-    await expect(run(context)).resolves.toBe(true);
+    await expect(run(context)).resolves.toEqual({ message: "OK" });
 
     expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
@@ -135,9 +137,9 @@ describe("User start/stop", () => {
     const context = createContext(1, 1, []);
     const infoSpy = jest.spyOn(context.logger, "info");
     createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
-    createEvent(2, daysPriorToNow(1));
+    createEvent(2, 2, daysPriorToNow(1));
 
-    await expect(run(context)).resolves.toBe(true);
+    await expect(run(context)).resolves.toEqual({ message: "OK" });
 
     expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
@@ -156,7 +158,8 @@ describe("User start/stop", () => {
 
     const timestamp = daysPriorToNow(9);
     createComment(3, 4, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
-    createEvent(2, timestamp);
+    createEvent(2, 1, timestamp);
+    createEvent(3, 2);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -178,6 +181,7 @@ describe("User start/stop", () => {
   it("Should warn the user after the warning period", async () => {
     const context = createContext(3, 2);
     const timestamp = daysPriorToNow(5);
+    createEvent(2, 2);
 
     createComment(3, 2, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
@@ -195,9 +199,10 @@ describe("User start/stop", () => {
     expect(latestComment.body).toContain(partialComment);
   });
 
-  it("Should have nothing do within the warning period", async () => {
+  it("Should have nothing to do within the warning period", async () => {
     const context = createContext(1, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
+    createEvent(2, 2);
 
     const timestamp = daysPriorToNow(2);
     createComment(3, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
@@ -292,7 +297,7 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: true,
     },
-    // @ts-expect-error err
+    // @ts-expect-error ESM causes types to not match
     octokit: new Octokit(),
     eventName: "issue_comment.created",
     env: {},

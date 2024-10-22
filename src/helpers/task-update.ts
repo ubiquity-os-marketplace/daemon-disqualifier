@@ -62,7 +62,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
 
   const lastReminderComment = lastReminders.flat().shift();
 
-  logger.info(`Handling metadata and deadline for ${issue.html_url}`, {
+  logger.debug(`Handling metadata and deadline for ${issue.html_url}`, {
     now: now.toLocaleString(DateTime.DATETIME_MED),
     assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
     lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
@@ -83,7 +83,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     if (mostRecentActivityDate.plus({ milliseconds: warning }) <= now) {
       await remindAssigneesForIssue(context, issue);
     } else {
-      logger.info(`No reminder to send for ${issue.html_url}, still within due time.`);
+      logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
     }
   }
 }
