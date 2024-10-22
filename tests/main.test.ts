@@ -1,5 +1,6 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect } from "@jest/globals";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
+import { Octokit } from "@octokit/rest";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
@@ -17,7 +18,6 @@ import cfg from "./__mocks__/results/valid-configuration.json";
 import { botAssignmentComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 
 dotenv.config();
-const octokit = jest.requireActual("@octokit/rest");
 
 beforeAll(() => {
   server.listen();
@@ -99,6 +99,7 @@ describe("User start/stop", () => {
     console.log("decodedSettings", decodedSettings);
 
     expect(decodedSettings).toEqual({
+      pullRequestRequired: true,
       warning: ms("3.5 days"),
       disqualification: ms("7 days"),
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
@@ -291,7 +292,8 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: true,
     },
-    octokit: new octokit.Octokit(),
+    // @ts-expect-error err
+    octokit: new Octokit(),
     eventName: "issue_comment.created",
     env: {},
   };

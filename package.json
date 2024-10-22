@@ -18,7 +18,7 @@
     "knip": "knip --config .github/knip.ts",
     "knip-ci": "knip --no-exit-code --reporter json --config .github/knip.ts",
     "prepare": "husky install",
-    "test": "jest",
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest)",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
     "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\""
   },
