@@ -37,7 +37,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     .shift();
 
   if (!assignedEvent) {
-    throw new Error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
+    logger.error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
+    return;
   }
 
   const activityEvent = (await getAssigneesActivityForIssue(context, issue, handledMetadata.taskAssignees))
