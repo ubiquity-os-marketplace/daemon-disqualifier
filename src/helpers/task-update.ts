@@ -48,19 +48,19 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
   let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
 
-  const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"] = [];
-  const linkedPrs = await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login });
-  for (const linkedPr of linkedPrs) {
-    const linkedPrIssue = parseIssueUrl(linkedPr.url);
-    const lastReminderComment = (await getCommentsFromMetadata(context, linkedPrIssue.issue_number, linkedPrIssue.owner, linkedPrIssue.repo, FOLLOWUP_HEADER))
-      .filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate)
-      .shift();
-    if (lastReminderComment) {
-      lastReminders.push(lastReminderComment);
-    }
-  }
-  const lastReminderComment = lastReminders.filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate).shift();
-  const disqualificationTimeDifference = disqualification - warning;
+  const linkedPrUrls: string[] = (await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login })).map(
+    (o) => o.url
+  );
+  linkedPrUrls.push(issue.html_url);
+  const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"][] = await Promise.all(
+    linkedPrUrls.map(async (url) => {
+      const { issue_number, owner, repo } = parseIssueUrl(url);
+      const comments = await getCommentsFromMetadata(context, issue_number, owner, repo, FOLLOWUP_HEADER);
+      return comments.filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate);
+    })
+  );
+
+  const lastReminderComment = lastReminders.flat().shift();
 
   logger.info(`Handling metadata and deadline for ${issue.html_url}`, {
     now: now.toLocaleString(DateTime.DATETIME_MED),
@@ -68,6 +68,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
     mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
   });
+
+  const disqualificationTimeDifference = disqualification - warning;
 
   if (lastReminderComment) {
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);

@@ -289,6 +289,7 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       warning: ONE_DAY * 3.5,
       watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+      pullRequestRequired: true,
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created",

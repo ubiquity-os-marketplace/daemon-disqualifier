@@ -17,7 +17,8 @@ Content-Type: application/json
     "watch": {
       "optOut": []
     },
-    "disqualification": "2 minutes"
+    "disqualification": "2 minutes",
+    "pullRequestRequired": true
   },
   "authToken": "{{GITHUB_TOKEN}}",
   "ref": "development",
