@@ -295,7 +295,7 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       warning: ONE_DAY * 3.5,
       watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
-      pullRequestRequired: true,
+      pullRequestRequired: false,
     },
     // @ts-expect-error ESM causes types to not match
     octokit: new Octokit(),
