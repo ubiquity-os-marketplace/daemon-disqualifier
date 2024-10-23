@@ -16,7 +16,7 @@ on:
       ref:
         description: "Ref"
       signature:
-        description: "Kernel payload signature"
+        description: "Used for authenticating requests from the kernel."
 
 jobs:
   compute:
