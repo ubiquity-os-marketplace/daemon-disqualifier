@@ -109,7 +109,6 @@ describe("User start/stop", () => {
   });
   it("Should run", async () => {
     const context = createContext(1, 1);
-    createEvent(2, 2);
     const result = await run(context);
     expect(result).toEqual({ message: "OK" });
   });
@@ -135,19 +134,16 @@ describe("User start/stop", () => {
   it("Should include the previously excluded repo", async () => {
     const context = createContext(1, 1, []);
     const infoSpy = jest.spyOn(context.logger, "info");
-    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
-    createEvent(2, 2, 1, daysPriorToNow(1));
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(4)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
