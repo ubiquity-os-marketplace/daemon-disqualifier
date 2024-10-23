@@ -1,3 +1,5 @@
+import { FOLLOWUP_HEADER } from "../../src/types/context";
+
 export const STRINGS = {
   UBIQUITY: "ubiquity",
   UBIQUIBOT: "ubiquibot",
@@ -52,6 +54,13 @@ export function botAssignmentComment(assigneeId: number, deadlineStr: string) {
   },
   "revision": "4b6c279",
   "caller": "start"
+}
+-->`;
+}
+export function botReminderComment() {
+  return `@user2, this task has been idle for a while. Please provide an update.
+<!-- Ubiquity - ${FOLLOWUP_HEADER} - function - 4b6c279
+{
 }
 -->`;
 }

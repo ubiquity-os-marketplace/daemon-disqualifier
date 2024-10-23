@@ -15,7 +15,7 @@ import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./
 import mockUsers from "./__mocks__/mock-users";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
-import { botAssignmentComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
+import { botAssignmentComment, botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 
 dotenv.config();
 
@@ -117,19 +117,18 @@ describe("User start/stop", () => {
   it("Should process updates for all repos except optOut", async () => {
     const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
-    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
-    createEvent(2, 2);
+    const errorSpy = jest.spyOn(context.logger, "error");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(errorSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
     expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
@@ -137,13 +136,13 @@ describe("User start/stop", () => {
     const context = createContext(1, 1, []);
     const infoSpy = jest.spyOn(context.logger, "info");
     createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
-    createEvent(2, 2, daysPriorToNow(1));
+    createEvent(2, 2, 1, daysPriorToNow(1));
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(2, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(4)}, sending a reminder.`);
     expect(infoSpy).toHaveBeenNthCalledWith(4, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
@@ -158,7 +157,7 @@ describe("User start/stop", () => {
 
     const timestamp = daysPriorToNow(9);
     createComment(3, 4, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
-    createEvent(2, 1, timestamp);
+    createEvent(2, 1, 1, timestamp);
     createEvent(3, 2);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
@@ -259,6 +258,7 @@ async function setupTests() {
   createRepo(STRINGS.FILLER_REPO_NAME, 4);
   createRepo(STRINGS.UBIQUIBOT, 5, STRINGS.UBIQUIBOT);
 
+  // no assignees
   createIssue(1, [], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
   // nothing to do
   createIssue(2, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
@@ -270,8 +270,12 @@ async function setupTests() {
 
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
+  createComment(3, 4, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
 
-  createEvent(1);
+  createEvent(1, 2, 2, daysPriorToNow(1));
+  createEvent(2, 2, 3, daysPriorToNow(4));
+  createEvent(3, 2, 4, daysPriorToNow(12));
+  createEvent(4, 2, 5, daysPriorToNow(12));
 }
 
 function daysPriorToNow(days: number) {
