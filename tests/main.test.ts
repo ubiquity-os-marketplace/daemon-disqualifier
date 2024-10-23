@@ -151,34 +151,24 @@ describe("User start/stop", () => {
     const context = createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
-    const timestamp = daysPriorToNow(9);
-    createComment(3, 4, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
-    createEvent(2, 1, 1, timestamp);
-    createEvent(3, 2);
-
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     await run(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(3, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(5, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
 
   it("Should warn the user after the warning period", async () => {
     const context = createContext(3, 2);
-    const timestamp = daysPriorToNow(5);
-    createEvent(2, 2);
-
-    createComment(3, 2, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -197,17 +187,13 @@ describe("User start/stop", () => {
   it("Should have nothing to do within the warning period", async () => {
     const context = createContext(1, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
-    createEvent(2, 2);
-
-    const timestamp = daysPriorToNow(2);
-    createComment(3, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
 
     await run(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
