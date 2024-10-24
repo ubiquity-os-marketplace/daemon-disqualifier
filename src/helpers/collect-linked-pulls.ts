@@ -1,5 +1,5 @@
-import { Context } from "../types/context";
 import { PullRequest, User, validate } from "@octokit/graphql-schema";
+import { ContextPlugin } from "../types/plugin-input";
 
 type closedByPullRequestsReferences = {
   node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
@@ -19,7 +19,7 @@ const query = /* GraphQL */ `
   query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
     repository(owner: $owner, name: $repo) {
       issue(number: $issue_number) {
-        closedByPullRequestsReferences(first: 100, includeClosedPrs: true) {
+        closedByPullRequestsReferences(first: 100, includeClosedPrs: false) {
           edges {
             node {
               url
@@ -52,7 +52,7 @@ if (queryErrors.length > 1) {
 }
 
 export async function collectLinkedPullRequests(
-  context: Context,
+  context: ContextPlugin,
   issue: {
     owner: string;
     repo: string;

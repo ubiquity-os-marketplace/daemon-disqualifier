@@ -16,7 +16,7 @@ on:
       ref:
         description: "Ref"
       signature:
-        description: "The kernel signature"
+        description: "Used for authenticating requests from the kernel."
 
 jobs:
   compute:
@@ -27,15 +27,11 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.10.0"
 
       - run: ${{ toJSON(inputs) }}
         shell: cat {0}

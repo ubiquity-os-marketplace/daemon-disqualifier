@@ -130,5 +130,6 @@ export const db = factory({
       id: Number,
       type: String,
     },
+    performed_via_github_app: Boolean,
   },
 });

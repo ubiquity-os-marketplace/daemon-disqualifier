@@ -23,6 +23,7 @@ export function createComment(id: number, issueId: number, user: string, type: "
     issueId,
     body: body || "test",
     created_at: created_at || new Date(Date.now() - ONE_DAY).toISOString(),
+    performed_via_github_app: type === "Bot",
   });
 }
 
@@ -41,17 +42,17 @@ export function createIssue(id: number, assignees: { login: string; id: number }
   });
 }
 
-export function createEvent(id: number, created_at = new Date(Date.now() - ONE_DAY).toISOString()) {
+export function createEvent(id: number, actorId = 1, issueId = 1, created_at = new Date(Date.now() - ONE_DAY).toISOString()) {
   db.event.create({
     id,
     actor: {
-      id: 1,
+      id: actorId,
       type: "User",
       login: "ubiquity",
     },
     owner: "ubiquity",
     repo: "test-repo",
-    issue_number: 1,
+    issue_number: issueId,
     event: "assigned",
     commit_id: null,
     commit_url: "https://github.com/ubiquity/test-repo/commit/1",

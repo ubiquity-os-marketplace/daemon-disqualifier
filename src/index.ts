@@ -1,13 +1,16 @@
-import * as core from "@actions/core";
-import program from "./parser/payload";
+import { LOG_LEVEL } from "@ubiquity-os/ubiquity-os-logger";
+import { createActionsPlugin } from "@ubiquity-os/ubiquity-os-kernel";
 import { run } from "./run";
+import { Env, envSchema, PluginSettings, pluginSettingsSchema, SupportedEvents } from "./types/plugin-input";
 
-run(program)
-  .then((result) => {
-    console.log("Done.");
-    return core?.setOutput("result", result);
-  })
-  .catch((e) => {
-    console.error("Failed to run user-activity-watcher:", e);
-    core?.setFailed(e.toString());
-  });
+createActionsPlugin<PluginSettings, Env, SupportedEvents>(
+  (context) => {
+    return run(context);
+  },
+  {
+    envSchema: envSchema,
+    settingsSchema: pluginSettingsSchema,
+    logLevel: process.env.LOG_LEVEL || LOG_LEVEL.INFO,
+    kernelPublicKey: process.env.KERNEL_PUBLIC_KEY,
+  }
+).catch(console.error);

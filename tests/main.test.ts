@@ -1,35 +1,35 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect } from "@jest/globals";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
+import { Octokit } from "@octokit/rest";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
-import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import dotenv from "dotenv";
 import ms from "ms";
-import { collectLinkedPullRequests } from "../src/handlers/collect-linked-pulls";
-import { runPlugin } from "../src/run";
+import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
+import { run } from "../src/run";
 import { Context } from "../src/types/context";
-import { pluginSettingsSchema } from "../src/types/plugin-input";
+import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
 import { db } from "./__mocks__/db";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
-import { botAssignmentComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
+import { botAssignmentComment, botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 
 dotenv.config();
-const octokit = jest.requireActual("@octokit/rest");
 
 beforeAll(() => {
   server.listen();
 });
 afterEach(() => {
-  drop(db);
   server.resetHandlers();
 });
 afterAll(() => server.close());
 
 describe("User start/stop", () => {
   beforeEach(async () => {
+    drop(db);
     await setupTests();
   });
   it("should throw an error if the whitelist events are incorrect", () => {
@@ -46,8 +46,9 @@ describe("User start/stop", () => {
     ).toThrow(TypeBoxError);
   });
   it("Should parse thresholds", async () => {
-    const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, cfg));
+    const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, { ...cfg }));
     expect(pluginSettings).toEqual({
+      pullRequestRequired: true,
       warning: 302400000,
       disqualification: 604800000,
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
@@ -99,6 +100,7 @@ describe("User start/stop", () => {
     console.log("decodedSettings", decodedSettings);
 
     expect(decodedSettings).toEqual({
+      pullRequestRequired: true,
       warning: ms("3.5 days"),
       disqualification: ms("7 days"),
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
@@ -107,45 +109,41 @@ describe("User start/stop", () => {
   });
   it("Should run", async () => {
     const context = createContext(1, 1);
-    const result = await runPlugin(context);
-    expect(result).toBe(true);
+    const result = await run(context);
+    expect(result).toEqual({ message: "OK" });
   });
 
   it("Should process updates for all repos except optOut", async () => {
     const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
-    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
-    createEvent(2, daysPriorToNow(1));
+    const errorSpy = jest.spyOn(context.logger, "error");
 
-    await expect(runPlugin(context)).resolves.toBe(true);
+    await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(errorSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
     expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
   it("Should include the previously excluded repo", async () => {
     const context = createContext(1, 1, []);
     const infoSpy = jest.spyOn(context.logger, "info");
-    createComment(5, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, daysPriorToNow(1)), daysPriorToNow(1));
-    createEvent(2, daysPriorToNow(1));
 
-    await expect(runPlugin(context)).resolves.toBe(true);
+    await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
@@ -153,37 +151,29 @@ describe("User start/stop", () => {
     const context = createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
-    const timestamp = daysPriorToNow(9);
-    createComment(3, 4, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
-    createEvent(2, timestamp);
-
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
-    await runPlugin(context);
+    await run(context);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, `Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(4, `Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(6, `Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
-    expect(infoSpy).toHaveBeenNthCalledWith(7, `@user2, this task has been idle for a while. Please provide an update.\n\n`, {
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenNthCalledWith(9, `Passed the deadline on ${getIssueHtmlUrl(4)} and no activity is detected, removing assignees.`);
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
 
   it("Should warn the user after the warning period", async () => {
     const context = createContext(3, 2);
-    const timestamp = daysPriorToNow(5);
-
-    createComment(3, 2, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
-    await runPlugin(context);
+    await run(context);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -194,19 +184,16 @@ describe("User start/stop", () => {
     expect(latestComment.body).toContain(partialComment);
   });
 
-  it("Should have nothing do within the warning period", async () => {
+  it("Should have nothing to do within the warning period", async () => {
     const context = createContext(1, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
-
-    const timestamp = daysPriorToNow(2);
-    createComment(3, 1, STRINGS.BOT, "Bot", botAssignmentComment(2, timestamp), timestamp);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
 
-    await runPlugin(context);
+    await run(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(1)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
@@ -253,6 +240,7 @@ async function setupTests() {
   createRepo(STRINGS.FILLER_REPO_NAME, 4);
   createRepo(STRINGS.UBIQUIBOT, 5, STRINGS.UBIQUIBOT);
 
+  // no assignees
   createIssue(1, [], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
   // nothing to do
   createIssue(2, [{ login: STRINGS.USER, id: 2 }], STRINGS.UBIQUITY, daysPriorToNow(1), "resolves #1");
@@ -264,15 +252,19 @@ async function setupTests() {
 
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
+  createComment(3, 4, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
 
-  createEvent(1);
+  createEvent(1, 2, 2, daysPriorToNow(1));
+  createEvent(2, 2, 3, daysPriorToNow(4));
+  createEvent(3, 2, 4, daysPriorToNow(12));
+  createEvent(4, 2, 5, daysPriorToNow(12));
 }
 
 function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
-function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): Context<"issue_comment.created"> {
+function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): ContextPlugin {
   return {
     payload: {
       issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["issue"],
@@ -289,8 +281,11 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       warning: ONE_DAY * 3.5,
       watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+      pullRequestRequired: false,
     },
-    octokit: new octokit.Octokit(),
+    // @ts-expect-error ESM causes types to not match
+    octokit: new Octokit(),
     eventName: "issue_comment.created",
+    env: {},
   };
 }

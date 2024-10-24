@@ -13,6 +13,8 @@ inputs:
     description: "Auth Token to auth as the Kernel"
   ref:
     description: "GitHub branch reference for the run"
+  signature:
+    description: "The kernel signature"
 outputs:
   result:
     description: "Actions taken by the watcher."

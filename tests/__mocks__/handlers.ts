@@ -7,8 +7,8 @@ import issueTimeline from "./routes/get-timeline.json";
  * Intercepts the routes and returns a custom payload
  */
 export const handlers = [
-  http.get("https://api.github.com/repos/:owner/:repo/issues/:id/events", () => {
-    return HttpResponse.json(db.event.getAll());
+  http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_id/events", ({ params: { issue_id } }) => {
+    return HttpResponse.json(db.event.findMany({ where: { issue_number: { equals: Number(issue_id) } } }));
   }),
   http.get("https://api.github.com/repos/:owner/:repo/issues/:id/labels", () => {
     return HttpResponse.json(issuesLabelsGet);
@@ -28,8 +28,8 @@ export const handlers = [
   http.get("https://api.github.com/orgs/:org/repos", ({ params: { org } }) => {
     return HttpResponse.json(db.repo.findMany({ where: { owner: { login: { equals: org as string } } } }));
   }),
-  http.get("https://api.github.com/repos/:owner/:repo/issues/:id/comments", ({ params: { owner, repo } }) => {
-    return HttpResponse.json(db.issueComments.getAll());
+  http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_id/comments", ({ params: { issue_id } }) => {
+    return HttpResponse.json(db.issueComments.findMany({ where: { issueId: { equals: Number(issue_id) } } }));
   }),
   http.post("https://api.github.com/repos/:owner/:repo/issues/:id/comments", async ({ params: { owner, repo, id }, request: { body } }) => {
     const comment = await body
