@@ -1,7 +1,8 @@
-import { Context } from "../types/context";
+import { Context } from "@ubiquity-os/ubiquity-os-kernel";
 import { ListForOrg } from "../types/github-types";
+import { ContextPlugin } from "../types/plugin-input";
 
-export async function getWatchedRepos(context: Context) {
+export async function getWatchedRepos(context: ContextPlugin) {
   const {
     config: {
       watch: { optOut },

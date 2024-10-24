@@ -1,18 +1,10 @@
-import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
+import { Context } from "@ubiquity-os/ubiquity-os-kernel";
 import ms from "ms";
-import { StandardValidator } from "typebox-validators";
 
 export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push";
 
-export interface PluginInputs<T extends WebhookEventName = SupportedEvents> {
-  stateId: string;
-  eventName: T;
-  eventPayload: WebhookEvent<T>["payload"];
-  settings: PluginSettings;
-  authToken: string;
-  ref: string;
-}
+export type ContextPlugin = Context<PluginSettings, Env, SupportedEvents>;
 
 function thresholdType(options?: StringOptions) {
   return T.Transform(T.String(options))
@@ -81,6 +73,10 @@ export const pluginSettingsSchema = T.Object(
       default: "7 days",
     }),
     /**
+     * Whether a pull request is required for the given issue on disqualify.
+     */
+    pullRequestRequired: T.Boolean({ default: true }),
+    /**
      * List of events to consider as valid activity on a task
      */
     eventWhitelist: T.Transform(T.Array(T.String(), { default: eventWhitelist }))
@@ -122,12 +118,8 @@ export const pluginSettingsSchema = T.Object(
   { default: {} }
 );
 
-export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
-
 export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;
 
 export const envSchema = T.Object({});
-
-export const envValidator = new StandardValidator(envSchema);
 
 export type Env = StaticDecode<typeof envSchema>;

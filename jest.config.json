@@ -7,5 +7,18 @@
   "coverageReporters": ["json", "lcov", "text", "clover", "json-summary"],
   "reporters": ["default", "jest-junit", "jest-md-dashboard"],
   "coverageDirectory": "coverage",
-  "setupFiles": ["dotenv/config"]
+  "setupFiles": ["dotenv/config"],
+  "extensionsToTreatAsEsm": [".ts"],
+  "moduleFileExtensions": ["ts", "js", "json", "node"],
+  "transform": {
+    "^.+\\.ts?$": [
+      "ts-jest",
+      {
+        "useESM": true
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  }
 }

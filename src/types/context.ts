@@ -1,7 +1,7 @@
-import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { Octokit } from "@octokit/rest";
-import { SupportedEvents, PluginSettings } from "./plugin-input";
-import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { EmitterWebhookEvent as WebhookEvent } from "@octokit/webhooks";
+import { Logs } from "@ubiquity-os/ubiquity-os-logger";
+import { PluginSettings, SupportedEvents } from "./plugin-input";
 
 export interface Context<T extends SupportedEvents = SupportedEvents> {
   eventName: T;
@@ -10,3 +10,6 @@ export interface Context<T extends SupportedEvents = SupportedEvents> {
   config: PluginSettings;
   logger: Logs;
 }
+
+export const FOLLOWUP_HEADER = "Followup";
+export const UNASSIGN_HEADER = "Unassign";

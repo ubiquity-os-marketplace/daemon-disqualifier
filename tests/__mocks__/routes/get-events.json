@@ -28,5 +28,35 @@
     "commit_url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/commits/e05f98a5de8bc3b99aa58bd205c4e923381c9806",
     "created_at": "2024-06-07T18:43:34Z",
     "performed_via_github_app": null
+  },
+  {
+    "id": 13084374511,
+    "node_id": "REFE_lADOMDzQsM6Lfa9izwAAAAML47Xv",
+    "url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/issues/events/13084374511",
+    "actor": {
+      "login": "ubiquibot",
+      "id": 9807008,
+      "node_id": "MDQ6VXNlcjk4MDcwMDg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9807008?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ubiquibot",
+      "html_url": "https://github.com/ubiquibot",
+      "followers_url": "https://api.github.com/users/ubiquibot/followers",
+      "following_url": "https://api.github.com/users/ubiquibot/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ubiquibot/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ubiquibot/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ubiquibot/subscriptions",
+      "organizations_url": "https://api.github.com/users/ubiquibot/orgs",
+      "repos_url": "https://api.github.com/users/ubiquibot/repos",
+      "events_url": "https://api.github.com/users/ubiquibot/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ubiquibot/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "event": "assigned",
+    "commit_id": "e05f98a5de8bc3b99aa58bd205c4e923381c9807",
+    "commit_url": "https://api.github.com/repos/ubiquibot/user-activity-watcher/commits/e05f98a5de8bc3b99aa58bd205c4e923381c9807",
+    "created_at": "2024-06-07T19:00:00Z",
+    "performed_via_github_app": null
   }
 ]

@@ -1,0 +1,26 @@
+### POST request to run the plugin
+POST http://localhost:3000
+Content-Type: application/json
+
+{
+  "stateId": "some-state-id",
+  "eventName": "issues.closed",
+  "eventPayload": {
+    "repository": {
+      "owner": {
+        "login": "{{REPO_LOGIN}}"
+      }
+    }
+  },
+  "settings": {
+    "warning": "1 minute",
+    "watch": {
+      "optOut": []
+    },
+    "disqualification": "2 minutes",
+    "pullRequestRequired": true
+  },
+  "authToken": "{{GITHUB_TOKEN}}",
+  "ref": "development",
+  "signature": "1234"
+}
