@@ -1,6 +1,7 @@
 {
   "warning": "3.5 days",
   "disqualification": "7 days",
+  "aggressiveFollowUps": true,
   "watch": {
     "optOut": ["private-repo"]
   },

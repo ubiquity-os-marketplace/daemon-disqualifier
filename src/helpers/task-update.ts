@@ -8,7 +8,7 @@ import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 import { parseIssueUrl } from "./github-url";
 import { remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
-import { getTaskAssignmentDetails } from "./task-metadata";
+import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
 const getMostRecentActivityDate = (assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime => {
   return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
@@ -18,7 +18,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   const {
     octokit,
     logger,
-    config: { eventWhitelist, warning, disqualification },
+    config: { eventWhitelist, warning, disqualification, aggressiveFollowUps },
   } = context;
   const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
   const now = DateTime.local();
@@ -46,6 +46,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     .shift();
 
   const assignedDate = DateTime.fromISO(assignedEvent.created_at);
+  const priorityLevel = parsePriorityLabel(issue.labels);
   const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
   let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
 
@@ -75,13 +76,16 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   if (lastReminderComment) {
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
-    if (mostRecentActivityDate.plus({ milliseconds: disqualificationTimeDifference }) <= now) {
+    if (
+      mostRecentActivityDate.plus({ milliseconds: aggressiveFollowUps ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <=
+      now
+    ) {
       await unassignUserFromIssue(context, issue);
     } else {
       logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`);
     }
   } else {
-    if (mostRecentActivityDate.plus({ milliseconds: warning }) <= now) {
+    if (mostRecentActivityDate.plus({ milliseconds: aggressiveFollowUps ? warning / priorityLevel : warning }) <= now) {
       await remindAssigneesForIssue(context, issue);
     } else {
       logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
