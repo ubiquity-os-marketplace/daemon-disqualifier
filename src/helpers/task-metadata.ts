@@ -108,3 +108,45 @@ function parseTimeLabel(
 
   return taskTimeEstimate;
 }
+
+export function parsePriorityLabel(
+  labels: (
+    | string
+    | {
+        id?: number;
+        node_id?: string;
+        url?: string;
+        name?: string;
+        description?: string | null;
+        color?: string | null;
+        default?: boolean;
+      }
+  )[]
+): number {
+  let taskPriorityEstimate = 0;
+
+  for (const label of labels) {
+    let priorityLabel = "";
+    if (typeof label === "string") {
+      priorityLabel = label;
+    } else {
+      priorityLabel = label.name || "";
+    }
+
+    if (priorityLabel.startsWith("Priority:")) {
+      const matched = priorityLabel.match(/Priority: (\d+)/i);
+      if (!matched) {
+        return 0;
+      }
+
+      const [_, urgency] = matched;
+      taskPriorityEstimate = Number(urgency);
+    }
+
+    if (taskPriorityEstimate) {
+      break;
+    }
+  }
+
+  return taskPriorityEstimate;
+}
