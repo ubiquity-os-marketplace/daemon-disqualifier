@@ -72,7 +72,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   });
 
   const disqualificationTimeDifference = disqualification - warning;
-
+  console.log(disqualificationTimeDifference);
+  console.log(prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference);
   if (lastReminderComment) {
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
