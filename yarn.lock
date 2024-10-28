@@ -2032,10 +2032,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@ubiquity-os/ubiquity-os-kernel@^2.4.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@ubiquity-os/ubiquity-os-kernel/-/ubiquity-os-kernel-2.4.0.tgz#1bb74d4b02ef5ba6b0c1c01d509e3e0f58609904"
-  integrity sha512-KT8AwtMOHA99GoVUs43eAR2PZii9AHmY9NjOlBtvotB5tXbeEIyhjgHr0kgRncgiLJU1UFIe0QYMmpOvmXiQpg==
+"@ubiquity-os/ubiquity-os-kernel@^2.5.1":
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/@ubiquity-os/ubiquity-os-kernel/-/ubiquity-os-kernel-2.5.1.tgz#13cc77146837deeb7a6e6346511a686be78a832b"
+  integrity sha512-G+gL/NmZTP7QiijB1CcHXBj78iKW7RYdRC80ETWxzojIR3fZYPxTSb3rWEJOim9iAfQ7qGawJQJGL1yrPuMRBQ==
   dependencies:
     "@actions/core" "1.10.1"
     "@actions/github" "6.0.0"
