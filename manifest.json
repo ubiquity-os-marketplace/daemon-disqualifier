@@ -23,6 +23,10 @@
           }
         }
       },
+      "prioritySpeed": {
+        "default": true,
+        "type": "boolean"
+      },
       "disqualification": {
         "default": "7 days",
         "type": "string"
