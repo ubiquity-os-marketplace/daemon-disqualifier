@@ -279,6 +279,7 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
     config: {
       disqualification: ONE_DAY * 7,
       warning: ONE_DAY * 3.5,
+      prioritySpeed: true,
       watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: false,
