@@ -46,7 +46,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     .shift();
 
   const assignedDate = DateTime.fromISO(assignedEvent.created_at);
-  const priorityLevel = parsePriorityLabel(issue.labels);
+  const priorityValue = parsePriorityLabel(issue.labels);
+  const priorityLevel = priorityValue === 0 ? priorityValue + 1 : priorityValue;
   const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
   let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
 
@@ -85,7 +86,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? warning / priorityLevel : warning }) <= now) {
       await remindAssigneesForIssue(context, issue);
     } else {
-      logger.info(`Nothing to do for ${issue.html_url}, still within due-time.`);
+      logger.info(`Nothing to do for ${issue.html_url} still within due-time.`);
     }
   }
 }
