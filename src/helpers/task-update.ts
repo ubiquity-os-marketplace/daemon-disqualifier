@@ -47,7 +47,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
 
   const assignedDate = DateTime.fromISO(assignedEvent.created_at);
   const priorityValue = parsePriorityLabel(issue.labels);
-  const priorityLevel = priorityValue === 0 ? priorityValue + 1 : priorityValue;
+  const priorityLevel = Math.max(1, priorityValue);
   const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
   let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
 
