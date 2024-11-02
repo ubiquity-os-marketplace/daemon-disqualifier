@@ -2,6 +2,11 @@ import { DateTime } from "luxon";
 import ms from "ms";
 import { ListForOrg, ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
+import { RestEndpointMethodTypes } from "@octokit/rest";
+
+type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForRepo"]["response"]["data"][0], "color">> & {
+  color?: string | null;
+};
 
 /**
  * Retrieves assignment events from the timeline of an issue and calculates the deadline based on the time label.
@@ -67,20 +72,7 @@ export async function getTaskAssignmentDetails(
   return metadata;
 }
 
-function parseTimeLabel(
-  labels: (
-    | string
-    | {
-        id?: number;
-        node_id?: string;
-        url?: string;
-        name?: string;
-        description?: string | null;
-        color?: string | null;
-        default?: boolean;
-      }
-  )[]
-): number {
+function parseTimeLabel(labels: (IssueLabel | string)[]): number {
   let taskTimeEstimate = 0;
 
   for (const label of labels) {
@@ -107,4 +99,26 @@ function parseTimeLabel(
   }
 
   return taskTimeEstimate;
+}
+
+export function parsePriorityLabel(labels: (IssueLabel | string)[]): number {
+  for (const label of labels) {
+    let priorityLabel = "";
+    if (typeof label === "string") {
+      priorityLabel = label;
+    } else {
+      priorityLabel = label.name || "";
+    }
+
+    if (priorityLabel.startsWith("Priority:")) {
+      const matched = priorityLabel.match(/Priority: (\d+)/i);
+      if (!matched) {
+        return 1;
+      }
+
+      return Number(matched[1]);
+    }
+  }
+
+  return 1;
 }
