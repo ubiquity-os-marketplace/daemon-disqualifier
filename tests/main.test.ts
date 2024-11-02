@@ -122,7 +122,7 @@ describe("User start/stop", () => {
 
     expect(errorSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
@@ -138,7 +138,7 @@ describe("User start/stop", () => {
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
@@ -157,7 +157,7 @@ describe("User start/stop", () => {
     await run(context);
 
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
