@@ -60,12 +60,22 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
     const pullRequests = await collectLinkedPullRequests(context, { repo, owner, issue_number });
     for (const pullRequest of pullRequests) {
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
-      await octokit.rest.issues.createComment({
-        owner: prOwner,
-        repo: prRepo,
-        issue_number: prNumber,
-        body: [logMessage.logMessage.raw, metadata].join("\n"),
-      });
+      try {
+        await octokit.rest.issues.createComment({
+          owner: prOwner,
+          repo: prRepo,
+          issue_number: prNumber,
+          body: [logMessage.logMessage.raw, metadata].join("\n"),
+        });
+      } catch (e) {
+        logger.error(`Could not post to ${pullRequest.url} will post to the issue instead`, { e });
+        await octokit.rest.issues.createComment({
+          owner,
+          repo,
+          issue_number,
+          body: [logMessage.logMessage.raw, metadata].join("\n"),
+        });
+      }
     }
   }
   return true;
