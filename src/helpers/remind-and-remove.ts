@@ -58,12 +58,28 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
     });
   } else {
     const pullRequests = await collectLinkedPullRequests(context, { repo, owner, issue_number });
+    let shouldPostToMainIssue = false;
     for (const pullRequest of pullRequests) {
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
+      try {
+        await octokit.rest.issues.createComment({
+          owner: prOwner,
+          repo: prRepo,
+          issue_number: prNumber,
+          body: [logMessage.logMessage.raw, metadata].join("\n"),
+        });
+      } catch (e) {
+        logger.error(`Could not post to ${pullRequest.url} will post to the issue instead.`, { e });
+        shouldPostToMainIssue = true;
+      }
+    }
+    // This is a fallback if we failed to post the reminder to a pull-request, which can happen when posting cross
+    // organizations, so we post to the parent issue instead, to make sure the user got a reminder.
+    if (shouldPostToMainIssue) {
       await octokit.rest.issues.createComment({
-        owner: prOwner,
-        repo: prRepo,
-        issue_number: prNumber,
+        owner,
+        repo,
+        issue_number,
         body: [logMessage.logMessage.raw, metadata].join("\n"),
       });
     }

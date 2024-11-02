@@ -20,6 +20,7 @@ on:
 
 jobs:
   compute:
+    environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
     permissions: write-all
     name: User Activity Watcher
     runs-on: ubuntu-latest
