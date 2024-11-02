@@ -80,13 +80,23 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
       await unassignUserFromIssue(context, issue);
     } else {
-      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`);
+      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`, {
+        now: now.toLocaleString(DateTime.DATETIME_MED),
+        assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
+        lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
+        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+      });
     }
   } else {
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? warning / priorityLevel : warning }) <= now) {
       await remindAssigneesForIssue(context, issue);
     } else {
-      logger.info(`Nothing to do for ${issue.html_url} still within due-time.`);
+      logger.info(`Nothing to do for ${issue.html_url} still within due-time.`, {
+        now: now.toLocaleString(DateTime.DATETIME_MED),
+        assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
+        lastReminderComment: "none",
+        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+      });
     }
   }
 }
