@@ -50,6 +50,7 @@ describe("User start/stop", () => {
     expect(pluginSettings).toEqual({
       pullRequestRequired: true,
       warning: 302400000,
+      prioritySpeed: true,
       disqualification: 604800000,
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
@@ -103,6 +104,7 @@ describe("User start/stop", () => {
       pullRequestRequired: true,
       warning: ms("3.5 days"),
       disqualification: ms("7 days"),
+      prioritySpeed: true,
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
     });
@@ -121,13 +123,16 @@ describe("User start/stop", () => {
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
     expect(errorSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`), expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
+    expect(infoSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Passed the deadline and no activity is detected, removing assignees: @user2."),
+      expect.anything()
+    );
     expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
@@ -137,13 +142,13 @@ describe("User start/stop", () => {
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.", expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
@@ -156,13 +161,13 @@ describe("User start/stop", () => {
 
     await run(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)}, sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.");
+    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.", expect.anything());
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
@@ -193,7 +198,7 @@ describe("User start/stop", () => {
 
     await run(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)}, still within due-time.`);
+    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
@@ -279,6 +284,7 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
     config: {
       disqualification: ONE_DAY * 7,
       warning: ONE_DAY * 3.5,
+      prioritySpeed: true,
       watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: false,

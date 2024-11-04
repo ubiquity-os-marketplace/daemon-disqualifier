@@ -25,7 +25,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   } else if (config.pullRequestRequired && !hasLinkedPr) {
     await unassignUserFromIssue(context, issue);
   } else {
-    logger.info(`Passed the reminder threshold on ${issue.html_url}, sending a reminder.`);
+    logger.info(`Passed the reminder threshold on ${issue.html_url} sending a reminder.`);
     await remindAssignees(context, issue);
   }
 }
@@ -96,7 +96,9 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
-  const logMessage = logger.info(`Passed the deadline and no activity is detected, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`);
+  const logMessage = logger.info(`Passed the deadline and no activity is detected, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`, {
+    issue: issue.html_url,
+  });
   const metadata = createStructuredMetadata(UNASSIGN_HEADER, logMessage);
 
   await octokit.rest.issues.createComment({

@@ -66,6 +66,10 @@ export const pluginSettingsSchema = T.Object(
       },
       { default: {} }
     ),
+    /*
+     * Whether to rush the follow ups by the priority level
+     */
+    prioritySpeed: T.Boolean({ default: true }),
     /**
      * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
      */

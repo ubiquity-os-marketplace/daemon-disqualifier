@@ -39,6 +39,7 @@ yarn test
   with:
     disqualification: "7 days"
     warning: "3.5 days"
+    prioritySpeed: true
     watch:
       optOut:
         - "repoName"
