@@ -1,7 +1,7 @@
 {
   "name": "@ubiquity-os/daemon-disqualifier",
   "version": "1.0.0",
-  "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
+  "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "main": "src/index.ts",
   "author": "Ubiquity DAO",
   "license": "MIT",
