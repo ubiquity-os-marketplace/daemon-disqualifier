@@ -1,6 +1,6 @@
 {
   "name": "User activity watcher",
-  "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
+  "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push"],
   "configuration": {
     "default": {},

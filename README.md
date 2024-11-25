@@ -1,6 +1,6 @@
 # @ubiquity-os/daemon-disqualifier
 
-Watches user activity on issues, sends reminders on deadlines, and eventually unassigns inactive user to ensure that
+Watches user activity on issues, sends reminders on disqualification threshold, and eventually unassigns inactive user to ensure that
 tasks don't stall, and subtracts XP.
 
 ## Setup
