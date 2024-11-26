@@ -17,6 +17,8 @@ on:
         description: "Ref"
       signature:
         description: "Used for authenticating requests from the kernel."
+      command:
+        description: "Command"
 
 jobs:
   compute:

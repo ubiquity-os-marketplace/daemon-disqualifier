@@ -1,15 +1,15 @@
 import { PullRequest, User, validate } from "@octokit/graphql-schema";
 import { ContextPlugin } from "../types/plugin-input";
 
-type closedByPullRequestsReferences = {
+type ClosedByPullRequestsReferences = {
   node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
 };
 
-type IssueWithClosedByPRs = {
+type IssueWithClosedByPrs = {
   repository: {
     issue: {
       closedByPullRequestsReferences: {
-        edges: closedByPullRequestsReferences[];
+        edges: ClosedByPullRequestsReferences[];
       };
     };
   };
@@ -60,7 +60,7 @@ export async function collectLinkedPullRequests(
   }
 ) {
   const { owner, repo, issue_number } = issue;
-  const result = await context.octokit.graphql<IssueWithClosedByPRs>(query, {
+  const result = await context.octokit.graphql<IssueWithClosedByPrs>(query, {
     owner,
     repo,
     issue_number,

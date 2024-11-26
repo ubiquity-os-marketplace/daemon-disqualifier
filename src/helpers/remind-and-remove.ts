@@ -1,4 +1,4 @@
-import { FOLLOWUP_HEADER, UNASSIGN_HEADER } from "../types/context";
+import { FOLLOWUP_HEADER, UNASSIGN_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";

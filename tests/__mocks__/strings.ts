@@ -1,4 +1,4 @@
-import { FOLLOWUP_HEADER } from "../../src/types/context";
+import { FOLLOWUP_HEADER } from "../../src/types/constants";
 
 export const STRINGS = {
   UBIQUITY: "ubiquity",

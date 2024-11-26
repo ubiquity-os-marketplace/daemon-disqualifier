@@ -42,15 +42,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.10.0"
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Generate Supabase Types
         run: |
-          yarn install
-          yarn run "supabase:generate:remote"
+          bun install --frozen-lockfile
+          bun run "supabase:generate:remote"
 
       - name: Commit and Push generated types
         run: |
