@@ -1,5 +1,3 @@
-import { Context } from "@ubiquity-os/ubiquity-os-kernel";
-import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 
 export async function getWatchedRepos(context: ContextPlugin) {
@@ -22,16 +20,16 @@ export async function getWatchedRepos(context: ContextPlugin) {
 
   return Array.from(repoNames)
     .map((name) => orgRepos.find((repo) => repo.name.toLowerCase() === name))
-    .filter((repo) => repo !== undefined) as ListForOrg["data"];
+    .filter((repo) => repo !== undefined);
 }
 
-export async function getReposForOrg(context: Context, orgOrRepo: string) {
+export async function getReposForOrg(context: ContextPlugin, orgOrRepo: string) {
   const { octokit } = context;
   try {
-    return (await octokit.paginate(octokit.rest.repos.listForOrg, {
+    return await octokit.paginate(octokit.rest.repos.listForOrg, {
       org: orgOrRepo,
       per_page: 100,
-    })) as ListForOrg["data"];
+    });
   } catch (er) {
     throw new Error(`Error getting repositories for org ${orgOrRepo}: ` + JSON.stringify(er));
   }

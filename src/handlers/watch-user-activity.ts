@@ -1,6 +1,6 @@
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { updateTaskReminder } from "../helpers/task-update";
-import { ListForOrg, ListIssueForRepo } from "../types/github-types";
+import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 
 export async function watchUserActivity(context: ContextPlugin) {
@@ -28,12 +28,12 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
   if (!owner) {
     throw new Error("No owner found in the payload");
   }
-  const issues = (await octokit.paginate(octokit.rest.issues.listForRepo, {
+  const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
     owner,
     repo: repo.name,
     per_page: 100,
     state: "open",
-  })) as ListIssueForRepo[];
+  });
 
   await Promise.all(
     issues.map(async (issue) => {

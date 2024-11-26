@@ -1,7 +1,7 @@
 import { db } from "./db";
 import issueTemplate from "./issue-template";
 import repoTemplate from "./repo-template";
-import { STRINGS, getIssueUrl, getIssueHtmlUrl } from "./strings";
+import { STRINGS, getIssueHtmlUrl } from "./strings";
 
 export const ONE_DAY = 1000 * 60 * 60 * 24;
 
