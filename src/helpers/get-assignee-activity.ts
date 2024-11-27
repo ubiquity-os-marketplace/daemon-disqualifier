@@ -33,13 +33,13 @@ export async function getAssigneesActivityForIssue(context: ContextPlugin, issue
 function filterEvents(issueEvents: GitHubTimelineEvents[], assigneeIds: number[]) {
   const userIdMap = new Map<string, number>();
 
-  let assigneeEvents = [];
+  const assigneeEvents = [];
 
   for (const event of issueEvents) {
     let actorId = null;
     let actorLogin = null;
     let createdAt = null;
-    let eventName = event.event;
+    const eventName = event.event;
 
     if ("actor" in event && event.actor) {
       actorLogin = event.actor.login.toLowerCase();

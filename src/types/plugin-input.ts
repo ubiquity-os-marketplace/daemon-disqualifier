@@ -1,10 +1,10 @@
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
-import { Context } from "@ubiquity-os/ubiquity-os-kernel";
+import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
 
 export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push";
 
-export type ContextPlugin = Context<PluginSettings, Env, SupportedEvents>;
+export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents>;
 
 function thresholdType(options?: StringOptions) {
   return T.Transform(T.String(options))
@@ -48,8 +48,6 @@ function mapWebhookToEvent(webhook: WhitelistEvent) {
   return roleMap.get(webhook);
 }
 
-const EventWhitelistType = T.Union(eventWhitelist.map((event) => T.Literal(event)));
-
 export const pluginSettingsSchema = T.Object(
   {
     /**
@@ -86,7 +84,7 @@ export const pluginSettingsSchema = T.Object(
     eventWhitelist: T.Transform(T.Array(T.String(), { default: eventWhitelist }))
       .Decode((value) => {
         const validEvents = Object.values(eventWhitelist);
-        let eventsStripped: TimelineEvent[] = [];
+        const eventsStripped: TimelineEvent[] = [];
         for (const event of value) {
           if (!validEvents.includes(event as WhitelistEvent)) {
             throw new TypeBoxError(`Invalid event [${event}] (unknown event)`);
