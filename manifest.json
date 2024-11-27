@@ -1,14 +1,13 @@
 {
   "name": "User activity watcher",
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
-  "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push", "issues.assigned"],
+  "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push"],
   "configuration": {
     "default": {},
     "type": "object",
     "properties": {
       "warning": {
         "default": "3.5 days",
-        "description": "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
         "type": "string"
       },
       "watch": {
@@ -30,7 +29,6 @@
       },
       "disqualification": {
         "default": "7 days",
-        "description": "Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days",
         "type": "string"
       },
       "pullRequestRequired": {
