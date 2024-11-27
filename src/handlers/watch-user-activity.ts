@@ -1,7 +1,12 @@
+import { RestEndpointMethodTypes } from "@octokit/rest";
+import { postComment } from "@ubiquity-os/plugin-sdk";
+import prettyMilliseconds from "pretty-ms";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
+
+type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"]["0"];
 
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
@@ -12,7 +17,24 @@ export async function watchUserActivity(context: ContextPlugin) {
     return { message: logger.info("No watched repos have been found, no work to do.").logMessage.raw };
   }
 
-  // TODO if event is assign and repo is in the watched list then post a message
+  if (
+    context.eventName === "issues.assigned" &&
+    repos.some((repo) => repo.id === context.payload.repository.id) &&
+    "issue" in context.payload &&
+    !shouldIgnoreIssue(context.payload.issue as IssueType)
+  ) {
+    const message = ["[!IMPORTANT]"];
+    message.push(
+      `${context.payload.issue.assignees.map((assignee) => `@${assignee?.login}`).join(", ")}, a reminder will be sent in ${prettyMilliseconds(context.config.warning, { verbose: true })}.`
+    );
+    message.push(`If no activity is detected, disqualification will occur after ${prettyMilliseconds(context.config.disqualification, { verbose: true })}.`);
+    if (context.config.pullRequestRequired) {
+      message.push(`Be careful! If no pull request has been opened before the first reminder, you will automatically get disqualified.`);
+    }
+    const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
+    log.logMessage.diff = log.logMessage.raw;
+    await postComment(context, log);
+  }
 
   await Promise.all(
     repos.map(async (repo) => {
@@ -22,6 +44,10 @@ export async function watchUserActivity(context: ContextPlugin) {
   );
 
   return { message: "OK" };
+}
+
+function shouldIgnoreIssue(issue: IssueType) {
+  return issue.draft || issue.pull_request || issue.locked || issue.state !== "open";
 }
 
 async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][0]) {
@@ -40,7 +66,7 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
   await Promise.all(
     issues.map(async (issue) => {
       // I think we can safely ignore the following
-      if (issue.draft || issue.pull_request || issue.locked || issue.state !== "open") {
+      if (shouldIgnoreIssue(issue)) {
         logger.debug(`Skipping issue ${issue.html_url} due to the issue not meeting the right criteria.`, {
           draft: issue.draft,
           pullRequest: !!issue.pull_request,
