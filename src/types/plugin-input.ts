@@ -2,7 +2,7 @@ import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/
 import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
 
-export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push";
+export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push" | "issues.assigned";
 
 export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents>;
 
@@ -53,7 +53,10 @@ export const pluginSettingsSchema = T.Object(
     /**
      * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
      */
-    warning: thresholdType({ default: "3.5 days" }),
+    warning: thresholdType({
+      default: "3.5 days",
+      description: "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
+    }),
     /**
      * By default, all repositories are watched. Use this option to opt-out from watching specific repositories
      * within your organization. The value is an array of repository names.
@@ -65,7 +68,7 @@ export const pluginSettingsSchema = T.Object(
       { default: {} }
     ),
     /*
-     * Whether to rush the follow ups by the priority level
+     * Whether to rush the follow-ups by the priority level
      */
     prioritySpeed: T.Boolean({ default: true }),
     /**
@@ -73,6 +76,7 @@ export const pluginSettingsSchema = T.Object(
      */
     disqualification: thresholdType({
       default: "7 days",
+      description: "Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days",
     }),
     /**
      * Whether a pull request is required for the given issue on disqualify.

@@ -11,7 +11,7 @@
   },
   "scripts": {
     "start": "tsx src/index.ts",
-    "prebuild": "dotenv -- cross-env yarn supabase:generate:remote",
+    "prebuild": "dotenv -- cross-env bun supabase:generate:remote",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
@@ -78,7 +78,7 @@
   },
   "lint-staged": {
     "*.ts": [
-      "yarn prettier --write",
+      "bun prettier --write",
       "eslint --fix"
     ],
     "src/**.{ts,json}": [

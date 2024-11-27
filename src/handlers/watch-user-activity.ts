@@ -12,6 +12,8 @@ export async function watchUserActivity(context: ContextPlugin) {
     return { message: logger.info("No watched repos have been found, no work to do.").logMessage.raw };
   }
 
+  // TODO if event is assign and repo is in the watched list then post a message
+
   await Promise.all(
     repos.map(async (repo) => {
       logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
