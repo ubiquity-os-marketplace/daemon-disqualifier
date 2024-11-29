@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
-import { Octokit } from "@octokit/rest";
+import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
@@ -8,14 +8,13 @@ import dotenv from "dotenv";
 import ms from "ms";
 import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
 import { run } from "../src/run";
-import { Context } from "../src/types/context";
 import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
 import { db } from "./__mocks__/db";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
-import { botAssignmentComment, botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
+import { botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 
 dotenv.config();
 
@@ -272,13 +271,15 @@ function daysPriorToNow(days: number) {
 function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): ContextPlugin {
   return {
     payload: {
-      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["issue"],
-      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as Context<"issue_comment.created">["payload"]["sender"],
-      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context<"issue_comment.created">["payload"]["repository"],
+      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["issue"],
+      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["sender"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["repository"],
       action: "created",
-      installation: { id: 1 } as unknown as Context["payload"]["installation"],
-      organization: { login: STRINGS.UBIQUITY } as unknown as Context["payload"]["organization"],
-      comment: db.issueComments.findFirst({ where: { issueId: { equals: issueId } } }) as unknown as Context<"issue_comment.created">["payload"]["comment"],
+      installation: { id: 1 } as unknown as ContextPlugin["payload"]["installation"],
+      organization: { login: STRINGS.UBIQUITY } as unknown as ContextPlugin["payload"]["organization"],
+      comment: db.issueComments.findFirst({
+        where: { issueId: { equals: issueId } },
+      }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["comment"],
     },
     logger: new Logs("debug"),
     config: {
@@ -289,9 +290,9 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: false,
     },
-    // @ts-expect-error ESM causes types to not match
-    octokit: new Octokit(),
+    octokit: new Octokit({ throttle: { enabled: false } }),
     eventName: "issue_comment.created",
     env: {},
+    command: null,
   };
 }

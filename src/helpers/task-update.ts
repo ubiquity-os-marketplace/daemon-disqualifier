@@ -1,6 +1,6 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { DateTime } from "luxon";
-import { FOLLOWUP_HEADER } from "../types/context";
+import { FOLLOWUP_HEADER } from "../types/constants";
 import { ListForOrg, ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
