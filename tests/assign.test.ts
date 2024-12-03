@@ -52,7 +52,9 @@ describe("watchUserActivity", () => {
 
     expect(spy).toHaveBeenNthCalledWith(
       1,
-      expect.stringMatching(/(@ubiquity-os, a reminder will be sent in 1 hour\.|If no activity is detected, disqualification will occur after 2 hours\.)/)
+      expect.stringMatching(
+        /(A reminder will be sent every 1 hour if there is no activity\.|Tasks are subject to disqualification after 2 hours of inactivity\.)/
+      )
     );
     spy.mockReset();
   });
