@@ -23,13 +23,11 @@ export async function watchUserActivity(context: ContextPlugin) {
     "issue" in context.payload &&
     !shouldIgnoreIssue(context.payload.issue as IssueType)
   ) {
-    const message = ["[!IMPORTANT]"];
-    message.push(
-      `${context.payload.issue.assignees.map((assignee) => `@${assignee?.login}`).join(", ")}, a reminder will be sent in ${prettyMilliseconds(context.config.warning, { verbose: true })}.`
-    );
-    message.push(`If no activity is detected, disqualification will occur after ${prettyMilliseconds(context.config.disqualification, { verbose: true })}.`);
+    const message = ["[!IMPORTANT]", "**Follow-up schedule**"];
+    message.push(`- A reminder will be sent every ${prettyMilliseconds(context.config.warning, { verbose: true })} if there is no activity.`);
+    message.push(`- Tasks are subject to disqualification after ${prettyMilliseconds(context.config.disqualification, { verbose: true })} of inactivity.`);
     if (context.config.pullRequestRequired) {
-      message.push(`Be careful! If no pull request has been opened before the first reminder, you will automatically get disqualified.`);
+      message.push(`- Be sure to link a pull-request before the first reminder or you will be disqualified.`);
     }
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
