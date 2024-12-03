@@ -40,6 +40,7 @@ bun test
     disqualification: "7 days"
     warning: "3.5 days"
     prioritySpeed: true
+    pullRequestRequired: true
     watch:
       optOut:
         - "repoName"

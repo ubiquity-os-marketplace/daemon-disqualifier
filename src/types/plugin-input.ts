@@ -81,7 +81,7 @@ export const pluginSettingsSchema = T.Object(
     /**
      * Whether a pull request is required for the given issue on disqualify.
      */
-    pullRequestRequired: T.Boolean({ default: true }),
+    pullRequestRequired: T.Boolean({ default: true, examples: ["true", "false"] }),
     /**
      * List of events to consider as valid activity on a task
      */
