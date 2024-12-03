@@ -35,6 +35,7 @@
       },
       "pullRequestRequired": {
         "default": true,
+        "examples": ["true", "false"],
         "type": "boolean"
       },
       "eventWhitelist": {
