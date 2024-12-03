@@ -8,7 +8,7 @@
     "properties": {
       "warning": {
         "default": "3.5 days",
-        "description": "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1.5 days",
+        "description": "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
         "type": "string"
       },
       "watch": {
