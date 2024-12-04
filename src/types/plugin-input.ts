@@ -56,7 +56,7 @@ export const pluginSettingsSchema = T.Object(
     warning: thresholdType({
       default: "3.5 days",
       description: "Delay to send reminders. 0 means disabled and any other value is counted in days, e.g. 1,5 days",
-      examples: ["3.5 days", "1 day"]
+      examples: ["3.5 days", "1 day"],
     }),
     /**
      * By default, all repositories are watched. Use this option to opt-out from watching specific repositories
@@ -67,7 +67,7 @@ export const pluginSettingsSchema = T.Object(
         optOut: T.Array(T.String(), {
           default: [],
           description: "List of repositories to opt-out from watching user activity within the organization",
-          examples: ["repoName", "no-owner-required"]
+          examples: ["repoName", "no-owner-required"],
         }),
       },
       { default: {} }
@@ -82,7 +82,7 @@ export const pluginSettingsSchema = T.Object(
     disqualification: thresholdType({
       default: "7 days",
       description: "Delay to unassign users. 0 means disabled and any other value is counted in days, e.g. 7 days",
-      examples: ["7 days", "1 day"]
+      examples: ["7 days", "1 day"],
     }),
     /**
      * Whether a pull request is required for the given issue on disqualify.
@@ -91,11 +91,13 @@ export const pluginSettingsSchema = T.Object(
     /**
      * List of events to consider as valid activity on a task
      */
-    eventWhitelist: T.Transform(T.Array(T.String(), {
-      default: eventWhitelist,
-      description: "List of webhook event names to consider as valid activity on a task",
-      examples: ["pull_request.review_requested", "issue_comment.created", "push"]
-    }))
+    eventWhitelist: T.Transform(
+      T.Array(T.String(), {
+        default: eventWhitelist,
+        description: "List of webhook event names to consider as valid activity on a task",
+        examples: ["pull_request.review_requested", "issue_comment.created", "push"],
+      })
+    )
       .Decode((value) => {
         const validEvents = Object.values(eventWhitelist);
         const eventsStripped: TimelineEvent[] = [];
