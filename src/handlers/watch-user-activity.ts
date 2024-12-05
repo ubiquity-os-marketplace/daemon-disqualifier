@@ -24,7 +24,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     "issue" in context.payload &&
     !shouldIgnoreIssue(context.payload.issue as IssueType)
   ) {
-    const message = ["[!IMPORTANT]", "**Follow-up schedule**"];
+    const message = ["[!IMPORTANT]"];
     const priorityValue = Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels) : 1);
     if (context.config.pullRequestRequired) {
       message.push(`- Be sure to link a pull-request before the first reminder to avoid disqualification.`);
