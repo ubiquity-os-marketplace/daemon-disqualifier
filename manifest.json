@@ -8,6 +8,8 @@
     "properties": {
       "warning": {
         "default": "3.5 days",
+        "description": "Delay to send reminders. 0 means disabled and any other value is counted in days, e.g. 1,5 days",
+        "examples": ["3.5 days", "1 day"],
         "type": "string"
       },
       "watch": {
@@ -16,6 +18,8 @@
         "properties": {
           "optOut": {
             "default": [],
+            "description": "List of repositories to opt-out from watching user activity within the organization",
+            "examples": ["repoName", "no-owner-required"],
             "type": "array",
             "items": {
               "type": "string"
@@ -25,18 +29,24 @@
       },
       "prioritySpeed": {
         "default": true,
+        "description": "Whether to rush the follow ups by the priority level",
         "type": "boolean"
       },
       "disqualification": {
         "default": "7 days",
+        "description": "Delay to unassign users. 0 means disabled and any other value is counted in days, e.g. 7 days",
+        "examples": ["7 days", "1 day"],
         "type": "string"
       },
       "pullRequestRequired": {
         "default": true,
+        "description": "Whether a pull request is required for the given issue on disqualify",
         "type": "boolean"
       },
       "eventWhitelist": {
         "default": ["pull_request.review_requested", "pull_request.ready_for_review", "pull_request_review_comment.created", "issue_comment.created", "push"],
+        "description": "List of webhook event names to consider as valid activity on a task",
+        "examples": ["pull_request.review_requested", "issue_comment.created", "push"],
         "type": "array",
         "items": {
           "type": "string"
