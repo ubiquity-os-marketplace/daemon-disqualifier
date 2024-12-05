@@ -2,6 +2,7 @@ import { RestEndpointMethodTypes } from "@octokit/rest";
 import { postComment } from "@ubiquity-os/plugin-sdk";
 import prettyMilliseconds from "pretty-ms";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
+import { parsePriorityLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
@@ -24,11 +25,14 @@ export async function watchUserActivity(context: ContextPlugin) {
     !shouldIgnoreIssue(context.payload.issue as IssueType)
   ) {
     const message = ["[!IMPORTANT]", "**Follow-up schedule**"];
-    message.push(`- A reminder will be sent every ${prettyMilliseconds(context.config.warning, { verbose: true })} if there is no activity.`);
-    message.push(`- Tasks are subject to disqualification after ${prettyMilliseconds(context.config.disqualification, { verbose: true })} of inactivity.`);
+    const priorityValue = Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels) : 1);
     if (context.config.pullRequestRequired) {
-      message.push(`- Be sure to link a pull-request before the first reminder or you will be disqualified.`);
+      message.push(`- Be sure to link a pull-request before the first reminder to avoid disqualification.`);
     }
+    message.push(`- Reminders will be sent every ${prettyMilliseconds(context.config.warning / priorityValue, { verbose: true })} if there is no activity.`);
+    message.push(
+      `- Assignees will be disqualified after ${prettyMilliseconds(context.config.disqualification / priorityValue, { verbose: true })} of inactivity.`
+    );
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
     await postComment(context, log);
