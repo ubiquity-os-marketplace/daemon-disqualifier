@@ -1,11 +1,11 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { postComment } from "@ubiquity-os/plugin-sdk";
-import prettyMilliseconds from "pretty-ms";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { parsePriorityLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
+import { formatMillisecondsToDaysAndHours } from "./time-format";
 
 type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"]["0"];
 
@@ -29,9 +29,9 @@ export async function watchUserActivity(context: ContextPlugin) {
     if (context.config.pullRequestRequired) {
       message.push(`- Be sure to link a pull-request before the first reminder to avoid disqualification.`);
     }
-    message.push(`- Reminders will be sent every ${prettyMilliseconds(context.config.warning / priorityValue, { verbose: true })} if there is no activity.`);
+    message.push(`- Reminders will be sent every \`${formatMillisecondsToDaysAndHours(context.config.warning / priorityValue)}\` if there is no activity.`);
     message.push(
-      `- Assignees will be disqualified after ${prettyMilliseconds(context.config.disqualification / priorityValue, { verbose: true })} of inactivity.`
+      `- Assignees will be disqualified after \`${formatMillisecondsToDaysAndHours(context.config.disqualification / priorityValue)}\` of inactivity.`
     );
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
