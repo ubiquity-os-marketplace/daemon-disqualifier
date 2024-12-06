@@ -1,5 +1,5 @@
 {
-  "name": "User activity watcher",
+  "name": "Daemon Disqualifier",
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push", "issues.assigned"],
   "configuration": {
