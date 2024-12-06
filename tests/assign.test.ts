@@ -52,7 +52,7 @@ describe("watchUserActivity", () => {
 
     expect(spy).toHaveBeenNthCalledWith(
       1,
-      expect.stringMatching(/(Reminders will be sent every 1 hour if there is no activity\.|Assignees will be disqualified after 2 hours of inactivity\.)/)
+      expect.stringMatching(/(Reminders will be sent every `1 hour` if there is no activity\.|Assignees will be disqualified after `2 hours` of inactivity\.)/)
     );
     spy.mockReset();
   });
