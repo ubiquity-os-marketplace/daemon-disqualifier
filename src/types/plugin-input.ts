@@ -2,7 +2,7 @@ import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/
 import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
 
-export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push";
+export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push" | "issues.assigned";
 
 export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents>;
 
@@ -55,8 +55,7 @@ export const pluginSettingsSchema = T.Object(
      */
     warning: thresholdType({
       default: "3.5 days",
-      description: "Delay to send reminders. 0 means disabled and any other value is counted in days, e.g. 1,5 days",
-      examples: ["3.5 days", "1 day"],
+      description: "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
     }),
     /**
      * By default, all repositories are watched. Use this option to opt-out from watching specific repositories
@@ -73,7 +72,7 @@ export const pluginSettingsSchema = T.Object(
       { default: {} }
     ),
     /*
-     * Whether to rush the follow ups by the priority level
+     * Whether to rush the follow-ups by the priority level
      */
     prioritySpeed: T.Boolean({ default: true, description: "Whether to rush the follow ups by the priority level" }),
     /**
@@ -87,7 +86,11 @@ export const pluginSettingsSchema = T.Object(
     /**
      * Whether a pull request is required for the given issue on disqualify.
      */
-    pullRequestRequired: T.Boolean({ default: true, description: "Whether a pull request is required for the given issue on disqualify" }),
+    pullRequestRequired: T.Boolean({
+      default: true,
+      description: "Whether a pull request is required for the given issue on disqualify",
+      examples: ["true", "false"],
+    }),
     /**
      * List of events to consider as valid activity on a task
      */

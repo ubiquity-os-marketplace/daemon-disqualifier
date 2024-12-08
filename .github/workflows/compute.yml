@@ -24,7 +24,7 @@ jobs:
   compute:
     environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
     permissions: write-all
-    name: User Activity Watcher
+    name: Daemon Disqualifier
     runs-on: ubuntu-latest
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
