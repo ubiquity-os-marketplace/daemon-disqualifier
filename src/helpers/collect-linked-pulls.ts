@@ -22,6 +22,7 @@ const query = /* GraphQL */ `
         closedByPullRequestsReferences(first: 100, includeClosedPrs: false) {
           edges {
             node {
+              id
               url
               title
               body

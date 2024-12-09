@@ -3,6 +3,7 @@ import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { parseIssueUrl } from "./github-url";
+import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-draft";
 import { createStructuredMetadata } from "./structured-metadata";
 
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
@@ -67,6 +68,11 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
           repo: prRepo,
           issue_number: prNumber,
           body: [logMessage.logMessage.raw, metadata].join("\n"),
+        });
+        await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
+          input: {
+            pullRequestId: pullRequest.id,
+          },
         });
       } catch (e) {
         logger.error(`Could not post to ${pullRequest.url} will post to the issue instead.`, { e });

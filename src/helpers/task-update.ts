@@ -10,9 +10,9 @@ import { remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-rem
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
-const getMostRecentActivityDate = (assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime => {
+function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime {
   return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
-};
+}
 
 export async function updateTaskReminder(context: ContextPlugin, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
   const {
