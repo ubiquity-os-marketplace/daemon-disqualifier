@@ -124,3 +124,25 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
   });
   return true;
 }
+
+export async function closeLinkedPullRequests(context: ContextPlugin, issue: ListIssueForRepo) {
+  const { octokit, logger } = context;
+  const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
+  const pullRequestsFromAssignees = (await collectLinkedPullRequests(context, { repo, owner, issue_number })).filter((o) =>
+    issue.assignees?.some((assignee) => assignee.id === o.author.id)
+  );
+
+  for (const pullRequest of pullRequestsFromAssignees) {
+    const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
+    try {
+      await octokit.rest.pulls.update({
+        owner: prOwner,
+        repo: prRepo,
+        pull_number: prNumber,
+        state: "closed",
+      });
+    } catch (e) {
+      logger.error(`Could not close pull-request ${pullRequest.url}.`, { e });
+    }
+  }
+}
