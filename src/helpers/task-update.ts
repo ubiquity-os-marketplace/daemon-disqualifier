@@ -79,6 +79,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
       await unassignUserFromIssue(context, issue);
+      // TODO close all related PRs
     } else {
       logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification disqualification threshold yet.`, {
         now: now.toLocaleString(DateTime.DATETIME_MED),
