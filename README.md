@@ -6,7 +6,7 @@ tasks don't stall, and subtracts XP.
 ## Setup
 
 ```shell
-yarn install
+bun install
 ```
 
 ### Database
@@ -20,7 +20,7 @@ supabase start
 Afterward, you can generate types for full auto-completion with
 
 ```shell
-yarn supabase:generate:local
+bun run supabase:generate:local
 ```
 
 ### Test
@@ -28,14 +28,13 @@ yarn supabase:generate:local
 To start Jest testing, run
 
 ```shell
-yarn test
+bun run test
 ```
 
 ## Valid configuration
 
 ```yaml
-- plugin: ubiquibot/user-activity-watcher
-  type: github
+- plugin: ubiquity-os/daemon-disqualifier
   with:
     disqualification: "7 days"
     warning: "3.5 days"
@@ -44,7 +43,7 @@ yarn test
       optOut:
         - "repoName"
         - "repoName2"
-    eventWhitelist: # these are the tail of the webhook event i.e pull_request.review_requested
+    eventWhitelist: # these are the tail of the webhook event i.e. pull_request.review_requested
       - "review_requested"
       - "ready_for_review"
       - "commented"
