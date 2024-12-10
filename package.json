@@ -1,7 +1,7 @@
 {
   "name": "@ubiquity-os/daemon-disqualifier",
   "version": "1.0.0",
-  "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
+  "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "main": "src/index.ts",
   "author": "Ubiquity DAO",
   "license": "MIT",
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "start": "tsx src/index.ts",
-    "prebuild": "dotenv -- cross-env yarn supabase:generate:remote",
+    "prebuild": "dotenv -- cross-env bun supabase:generate:remote",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
@@ -78,7 +78,7 @@
   },
   "lint-staged": {
     "*.ts": [
-      "yarn prettier --write",
+      "bun prettier --write",
       "eslint --fix"
     ],
     "src/**.{ts,json}": [

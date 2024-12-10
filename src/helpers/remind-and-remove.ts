@@ -57,8 +57,10 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
       body: [logMessage.logMessage.raw, metadata].join("\n"),
     });
   } else {
-    const pullRequests = await collectLinkedPullRequests(context, { repo, owner, issue_number });
-    let shouldPostToMainIssue = false;
+    const pullRequests = (await collectLinkedPullRequests(context, { repo, owner, issue_number }))
+      // We filter out closed and merged PRs to avoid commenting on these
+      .filter((o) => o.state === "OPEN");
+    let shouldPostToMainIssue = pullRequests.length === 0;
     for (const pullRequest of pullRequests) {
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
       try {
@@ -96,9 +98,12 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
-  const logMessage = logger.info(`Passed the deadline and no activity is detected, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`, {
-    issue: issue.html_url,
-  });
+  const logMessage = logger.info(
+    `Passed the disqualification threshold and no activity is detected, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
+    {
+      issue: issue.html_url,
+    }
+  );
   const metadata = createStructuredMetadata(UNASSIGN_HEADER, logMessage);
 
   await octokit.rest.issues.createComment({

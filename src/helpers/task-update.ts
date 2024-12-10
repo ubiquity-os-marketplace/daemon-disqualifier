@@ -51,9 +51,10 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
   let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
 
-  const linkedPrUrls: string[] = (await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login })).map(
-    (o) => o.url
-  );
+  const linkedPrUrls: string[] = (await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login }))
+    // We filter out closed and merged PRs to avoid commenting on these
+    .filter((o) => o.state === "OPEN")
+    .map((o) => o.url);
   linkedPrUrls.push(issue.html_url);
   const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"][] = await Promise.all(
     linkedPrUrls.map(async (url) => {
@@ -65,7 +66,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
 
   const lastReminderComment = lastReminders.flat().shift();
 
-  logger.debug(`Handling metadata and deadline for ${issue.html_url}`, {
+  logger.debug(`Handling metadata and disqualification threshold for ${issue.html_url}`, {
     now: now.toLocaleString(DateTime.DATETIME_MED),
     assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
     lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
@@ -80,7 +81,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
       await unassignUserFromIssue(context, issue);
     } else {
-      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`, {
+      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification disqualification threshold yet.`, {
         now: now.toLocaleString(DateTime.DATETIME_MED),
         assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
         lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
