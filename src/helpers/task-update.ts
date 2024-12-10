@@ -51,9 +51,10 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
   let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
 
-  const linkedPrUrls: string[] = (await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login })).map(
-    (o) => o.url
-  );
+  const linkedPrUrls: string[] = (await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login }))
+    // We filter out closed and merged PRs to avoid commenting on these
+    .filter((o) => o.state === "OPEN")
+    .map((o) => o.url);
   linkedPrUrls.push(issue.html_url);
   const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"][] = await Promise.all(
     linkedPrUrls.map(async (url) => {

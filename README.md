@@ -6,7 +6,7 @@ tasks don't stall, and subtracts XP.
 ## Setup
 
 ```shell
-yarn install
+bun install
 ```
 
 ### Database
@@ -20,7 +20,7 @@ supabase start
 Afterward, you can generate types for full auto-completion with
 
 ```shell
-yarn supabase:generate:local
+bun run supabase:generate:local
 ```
 
 ### Test
@@ -28,7 +28,7 @@ yarn supabase:generate:local
 To start Jest testing, run
 
 ```shell
-yarn test
+bun run test
 ```
 
 ## Valid configuration
