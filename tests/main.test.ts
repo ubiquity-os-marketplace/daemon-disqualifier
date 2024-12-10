@@ -129,7 +129,7 @@ describe("User start/stop", () => {
       caller: STRINGS.LOGS_ANON_CALLER,
     });
     expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Passed the deadline and no activity is detected, removing assignees: @user2."),
+      expect.stringContaining("Passed the disqualification threshold and no activity is detected, removing assignees: @user2."),
       expect.anything()
     );
     expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
@@ -147,7 +147,7 @@ describe("User start/stop", () => {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.", expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
@@ -166,7 +166,7 @@ describe("User start/stop", () => {
       taskAssignees: [2],
       caller: STRINGS.LOGS_ANON_CALLER,
     });
-    expect(infoSpy).toHaveBeenCalledWith("Passed the deadline and no activity is detected, removing assignees: @user2.", expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
