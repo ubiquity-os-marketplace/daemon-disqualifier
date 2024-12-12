@@ -3,6 +3,7 @@ import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { parseIssueUrl } from "./github-url";
+import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-draft";
 import { createStructuredMetadata } from "./structured-metadata";
 
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
@@ -68,6 +69,11 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
           issue_number: prNumber,
           body: [logMessage.logMessage.raw, metadata].join("\n"),
         });
+        await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
+          input: {
+            pullRequestId: pullRequest.id,
+          },
+        });
       } catch (e) {
         logger.error(`Could not post to ${pullRequest.url} will post to the issue instead.`, { e });
         shouldPostToMainIssue = true;
@@ -117,4 +123,26 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     assignees: logins,
   });
   return true;
+}
+
+export async function closeLinkedPullRequests(context: ContextPlugin, issue: ListIssueForRepo) {
+  const { octokit, logger } = context;
+  const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
+  const pullRequestsFromAssignees = (await collectLinkedPullRequests(context, { repo, owner, issue_number })).filter((o) =>
+    issue.assignees?.some((assignee) => assignee.id === o.author.id)
+  );
+
+  for (const pullRequest of pullRequestsFromAssignees) {
+    const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
+    try {
+      await octokit.rest.pulls.update({
+        owner: prOwner,
+        repo: prRepo,
+        pull_number: prNumber,
+        state: "closed",
+      });
+    } catch (e) {
+      logger.error(`Could not close pull-request ${pullRequest.url}.`, { e });
+    }
+  }
 }
