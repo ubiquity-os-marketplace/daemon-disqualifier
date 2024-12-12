@@ -1,9 +1,9 @@
+import { createPlugin } from "@ubiquity-os/plugin-sdk";
 import { Manifest } from "@ubiquity-os/plugin-sdk/dist/manifest";
 import { LOG_LEVEL } from "@ubiquity-os/ubiquity-os-logger";
-import { createPlugin } from "@ubiquity-os/plugin-sdk";
+import manifest from "../manifest.json";
 import { run } from "./run";
 import { Env, envSchema, PluginSettings, pluginSettingsSchema, SupportedEvents } from "./types/plugin-input";
-import manifest from "../manifest.json";
 
 const app = createPlugin<PluginSettings, Env, null, SupportedEvents>(
   (context) => {
