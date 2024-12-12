@@ -65,7 +65,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
 
   const lastReminderComment = lastReminders.flat().shift();
 
-  logger.debug(`Handling metadata and deadline for ${issue.html_url}`, {
+  logger.debug(`Handling metadata and disqualification threshold for ${issue.html_url}`, {
     now: now.toLocaleString(DateTime.DATETIME_MED),
     assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
     lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
@@ -80,7 +80,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
       await unassignUserFromIssue(context, issue);
     } else {
-      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`, {
+      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification disqualification threshold yet.`, {
         now: now.toLocaleString(DateTime.DATETIME_MED),
         assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
         lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",

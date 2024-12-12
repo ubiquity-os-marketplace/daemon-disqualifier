@@ -9,11 +9,11 @@ type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForR
 };
 
 /**
- * Retrieves assignment events from the timeline of an issue and calculates the deadline based on the time label.
+ * Retrieves assignment events from the timeline of an issue and calculates the disqualification threshold based on the time label.
  *
  * It does not care about previous updates, comments or other events that might have happened on the issue.
  *
- * It returns who is assigned and the initial calculated deadline (start + time label duration).
+ * It returns who is assigned and the initial calculated disqualification threshold (start + time label duration).
  */
 export async function getTaskAssignmentDetails(
   context: ContextPlugin,
@@ -59,11 +59,11 @@ export async function getTaskAssignmentDetails(
     // it could mean there was no time label set on the issue
     // but it could still be workable and priced
   } else if (durationInMs < 0 || !durationInMs) {
-    logger.error(`Invalid deadline found on ${issue.html_url}`);
+    logger.error(`Invalid disqualification threshold found on ${issue.html_url}`);
     return false;
   }
 
-  // if there are no assignment events, we can assume the deadline is the issue creation date
+  // if there are no assignment events, we can assume the disqualification threshold is the issue creation date
   metadata.startPlusLabelDuration =
     DateTime.fromISO(mostRecentAssignmentEvent?.created_at || issue.created_at)
       .plus({ milliseconds: durationInMs })
