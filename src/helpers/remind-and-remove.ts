@@ -58,9 +58,11 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
       body: [logMessage.logMessage.raw, metadata].join("\n"),
     });
   } else {
-    const pullRequests = await collectLinkedPullRequests(context, { repo, owner, issue_number });
-    let shouldPostToMainIssue = false;
-    for (const pullRequest of pullRequests) {
+    const openedLinkedPullRequests = (await collectLinkedPullRequests(context, { repo, owner, issue_number }))
+      // We filter out closed and merged PRs to avoid commenting on these
+      .filter((o) => o.state === "OPEN");
+    let shouldPostToMainIssue = openedLinkedPullRequests.length === 0;
+    for (const pullRequest of openedLinkedPullRequests) {
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
       try {
         await octokit.rest.issues.createComment({
