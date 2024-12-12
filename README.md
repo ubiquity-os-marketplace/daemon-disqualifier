@@ -34,17 +34,17 @@ bun run test
 ## Valid configuration
 
 ```yaml
-- plugin: ubiquibot/user-activity-watcher
-  type: github
+- plugin: ubiquity-os/daemon-disqualifier
   with:
     disqualification: "7 days"
     warning: "3.5 days"
     prioritySpeed: true
+    pullRequestRequired: true
     watch:
       optOut:
         - "repoName"
         - "repoName2"
-    eventWhitelist: # these are the tail of the webhook event i.e pull_request.review_requested
+    eventWhitelist: # these are the tail of the webhook event i.e. pull_request.review_requested
       - "review_requested"
       - "ready_for_review"
       - "commented"
