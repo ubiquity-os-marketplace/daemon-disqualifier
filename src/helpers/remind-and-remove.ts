@@ -20,7 +20,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const { logger, config } = context;
   const issueItem = parseIssueUrl(issue.html_url);
 
-  const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).length;
+  const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else if (config.pullRequestRequired && !hasLinkedPr) {
