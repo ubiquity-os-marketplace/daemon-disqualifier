@@ -1,14 +1,14 @@
 {
-  "name": "User activity watcher",
+  "name": "Daemon Disqualifier",
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
-  "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push"],
+  "ubiquity:listeners": ["pull_request_review_comment.created", "issue_comment.created", "push", "issues.assigned"],
   "configuration": {
     "default": {},
     "type": "object",
     "properties": {
       "warning": {
         "default": "3.5 days",
-        "description": "Delay to send reminders. 0 means disabled and any other value is counted in days, e.g. 1,5 days",
+        "description": "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
         "examples": ["3.5 days", "1 day"],
         "type": "string"
       },
@@ -41,6 +41,7 @@
       "pullRequestRequired": {
         "default": true,
         "description": "Whether a pull request is required for the given issue on disqualify",
+        "examples": ["true", "false"],
         "type": "boolean"
       },
       "eventWhitelist": {
