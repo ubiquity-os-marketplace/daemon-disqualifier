@@ -71,11 +71,13 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
           issue_number: prNumber,
           body: [logMessage.logMessage.raw, metadata].join("\n"),
         });
-        await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
-          input: {
-            pullRequestId: pullRequest.id,
-          },
-        });
+        if (pullRequest.reviewDecision === "CHANGES_REQUESTED") {
+          await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
+            input: {
+              pullRequestId: pullRequest.id,
+            },
+          });
+        }
       } catch (e) {
         logger.error(`Could not post to ${pullRequest.url} will post to the issue instead.`, { e });
         shouldPostToMainIssue = true;

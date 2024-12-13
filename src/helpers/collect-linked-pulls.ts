@@ -2,7 +2,7 @@ import { PullRequest, validate } from "@octokit/graphql-schema";
 import { ContextPlugin } from "../types/plugin-input";
 
 type ClosedByPullRequestsReferences = {
-  node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body" | "id"> & { author: { login: string; id: number } };
+  node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body" | "id" | "reviewDecision"> & { author: { login: string; id: number } };
 };
 
 type IssueWithClosedByPrs = {
@@ -34,6 +34,7 @@ const query = /* GraphQL */ `
                   id: databaseId
                 }
               }
+              reviewDecision
             }
           }
         }
