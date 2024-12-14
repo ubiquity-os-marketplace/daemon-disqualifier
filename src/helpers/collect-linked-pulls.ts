@@ -1,8 +1,8 @@
-import { PullRequest, User, validate } from "@octokit/graphql-schema";
+import { PullRequest, validate } from "@octokit/graphql-schema";
 import { ContextPlugin } from "../types/plugin-input";
 
 type ClosedByPullRequestsReferences = {
-  node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
+  node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body" | "id"> & { author: { login: string; id: number } };
 };
 
 type IssueWithClosedByPrs = {
@@ -22,6 +22,7 @@ const query = /* GraphQL */ `
         closedByPullRequestsReferences(first: 100, includeClosedPrs: false) {
           edges {
             node {
+              id
               url
               title
               body

@@ -1,7 +1,7 @@
 {
   "name": "@ubiquity-os/daemon-disqualifier",
   "version": "1.0.0",
-  "description": "Watches user activity on issues, sends reminders on deadlines, and unassign inactive users.",
+  "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "main": "src/index.ts",
   "author": "Ubiquity DAO",
   "license": "MIT",
@@ -10,8 +10,8 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "start": "tsx src/index.ts",
-    "prebuild": "dotenv -- cross-env yarn supabase:generate:remote",
+    "start": "bun --watch src/worker.ts",
+    "prebuild": "dotenv -- cross-env bun run supabase:generate:remote",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
@@ -20,7 +20,8 @@
     "prepare": "husky install",
     "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --setupFiles dotenv/config --coverage",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
-    "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\""
+    "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\"",
+    "server": "bun --watch src/worker.ts"
   },
   "keywords": [
     "typescript",
@@ -33,12 +34,11 @@
     "@octokit/graphql-schema": "^15.25.0",
     "@octokit/rest": "^21.0.2",
     "@sinclair/typebox": "0.34.3",
-    "@ubiquity-os/plugin-sdk": "^1.1.0",
+    "@ubiquity-os/plugin-sdk": "^1.1.1",
     "@ubiquity-os/ubiquity-os-logger": "^1.3.2",
     "dotenv": "16.4.5",
     "luxon": "3.4.4",
-    "ms": "2.1.3",
-    "tsx": "4.11.2"
+    "ms": "2.1.3"
   },
   "devDependencies": {
     "@commitlint/cli": "19.3.0",
@@ -78,7 +78,7 @@
   },
   "lint-staged": {
     "*.ts": [
-      "yarn prettier --write",
+      "prettier --write",
       "eslint --fix"
     ],
     "src/**.{ts,json}": [

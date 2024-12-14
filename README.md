@@ -1,12 +1,12 @@
 # @ubiquity-os/daemon-disqualifier
 
-Watches user activity on issues, sends reminders on deadlines, and eventually unassigns inactive user to ensure that
+Watches user activity on issues, sends reminders on disqualification threshold, and eventually unassigns inactive user to ensure that
 tasks don't stall, and subtracts XP.
 
 ## Setup
 
 ```shell
-yarn install
+bun install
 ```
 
 ### Database
@@ -20,7 +20,7 @@ supabase start
 Afterward, you can generate types for full auto-completion with
 
 ```shell
-yarn supabase:generate:local
+bun run supabase:generate:local
 ```
 
 ### Test
@@ -28,23 +28,23 @@ yarn supabase:generate:local
 To start Jest testing, run
 
 ```shell
-yarn test
+bun run test
 ```
 
 ## Valid configuration
 
 ```yaml
-- plugin: ubiquibot/user-activity-watcher
-  type: github
+- plugin: ubiquity-os/daemon-disqualifier
   with:
     disqualification: "7 days"
     warning: "3.5 days"
     prioritySpeed: true
+    pullRequestRequired: true
     watch:
       optOut:
         - "repoName"
         - "repoName2"
-    eventWhitelist: # these are the tail of the webhook event i.e pull_request.review_requested
+    eventWhitelist: # these are the tail of the webhook event i.e. pull_request.review_requested
       - "review_requested"
       - "ready_for_review"
       - "commented"

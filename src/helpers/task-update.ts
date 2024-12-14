@@ -6,13 +6,13 @@ import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 import { parseIssueUrl } from "./github-url";
-import { remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
+import { closeLinkedPullRequests, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
-const getMostRecentActivityDate = (assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime => {
+function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime {
   return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
-};
+}
 
 export async function updateTaskReminder(context: ContextPlugin, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
   const {
@@ -51,12 +51,15 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
   const activityDate = activityEvent?.created_at ? DateTime.fromISO(activityEvent.created_at) : undefined;
   let mostRecentActivityDate = getMostRecentActivityDate(assignedDate, activityDate);
 
-  const linkedPrUrls: string[] = (await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login })).map(
-    (o) => o.url
-  );
-  linkedPrUrls.push(issue.html_url);
+  const openedLinkedPullRequestUrls: string[] = (
+    await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login })
+  )
+    // We filter out closed and merged PRs to avoid commenting on these
+    .filter((o) => o.state === "OPEN")
+    .map((o) => o.url);
+  openedLinkedPullRequestUrls.push(issue.html_url);
   const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"][] = await Promise.all(
-    linkedPrUrls.map(async (url) => {
+    openedLinkedPullRequestUrls.map(async (url) => {
       const { issue_number, owner, repo } = parseIssueUrl(url);
       const comments = await getCommentsFromMetadata(context, issue_number, owner, repo, FOLLOWUP_HEADER);
       return comments.filter((o) => DateTime.fromISO(o.created_at) > mostRecentActivityDate);
@@ -65,7 +68,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
 
   const lastReminderComment = lastReminders.flat().shift();
 
-  logger.debug(`Handling metadata and deadline for ${issue.html_url}`, {
+  logger.debug(`Handling metadata and disqualification threshold for ${issue.html_url}`, {
     now: now.toLocaleString(DateTime.DATETIME_MED),
     assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
     lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
@@ -79,8 +82,9 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ListForOr
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
       await unassignUserFromIssue(context, issue);
+      await closeLinkedPullRequests(context, issue);
     } else {
-      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline yet.`, {
+      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
         now: now.toLocaleString(DateTime.DATETIME_MED),
         assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
         lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
