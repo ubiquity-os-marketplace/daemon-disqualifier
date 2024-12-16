@@ -1,6 +1,6 @@
 export function formatMillisecondsToHumanReadable(milliseconds: number): string {
   if (milliseconds <= 0) {
-    return "0 days, 0 hours, and 0 minutes";
+    return "< 1 minute";
   }
   const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
   const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
