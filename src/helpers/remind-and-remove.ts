@@ -20,7 +20,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const { logger, config } = context;
   const issueItem = parseIssueUrl(issue.html_url);
 
-  const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).length;
+  const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else if (config.pullRequestRequired && !hasLinkedPr) {
@@ -71,11 +71,13 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
           issue_number: prNumber,
           body: [logMessage.logMessage.raw, metadata].join("\n"),
         });
-        await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
-          input: {
-            pullRequestId: pullRequest.id,
-          },
-        });
+        if (pullRequest.reviewDecision === "CHANGES_REQUESTED") {
+          await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
+            input: {
+              pullRequestId: pullRequest.id,
+            },
+          });
+        }
       } catch (e) {
         logger.error(`Could not post to ${pullRequest.url} will post to the issue instead.`, { e });
         shouldPostToMainIssue = true;
