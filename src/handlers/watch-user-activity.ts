@@ -57,7 +57,7 @@ export async function watchUserActivity(context: ContextPlugin) {
  * - not priced (no price label found)
  */
 function shouldIgnoreIssue(issue: IssueType) {
-  return !!issue.draft || !!issue.pull_request || issue.locked || issue.state !== "open" || parsePriceLabel(issue.labels) === null;
+  return issue.draft || !!issue.pull_request || issue.locked || issue.state !== "open" || parsePriceLabel(issue.labels) === null;
 }
 
 async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][0]) {
