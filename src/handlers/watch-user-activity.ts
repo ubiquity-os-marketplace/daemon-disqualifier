@@ -2,7 +2,7 @@ import { RestEndpointMethodTypes } from "@octokit/rest";
 import { postComment } from "@ubiquity-os/plugin-sdk";
 import { formatMillisecondsToHumanReadable } from "./time-format";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
-import { parsePriorityLabel } from "../helpers/task-metadata";
+import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
@@ -48,8 +48,16 @@ export async function watchUserActivity(context: ContextPlugin) {
   return { message: "OK" };
 }
 
+/*
+ * We ignore the issue if:
+ * - draft
+ * - pull request
+ * - locked
+ * - not in "open" state
+ * - not priced (no price label found)
+ */
 function shouldIgnoreIssue(issue: IssueType) {
-  return issue.draft || issue.pull_request || issue.locked || issue.state !== "open";
+  return issue.draft || !!issue.pull_request || issue.locked || issue.state !== "open" || parsePriceLabel(issue.labels) === null;
 }
 
 async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][0]) {
@@ -67,13 +75,13 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
 
   await Promise.all(
     issues.map(async (issue) => {
-      // I think we can safely ignore the following
       if (shouldIgnoreIssue(issue)) {
-        logger.debug(`Skipping issue ${issue.html_url} due to the issue not meeting the right criteria.`, {
+        logger.info(`Skipping issue ${issue.html_url} due to the issue not meeting the right criteria.`, {
           draft: issue.draft,
           pullRequest: !!issue.pull_request,
           locked: issue.locked,
           state: issue.state,
+          priceLabel: parsePriceLabel(issue.labels),
         });
         return;
       }

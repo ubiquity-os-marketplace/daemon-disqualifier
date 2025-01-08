@@ -122,3 +122,14 @@ export function parsePriorityLabel(labels: (IssueLabel | string)[]): number {
 
   return 1;
 }
+
+export function parsePriceLabel(labels: (IssueLabel | string)[]): number | null {
+  const priceLabel = labels?.map((label) => (typeof label === "string" ? label : label.name || "")).find((name) => name.toLowerCase().startsWith("price:"));
+
+  if (!priceLabel) {
+    return null;
+  }
+
+  const matched = priceLabel.match(/price:\s*(\d+)/i);
+  return matched ? Number(matched[1]) : null;
+}
