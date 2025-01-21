@@ -12,6 +12,7 @@ type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["d
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
+  // TODO change to run only on a single repo
   const repos = await getWatchedRepos(context);
 
   if (!repos?.length) {

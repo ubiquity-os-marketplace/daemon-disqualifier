@@ -1,0 +1,23 @@
+name: Cron
+
+on:
+  schedule:
+    - cron: '* * * * *'
+
+jobs:
+  run-cron:
+    environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
+    name: Run Cron
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Dispatch Actions
+        run: |
+          bun run dist/index.js
