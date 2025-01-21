@@ -1,8 +1,9 @@
 name: Cron
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '* * * * *'
+    - cron: '*/15 * * * *'
 
 jobs:
   run-cron:
@@ -13,11 +14,5 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Dispatch Actions
-        run: |
-          bun run dist/index.js
+      - run: |
+          echo "Running CRON job..."
