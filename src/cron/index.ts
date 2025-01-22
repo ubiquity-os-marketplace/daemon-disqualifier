@@ -15,7 +15,7 @@ async function main() {
   const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN,
   });
-  const filePath = path.join(import.meta.dirname, "./db.json");
+  const filePath = path.join(process.env.GITHUB_WORKSPACE || import.meta.dirname, "./db.json");
   const file = fs.readFileSync(filePath, { encoding: "utf8", flag: "a+" }) || "{}";
 
   console.log("->", file);
