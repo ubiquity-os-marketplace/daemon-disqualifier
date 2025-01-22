@@ -54,6 +54,9 @@ async function main() {
   // await octokit.rest.actions.disableWorkflow({
   //   owner
   // })
+  logger.info(`Saved updated database.`, {
+    filePath,
+  });
 }
 
 main().catch(console.error);
