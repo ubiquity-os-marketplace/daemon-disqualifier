@@ -16,6 +16,9 @@ jobs:
     steps:
       - uses: oven-sh/setup-bun@v2
 
+      - name: Install packages
+        run: bun install --frozen-lockfile
+
       - name: Get GitHub App token
         if: env.APP_ID != '' && env.APP_PRIVATE_KEY != ''
         uses: tibdex/github-app-token@v1.7.0
