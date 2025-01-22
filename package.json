@@ -36,6 +36,7 @@
     "@ubiquity-os/plugin-sdk": "^1.1.1",
     "@ubiquity-os/ubiquity-os-logger": "^1.3.2",
     "dotenv": "16.4.5",
+    "lowdb": "^7.0.1",
     "luxon": "3.4.4",
     "ms": "2.1.3"
   },

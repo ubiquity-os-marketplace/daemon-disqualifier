@@ -1,18 +1,18 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { postComment } from "@ubiquity-os/plugin-sdk";
-import { formatMillisecondsToHumanReadable } from "./time-format";
+import db from "../cron/database-handler";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
+import { formatMillisecondsToHumanReadable } from "./time-format";
 
 type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"]["0"];
 
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
-  // TODO change to run only on a single repo
   const repos = await getWatchedRepos(context);
 
   if (!repos?.length) {
@@ -37,6 +37,10 @@ export async function watchUserActivity(context: ContextPlugin) {
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
     await postComment(context, log);
+    await db.update((data) => {
+      data[`${context.payload.repository.owner}/${context.payload.repository.name}`] = { commentId: 1, issueNumber: 1 };
+      return data;
+    });
   }
 
   await Promise.all(
