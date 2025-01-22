@@ -21,28 +21,32 @@ async function main() {
   console.log("->", file);
   const fileContent = JSON.parse(file) as DbComment;
   for (const [key, value] of Object.entries(fileContent)) {
-    logger.info(`Triggering update`, {
-      key,
-      value,
-    });
-    const [owner, repo] = key.split("/");
-    const {
-      data: { body = "" },
-    } = await octokit.rest.issues.getComment({
-      owner,
-      repo,
-      comment_id: value.commentId,
-      issue_number: value.issueNumber,
-    });
-    const newBody = body + `\n<!-- daemon-disqualifier update ${Date().toLocaleString()} -->`;
-    logger.debug(`Update comment ${value.commentId}`, { newBody });
-    await octokit.rest.issues.updateComment({
-      owner,
-      repo,
-      comment_id: value.commentId,
-      issue_number: value.issueNumber,
-      body: newBody,
-    });
+    try {
+      logger.info(`Triggering update`, {
+        key,
+        value,
+      });
+      const [owner, repo] = key.split("/");
+      const {
+        data: { body = "" },
+      } = await octokit.rest.issues.getComment({
+        owner,
+        repo,
+        comment_id: value.commentId,
+        issue_number: value.issueNumber,
+      });
+      const newBody = body + `\n<!-- daemon-disqualifier update ${Date().toLocaleString()} -->`;
+      logger.debug(`Update comment ${value.commentId}`, { newBody });
+      await octokit.rest.issues.updateComment({
+        owner,
+        repo,
+        comment_id: value.commentId,
+        issue_number: value.issueNumber,
+        body: newBody,
+      });
+    } catch (e) {
+      logger.error("Failed to update the comment", { e });
+    }
   }
   // commit file
   // disable workflow?
