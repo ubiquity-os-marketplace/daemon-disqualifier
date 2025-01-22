@@ -16,7 +16,7 @@ async function main() {
     auth: process.env.GITHUB_TOKEN,
   });
   const filePath = path.join(import.meta.dirname, "./db.json");
-  const file = fs.readFileSync(filePath, { encoding: "utf8", flag: "a+" }) || '{ "comments": [] }';
+  const file = fs.readFileSync(filePath, { encoding: "utf8", flag: "a+" }) || "{}";
 
   console.log("->", file);
   const fileContent = JSON.parse(file) as DbComment;
