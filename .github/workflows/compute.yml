@@ -1,10 +1,6 @@
 name: Watch Activity
 
 on:
-  workflow_run:
-    workflows: ["Cron"]
-    types:
-      - completed
   workflow_dispatch:
     inputs:
       stateId:

@@ -38,7 +38,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     log.logMessage.diff = log.logMessage.raw;
     await postComment(context, log);
     await db.update((data) => {
-      data[`${context.payload.repository.owner}/${context.payload.repository.name}`] = { commentId: 1, issueNumber: 1 };
+      data[`${context.payload.repository.owner?.login}/${context.payload.repository.name}`] = { commentId: 1, issueNumber: 1 };
       return data;
     });
   }
