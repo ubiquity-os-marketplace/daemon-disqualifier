@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "*/15 * * * *"
 
+env:
+  APP_ID: ${{ secrets.APP_ID }}
+  APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
 jobs:
   run-cron:
     environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
@@ -18,6 +22,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Install packages
         run: bun install --frozen-lockfile
