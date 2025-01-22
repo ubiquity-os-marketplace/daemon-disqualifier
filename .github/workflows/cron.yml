@@ -3,7 +3,7 @@ name: Cron
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: "*/15 * * * *"
 
 jobs:
   run-cron:
@@ -14,5 +14,28 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - run: |
-          echo "Running CRON job..."
+      - use: oven-sh/setup-bun@v2
+
+      - name: Get GitHub App token
+        if: env.APP_ID != '' && env.APP_PRIVATE_KEY != ''
+        uses: tibdex/github-app-token@v1.7.0
+        id: get_installation_token
+        with:
+          app_id: ${{ env.APP_ID }}
+          private_key: ${{ env.APP_PRIVATE_KEY }}
+
+      - name: Run CRON job
+        run: |
+          bun src/cron/index.ts
+        env:
+          GITHUB_TOKEN: ${{ steps.get_installation_token.outputs.token || github.token }}
+
+      - name: Commit updated DB
+        uses: swinton/commit@v2.x
+        env:
+          GH_TOKEN: ${{ steps.get_installation_token.outputs.token || github.token }}
+        with:
+          files: |
+            db.json
+          commit-message: "chore: [skip ci] update db.json"
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}

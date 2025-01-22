@@ -5,26 +5,51 @@ import path from "node:path";
 
 interface DbComment {
   [repo: string]: {
-    commentId: string;
+    commentId: number;
     issueNumber: number;
   };
 }
 
 async function main() {
   const logger = new Logs(process.env.LOG_LEVEL ?? "info");
-  const octokit = new Octokit();
+  const octokit = new Octokit({
+    auth: process.env.GITHUB_TOKEN,
+  });
+  const filePath = path.join(import.meta.dirname, "./db.json");
+  const file = fs.readFileSync(filePath, { encoding: "utf8", flag: "a+" }) || '{ "comments": [] }';
 
-  const fileContent = JSON.parse(fs.readFileSync(path.join(__dirname, "./db.json"), { encoding: "utf8" })) as DbComment;
-  for (const [key, value] of Object.entries(fileContent.comments)) {
-    logger.info(`Triggering update through comments ${key} (${value})`);
+  console.log("->", file);
+  const fileContent = JSON.parse(file) as DbComment;
+  for (const [key, value] of Object.entries(fileContent)) {
+    logger.info(`Triggering update`, {
+      key,
+      value,
+    });
+    const [owner, repo] = key.split("/");
+    const {
+      data: { body = "" },
+    } = await octokit.rest.issues.getComment({
+      owner,
+      repo,
+      comment_id: value.commentId,
+      issue_number: value.issueNumber,
+    });
+    const newBody = body + `\n<!-- daemon-disqualifier update ${Date().toLocaleString()} -->`;
+    logger.debug(`Update comment ${value.commentId}`, { newBody });
     await octokit.rest.issues.updateComment({
-      owner: key,
-      repo: key,
-      comment_id: 1,
-      issue_number: value,
-      body: "",
+      owner,
+      repo,
+      comment_id: value.commentId,
+      issue_number: value.issueNumber,
+      body: newBody,
     });
   }
+  // commit file
+  // disable workflow?
+  fs.writeFileSync(filePath, JSON.stringify(fileContent, null, 2));
+  // await octokit.rest.actions.disableWorkflow({
+  //   owner
+  // })
 }
 
 main().catch(console.error);
