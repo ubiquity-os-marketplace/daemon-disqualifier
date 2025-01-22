@@ -16,6 +16,9 @@ jobs:
     steps:
       - uses: oven-sh/setup-bun@v2
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Install packages
         run: bun install --frozen-lockfile
 
@@ -26,9 +29,6 @@ jobs:
         with:
           app_id: ${{ env.APP_ID }}
           private_key: ${{ env.APP_PRIVATE_KEY }}
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Run CRON job
         run: |
