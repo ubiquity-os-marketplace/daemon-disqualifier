@@ -24,6 +24,10 @@ on:
       command:
         description: "Command"
 
+env:
+  APP_ID: ${{ secrets.APP_ID }}
+  APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
 jobs:
   compute:
     environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
@@ -46,3 +50,21 @@ jobs:
 
       - name: Watch Activity
         uses: ./
+
+      - name: Get GitHub App token
+        if: env.APP_ID != '' && env.APP_PRIVATE_KEY != ''
+        uses: tibdex/github-app-token@v1.7.0
+        id: get_installation_token
+        with:
+          app_id: ${{ env.APP_ID }}
+          private_key: ${{ env.APP_PRIVATE_KEY }}
+
+      - name: Commit updated DB
+        uses: swinton/commit@v2.x
+        env:
+          GH_TOKEN: ${{ steps.get_installation_token.outputs.token || github.token }}
+        with:
+          files: |
+            db.json
+          commit-message: "chore: [skip ci] update db.json"
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
