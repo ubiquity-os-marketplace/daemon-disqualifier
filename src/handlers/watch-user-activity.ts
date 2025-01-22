@@ -36,11 +36,16 @@ export async function watchUserActivity(context: ContextPlugin) {
     );
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
-    await postComment(context, log);
-    await db.update((data) => {
-      data[`${context.payload.repository.owner?.login}/${context.payload.repository.name}`] = { commentId: 1, issueNumber: 1 };
-      return data;
-    });
+    const commentData = await postComment(context, log);
+    if (commentData) {
+      await db.update((data) => {
+        data[`${context.payload.repository.owner?.login}/${context.payload.repository.name}`] = {
+          commentId: commentData.id,
+          issueNumber: commentData.issueNumber,
+        };
+        return data;
+      });
+    }
   }
 
   await Promise.all(
