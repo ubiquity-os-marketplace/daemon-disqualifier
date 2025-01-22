@@ -18,7 +18,6 @@ async function main() {
   const filePath = path.join(process.env.GITHUB_WORKSPACE || import.meta.dirname, "./db.json");
   const file = fs.readFileSync(filePath, { encoding: "utf8", flag: "a+" }) || "{}";
 
-  console.log("->", file);
   const fileContent = JSON.parse(file) as DbComment;
   for (const [key, value] of Object.entries(fileContent)) {
     try {
@@ -44,19 +43,18 @@ async function main() {
         issue_number: value.issueNumber,
         body: newBody,
       });
+      delete fileContent[key];
     } catch (e) {
-      logger.error("Failed to update the comment", { e });
+      logger.error("Failed to update the comment", { key, value, e });
     }
   }
-  // commit file
-  // disable workflow?
   fs.writeFileSync(filePath, JSON.stringify(fileContent, null, 2));
-  // await octokit.rest.actions.disableWorkflow({
-  //   owner
-  // })
   logger.info(`Saved updated database.`, {
     filePath,
   });
+  if (Object.keys(fileContent).length === 0) {
+    logger.info("No more repositories to watch, disabling the CRON workflow.");
+  }
 }
 
 main().catch(console.error);
