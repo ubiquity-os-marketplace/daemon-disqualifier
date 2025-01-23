@@ -4,10 +4,12 @@ import path from "node:path";
 export const DB_FILE_NAME = "db.json";
 
 export interface DbComment {
-  [repo: string]: {
-    commentId: number;
-    issueNumber: number;
-  };
+  commentId: number;
+  issueNumber: number;
 }
 
-export default await JSONFilePreset<DbComment>(path.join(process.env.GITHUB_WORKSPACE || import.meta.dirname, DB_FILE_NAME), {});
+export interface DbIssues {
+  [repo: string]: DbComment[];
+}
+
+export default await JSONFilePreset<DbIssues>(path.join(process.env.GITHUB_WORKSPACE || import.meta.dirname, DB_FILE_NAME), {});

@@ -15,32 +15,31 @@ async function main() {
         value,
       });
       const [owner, repo] = key.split("/");
+      const comment = value.pop();
+      if (!comment) {
+        logger.error(`No comment was found for repository ${key}`);
+        continue;
+      }
       const {
         data: { body = "" },
       } = await octokit.rest.issues.getComment({
         owner,
         repo,
-        comment_id: value.commentId,
-        issue_number: value.issueNumber,
+        comment_id: comment.commentId,
+        issue_number: comment.issueNumber,
       });
       const newBody = body + `\n<!-- daemon-disqualifier update ${Date().toLocaleString()} -->`;
-      logger.debug(`Update comment ${value.commentId}`, { newBody });
+      logger.debug(`Update comment ${comment.commentId}`, { newBody });
       await octokit.rest.issues.updateComment({
         owner,
         repo,
-        comment_id: value.commentId,
-        issue_number: value.issueNumber,
+        comment_id: comment.commentId,
+        issue_number: comment.issueNumber,
         body: newBody,
       });
-      delete db.data[key];
     } catch (e) {
       logger.error("Failed to update the comment", { key, value, e });
     }
-  }
-  await db.write();
-  logger.info(`Saved updated database.`);
-  if (Object.keys(fileContent).length === 0) {
-    logger.info("No more repositories to watch, disabling the CRON workflow.");
   }
 }
 

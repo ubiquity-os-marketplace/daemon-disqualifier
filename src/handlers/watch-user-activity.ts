@@ -39,10 +39,13 @@ export async function watchUserActivity(context: ContextPlugin) {
     const commentData = await postComment(context, log);
     if (commentData) {
       await db.update((data) => {
-        data[`${context.payload.repository.owner?.login}/${context.payload.repository.name}`] = {
-          commentId: commentData.id,
-          issueNumber: commentData.issueNumber,
-        };
+        const dbKey = `${context.payload.repository.owner?.login}/${context.payload.repository.name}`;
+        if (!data[dbKey].some((o) => o.issueNumber === commentData.issueNumber)) {
+          data[dbKey].push({
+            commentId: commentData.id,
+            issueNumber: commentData.issueNumber,
+          });
+        }
         return data;
       });
     }

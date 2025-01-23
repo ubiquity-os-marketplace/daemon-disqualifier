@@ -41,13 +41,3 @@ jobs:
           bun src/cron/index.ts
         env:
           GITHUB_TOKEN: ${{ steps.get_installation_token.outputs.token || github.token }}
-
-      - name: Commit updated DB
-        uses: swinton/commit@v2.x
-        env:
-          GH_TOKEN: ${{ steps.get_installation_token.outputs.token || github.token }}
-        with:
-          files: |
-            db.json
-          commit-message: "chore: [skip ci] update db.json"
-          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
