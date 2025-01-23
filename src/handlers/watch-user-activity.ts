@@ -40,7 +40,10 @@ export async function watchUserActivity(context: ContextPlugin) {
     if (commentData) {
       await db.update((data) => {
         const dbKey = `${context.payload.repository.owner?.login}/${context.payload.repository.name}`;
-        if (!data[dbKey]?.some((o) => o.issueNumber === commentData.issueNumber)) {
+        if (!data[dbKey]) {
+          data[dbKey] = [];
+        }
+        if (!data[dbKey].some((o) => o.issueNumber === commentData.issueNumber)) {
           data[dbKey].push({
             commentId: commentData.id,
             issueNumber: commentData.issueNumber,
