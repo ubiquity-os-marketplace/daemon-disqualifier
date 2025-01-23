@@ -1,7 +1,7 @@
 {
   "name": "Daemon Disqualifier",
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
-  "ubiquity:listeners": ["issues.assigned"],
+  "ubiquity:listeners": ["issues.assigned", "issue_comment.edited"],
   "skipBotEvents": false,
   "configuration": {
     "default": {},
