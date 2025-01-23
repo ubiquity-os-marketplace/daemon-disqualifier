@@ -17,6 +17,7 @@ function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDat
 
 async function removeEntryFromDatabase(issue: ListIssueForRepo) {
   // TODO: if empty, disable the CRON workflow
+  // if new, enable workflow again
   const { owner, repo, issue_number } = parseIssueUrl(issue.html_url);
   await db.update((data) => {
     data[`${owner}/${repo}`] = data[`${owner}/${repo}`].filter((o) => o.issueNumber !== issue_number);
