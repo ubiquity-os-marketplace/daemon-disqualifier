@@ -2,7 +2,7 @@ import { RestEndpointMethodTypes } from "@octokit/rest";
 import { DateTime } from "luxon";
 import db from "../cron/database-handler";
 import { FOLLOWUP_HEADER } from "../types/constants";
-import { ListForOrg, ListIssueForRepo } from "../types/github-types";
+import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
@@ -24,16 +24,21 @@ async function removeEntryFromDatabase(issue: ListIssueForRepo) {
   });
 }
 
-export async function updateTaskReminder(context: ContextPlugin, repo: ListForOrg["data"][0], issue: ListIssueForRepo) {
+export async function updateTaskReminder(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
   const {
     octokit,
     logger,
+    payload,
     config: { eventWhitelist, warning, disqualification, prioritySpeed },
   } = context;
   const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
   const now = DateTime.local();
 
   if (!handledMetadata) return;
+
+  if (!repo.owner) {
+    throw logger.error("No owner was found in the payload", { payload });
+  }
 
   const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
     owner: repo.owner.login,

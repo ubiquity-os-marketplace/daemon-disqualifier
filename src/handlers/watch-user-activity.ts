@@ -4,7 +4,6 @@ import db from "../cron/database-handler";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
-import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { formatMillisecondsToHumanReadable } from "./time-format";
 
@@ -54,12 +53,9 @@ export async function watchUserActivity(context: ContextPlugin) {
     }
   }
 
-  await Promise.all(
-    repos.map(async (repo) => {
-      logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
-      await updateReminders(context, repo);
-    })
-  );
+  const repo = context.payload.repository;
+  logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
+  await updateReminders(context, repo);
 
   return { message: "OK" };
 }
@@ -76,7 +72,7 @@ function shouldIgnoreIssue(issue: IssueType) {
   return issue.draft || !!issue.pull_request || issue.locked || issue.state !== "open" || parsePriceLabel(issue.labels) === null;
 }
 
-async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][0]) {
+async function updateReminders(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"]) {
   const { logger, octokit, payload } = context;
   const owner = payload.repository.owner?.login;
   if (!owner) {
