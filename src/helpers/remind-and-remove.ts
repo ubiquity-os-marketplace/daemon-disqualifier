@@ -1,3 +1,4 @@
+import db from "../cron/database-handler";
 import { FOLLOWUP_HEADER, UNASSIGN_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
@@ -97,6 +98,14 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
   return true;
 }
 
+async function removeEntryFromDatabase(issue: ListIssueForRepo) {
+  const { owner, repo, issue_number } = parseIssueUrl(issue.html_url);
+  await db.update((data) => {
+    data[`${owner}/${repo}`] = data[`${owner}/${repo}`].filter((o) => o.issueNumber !== issue_number);
+    return data;
+  });
+}
+
 async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
@@ -126,6 +135,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     issue_number,
     assignees: logins,
   });
+  await removeEntryFromDatabase(issue);
   return true;
 }
 

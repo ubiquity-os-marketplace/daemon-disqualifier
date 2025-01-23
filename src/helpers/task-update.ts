@@ -1,6 +1,5 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { DateTime } from "luxon";
-import db from "../cron/database-handler";
 import { FOLLOWUP_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
@@ -13,14 +12,6 @@ import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
 function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime {
   return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
-}
-
-async function removeEntryFromDatabase(issue: ListIssueForRepo) {
-  const { owner, repo, issue_number } = parseIssueUrl(issue.html_url);
-  await db.update((data) => {
-    data[`${owner}/${repo}`] = data[`${owner}/${repo}`].filter((o) => o.issueNumber !== issue_number);
-    return data;
-  });
 }
 
 export async function updateTaskReminder(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
@@ -97,7 +88,6 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
       await unassignUserFromIssue(context, issue);
       await closeLinkedPullRequests(context, issue);
-      await removeEntryFromDatabase(issue);
     } else {
       logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
         now: now.toLocaleString(DateTime.DATETIME_MED),
