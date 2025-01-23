@@ -56,8 +56,40 @@ export async function watchUserActivity(context: ContextPlugin) {
   const repo = context.payload.repository;
   logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
   await updateReminders(context, repo);
+  await updateCronState(context);
 
   return { message: "OK" };
+}
+
+async function updateCronState(context: ContextPlugin) {
+  if (!process.env.GITHUB_REPOSITORY) {
+    context.logger.error("Can't update the Action Workflow state as GITHUB_REPOSITORY is missing from the env.");
+    return;
+  }
+
+  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+
+  await db.update((data) => {
+    for (const key of Object.keys(data)) {
+      if (!data[key].length) {
+        delete data[key];
+      }
+    }
+    return data;
+  });
+  if (Object.keys(db.data).length) {
+    await context.octokit.rest.actions.enableWorkflow({
+      owner,
+      repo,
+      workflow_id: "cron.yml",
+    });
+  } else {
+    await context.octokit.rest.actions.disableWorkflow({
+      owner,
+      repo,
+      workflow_id: "cron.yml",
+    });
+  }
 }
 
 /*
