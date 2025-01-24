@@ -63,4 +63,5 @@ jobs:
           files: |
             db.json
           commit-message: "chore: [skip ci] update db.json"
-          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
+          # We save to the default branch since CRON cannot access any other branch
+          ref: ${{ github.event.repository.default_branch }}
