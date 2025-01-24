@@ -2,6 +2,7 @@ import { RestEndpointMethodTypes } from "@octokit/rest";
 import { postComment } from "@ubiquity-os/plugin-sdk";
 import db from "../cron/database-handler";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
+import { parseIssueUrl } from "../helpers/github-url";
 import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ContextPlugin } from "../types/plugin-input";
@@ -138,7 +139,14 @@ async function updateReminders(context: ContextPlugin, repo: ContextPlugin["payl
         await updateTaskReminder(context, repo, issue);
       } else {
         logger.info(`Skipping issue ${issue.html_url} because no user is assigned.`);
-        // TODO: remove entry from db?
+        const { owner, repo } = parseIssueUrl(issue.html_url);
+        const key = `${owner}/${repo}`;
+        if (db.data[key]) {
+          await db.update((data) => {
+            data[key] = data[key].filter((o) => o.issueNumber !== issue.number);
+            return data;
+          });
+        }
       }
     })
   );
