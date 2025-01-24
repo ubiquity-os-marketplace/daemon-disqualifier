@@ -3,7 +3,7 @@ name: Cron
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "1 0 * * *"
 
 env:
   APP_ID: ${{ secrets.APP_ID }}
