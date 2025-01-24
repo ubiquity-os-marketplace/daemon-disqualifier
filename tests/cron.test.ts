@@ -1,7 +1,14 @@
 import { describe, it, jest } from "@jest/globals";
+import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import db from "../src/cron/database-handler";
+import { ContextPlugin } from "../src/types/plugin-input";
 
 describe("CRON tests", () => {
+  beforeEach(async () => {
+    db.data = {};
+    await db.write();
+  });
+
   it("Should modify the comments in the list inside of the db", async () => {
     const issue1 = {
       issueNumber: 1,
@@ -43,5 +50,33 @@ describe("CRON tests", () => {
     });
     getComment.mockReset();
     updateComment.mockReset();
+  });
+
+  it("Should enable and disable the CRON workflow depending on the DB state", async () => {
+    const { updateCronState } = await import("../src/cron/workflow");
+    const enableWorkflow = jest.fn();
+    const disableWorkflow = jest.fn();
+    const context = {
+      logger: new Logs("debug"),
+      octokit: {
+        rest: {
+          actions: {
+            enableWorkflow,
+            disableWorkflow,
+          },
+        },
+      },
+    } as unknown as ContextPlugin;
+
+    process.env.GITHUB_REPOSITORY = "ubiquity-os-marketplace/daemon-disqualifier";
+    await updateCronState(context);
+    expect(disableWorkflow).toHaveBeenCalledTimes(1);
+
+    db.data = { "ubiquity-os-marketplace/daemon-disqualifier": [{ commentId: 1, issueNumber: 1 }] };
+    await updateCronState(context);
+    expect(enableWorkflow).toHaveBeenCalledTimes(1);
+
+    enableWorkflow.mockReset();
+    disableWorkflow.mockReset();
   });
 });

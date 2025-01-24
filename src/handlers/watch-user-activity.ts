@@ -1,6 +1,7 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { postComment } from "@ubiquity-os/plugin-sdk";
 import db from "../cron/database-handler";
+import { updateCronState } from "../cron/workflow";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { parseIssueUrl } from "../helpers/github-url";
 import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
@@ -60,40 +61,6 @@ export async function watchUserActivity(context: ContextPlugin) {
   await updateCronState(context);
 
   return { message: "OK" };
-}
-
-async function updateCronState(context: ContextPlugin) {
-  await db.update((data) => {
-    for (const key of Object.keys(data)) {
-      if (!data[key].length) {
-        delete data[key];
-      }
-    }
-    return data;
-  });
-
-  if (!process.env.GITHUB_REPOSITORY) {
-    context.logger.error("Can't update the Action Workflow state as GITHUB_REPOSITORY is missing from the env.");
-    return;
-  }
-
-  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
-
-  if (Object.keys(db.data).length) {
-    context.logger.verbose("Enabling cron.yml workflow.");
-    await context.octokit.rest.actions.enableWorkflow({
-      owner,
-      repo,
-      workflow_id: "cron.yml",
-    });
-  } else {
-    context.logger.verbose("Disabling cron.yml workflow.");
-    await context.octokit.rest.actions.disableWorkflow({
-      owner,
-      repo,
-      workflow_id: "cron.yml",
-    });
-  }
 }
 
 /*
