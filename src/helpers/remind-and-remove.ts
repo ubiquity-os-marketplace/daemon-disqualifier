@@ -101,7 +101,10 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
 async function removeEntryFromDatabase(issue: ListIssueForRepo) {
   const { owner, repo, issue_number } = parseIssueUrl(issue.html_url);
   await db.update((data) => {
-    data[`${owner}/${repo}`] = data[`${owner}/${repo}`].filter((o) => o.issueNumber !== issue_number);
+    const key = `${owner}/${repo}`;
+    if (data[key]) {
+      data[key] = data[key].filter((o) => o.issueNumber !== issue_number);
+    }
     return data;
   });
 }

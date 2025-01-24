@@ -31,6 +31,9 @@ export const handlers = [
   http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_id/comments", ({ params: { issue_id } }) => {
     return HttpResponse.json(db.issueComments.findMany({ where: { issueId: { equals: Number(issue_id) } } }));
   }),
+  http.patch("https://api.github.com/repos/:owner/:repo/pulls/:id", ({ params: { issue_id } }) => {
+    return HttpResponse.json();
+  }),
   http.post("https://api.github.com/repos/:owner/:repo/issues/:id/comments", async ({ params: { owner, repo, id }, request: { body } }) => {
     const comment = await body
       ?.getReader()
