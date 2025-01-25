@@ -1,8 +1,8 @@
+import { RestEndpointMethodTypes } from "@octokit/rest";
 import { DateTime } from "luxon";
 import ms from "ms";
-import { ListForOrg, ListIssueForRepo } from "../types/github-types";
+import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
-import { RestEndpointMethodTypes } from "@octokit/rest";
 
 type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForRepo"]["response"]["data"][0], "color">> & {
   color?: string | null;
@@ -17,10 +17,14 @@ type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForR
  */
 export async function getTaskAssignmentDetails(
   context: ContextPlugin,
-  repo: ListForOrg["data"][0],
+  repo: ContextPlugin["payload"]["repository"],
   issue: ListIssueForRepo
 ): Promise<{ startPlusLabelDuration: string; taskAssignees: number[] } | false> {
-  const { logger, octokit } = context;
+  const { logger, octokit, payload } = context;
+
+  if (!repo.owner) {
+    throw logger.error("No owner was found in the payload", { payload });
+  }
 
   const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
     owner: repo.owner.login,

@@ -76,7 +76,7 @@ describe("Reminder tests", () => {
           login: "ubiquity-os",
         },
         name: "daemon-disqualifier",
-      } as unknown as ListForOrg["data"][0],
+      } as unknown as ContextPlugin["payload"]["repository"],
       { number: 1, html_url: "https://github.com/ubiquity-os/daemon-disqualifier/issue/1" } as unknown as ListIssueForRepo
     );
     // We expect it to be called 2 times because one pull-request is merged and one is closed
