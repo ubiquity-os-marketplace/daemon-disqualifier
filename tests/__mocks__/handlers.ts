@@ -59,6 +59,12 @@ export const handlers = [
     });
     return HttpResponse.json({ message: "Assignees removed" });
   }),
+  http.put("https://api.github.com/repos/:owner/:repo/actions/workflows/:workflow/disable", () => {
+    return HttpResponse.json();
+  }),
+  http.put("https://api.github.com/repos/:owner/:repo/actions/workflows/:workflow/enable", () => {
+    return HttpResponse.json();
+  }),
   http.post("https://api.github.com/graphql", () => {
     return HttpResponse.json({
       data: {
