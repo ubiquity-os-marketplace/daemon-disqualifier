@@ -98,7 +98,7 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
   return true;
 }
 
-async function removeEntryFromDatabase(issue: ListIssueForRepo) {
+export async function removeEntryFromDatabase(issue: ListIssueForRepo) {
   const { owner, repo, issue_number } = parseIssueUrl(issue.html_url);
   await db.update((data) => {
     const key = `${owner}/${repo}`;
