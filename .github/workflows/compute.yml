@@ -49,16 +49,16 @@ jobs:
 
       - name: Get GitHub App token
         if: env.APP_ID != '' && env.APP_PRIVATE_KEY != ''
-        uses: tibdex/github-app-token@v1.7.0
-        id: get_installation_token
+        uses: actions/create-github-app-token@v1
+        id: app-token
         with:
-          app_id: ${{ env.APP_ID }}
-          private_key: ${{ env.APP_PRIVATE_KEY }}
+          app-id: ${{ env.APP_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
 
       - name: Commit updated DB
         uses: swinton/commit@v2.x
         env:
-          GH_TOKEN: ${{ steps.get_installation_token.outputs.token || github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
         with:
           files: |
             db.json
