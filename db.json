@@ -1,0 +1,46 @@
+{
+  "ubiquity-os-marketplace/text-conversation-rewards": [
+    {
+      "commentId": 2614081629,
+      "issueNumber": 247
+    },
+    {
+      "commentId": 2616074973,
+      "issueNumber": 249
+    },
+    {
+      "commentId": 2622938760,
+      "issueNumber": 230
+    },
+    {
+      "commentId": 2623816001,
+      "issueNumber": 187
+    }
+  ],
+  "ubiquity-os-marketplace/command-ask": [
+    {
+      "commentId": 2619678137,
+      "issueNumber": 51
+    },
+    {
+      "commentId": 2620364131,
+      "issueNumber": 52
+    }
+  ],
+  "ubiquity-os-marketplace/command-start-stop": [
+    {
+      "commentId": 2621028305,
+      "issueNumber": 131
+    },
+    {
+      "commentId": 2621150674,
+      "issueNumber": 129
+    }
+  ],
+  "ubiquity-os-marketplace/command-wallet": [
+    {
+      "commentId": 2621902755,
+      "issueNumber": 38
+    }
+  ]
+}

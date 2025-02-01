@@ -38,6 +38,9 @@ describe("watchUserActivity", () => {
         issues: {
           listForRepo: jest.fn(() => []),
         },
+        actions: {
+          disableWorkflow: jest.fn(),
+        },
       },
     },
   } as unknown as ContextPlugin;

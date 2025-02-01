@@ -1,11 +1,13 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { postComment } from "@ubiquity-os/plugin-sdk";
-import { formatMillisecondsToHumanReadable } from "./time-format";
+import db from "../cron/database-handler";
+import { updateCronState } from "../cron/workflow";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
+import { removeEntryFromDatabase } from "../helpers/remind-and-remove";
 import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
-import { ListForOrg } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
+import { formatMillisecondsToHumanReadable } from "./time-format";
 
 type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"]["0"];
 
@@ -35,15 +37,28 @@ export async function watchUserActivity(context: ContextPlugin) {
     );
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
-    await postComment(context, log);
+    const commentData = await postComment(context, log);
+    if (commentData) {
+      await db.update((data) => {
+        const dbKey = `${context.payload.repository.owner?.login}/${context.payload.repository.name}`;
+        if (!data[dbKey]) {
+          data[dbKey] = [];
+        }
+        if (!data[dbKey].some((o) => o.issueNumber === commentData.issueNumber)) {
+          data[dbKey].push({
+            commentId: commentData.id,
+            issueNumber: commentData.issueNumber,
+          });
+        }
+        return data;
+      });
+    }
   }
 
-  await Promise.all(
-    repos.map(async (repo) => {
-      logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
-      await updateReminders(context, repo);
-    })
-  );
+  const repo = context.payload.repository;
+  logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
+  await updateReminders(context, repo);
+  await updateCronState(context);
 
   return { message: "OK" };
 }
@@ -60,7 +75,7 @@ function shouldIgnoreIssue(issue: IssueType) {
   return issue.draft || !!issue.pull_request || issue.locked || issue.state !== "open" || parsePriceLabel(issue.labels) === null;
 }
 
-async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][0]) {
+async function updateReminders(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"]) {
   const { logger, octokit, payload } = context;
   const owner = payload.repository.owner?.login;
   if (!owner) {
@@ -91,6 +106,7 @@ async function updateReminders(context: ContextPlugin, repo: ListForOrg["data"][
         await updateTaskReminder(context, repo, issue);
       } else {
         logger.info(`Skipping issue ${issue.html_url} because no user is assigned.`);
+        await removeEntryFromDatabase(issue);
       }
     })
   );
