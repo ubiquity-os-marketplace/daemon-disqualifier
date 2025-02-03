@@ -30,6 +30,7 @@
     "open-source"
   ],
   "dependencies": {
+    "@octokit/auth-app": "^7.1.4",
     "@octokit/graphql-schema": "^15.25.0",
     "@octokit/rest": "^21.0.2",
     "@sinclair/typebox": "0.34.3",
