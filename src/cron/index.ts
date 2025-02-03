@@ -7,7 +7,12 @@ import db from "./database-handler";
 async function main() {
   const logger = new Logs(process.env.LOG_LEVEL ?? "info");
   const octokit = new Octokit({
-    auth: process.env.GITHUB_TOKEN,
+    authStrategy: createAppAuth,
+    auth: {
+      appId: Number(process.env.APP_ID),
+      privateKey: process.env.APP_PRIVATE_KEY,
+      installationId: process.env.APP_INSTALLATION_ID,
+    },
   });
 
   const fileContent = db.data;
