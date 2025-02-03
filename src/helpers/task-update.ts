@@ -1,3 +1,4 @@
+import { PullRequest } from "@octokit/graphql-schema";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { DateTime } from "luxon";
 import { FOLLOWUP_HEADER } from "../types/constants";
@@ -6,6 +7,7 @@ import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 import { parseIssueUrl } from "./github-url";
+import { QUERY_PULL_REQUEST } from "./pull-request-operations";
 import { closeLinkedPullRequests, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
@@ -85,16 +87,22 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   if (lastReminderComment) {
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
-    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
-      await unassignUserFromIssue(context, issue);
-      await closeLinkedPullRequests(context, issue);
+    if (await isPullRequestApproved(context, issue)) {
+      logger.info(`Skipping issue ${issue.html_url} because the pull-request was approved.`, { issue });
     } else {
-      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
-        now: now.toLocaleString(DateTime.DATETIME_MED),
-        assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
-        lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
-        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
-      });
+      if (
+        mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
+      ) {
+        await unassignUserFromIssue(context, issue);
+        await closeLinkedPullRequests(context, issue);
+      } else {
+        logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
+          now: now.toLocaleString(DateTime.DATETIME_MED),
+          assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
+          lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
+          mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+        });
+      }
     }
   } else {
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? warning / priorityLevel : warning }) <= now) {
@@ -108,4 +116,18 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
       });
     }
   }
+}
+
+async function isPullRequestApproved(context: ContextPlugin, issue: ListIssueForRepo) {
+  const { octokit } = context;
+  const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
+
+  const { reviewDecision } = await octokit.graphql<PullRequest>(QUERY_PULL_REQUEST, {
+    input: {
+      owner,
+      repo,
+      number: issue_number,
+    },
+  });
+  return reviewDecision === "APPROVED";
 }

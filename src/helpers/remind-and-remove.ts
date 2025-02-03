@@ -4,7 +4,7 @@ import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { parseIssueUrl } from "./github-url";
-import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-draft";
+import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
 
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
