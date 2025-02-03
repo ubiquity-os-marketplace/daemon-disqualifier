@@ -15,6 +15,10 @@
     {
       "commentId": 2623816001,
       "issueNumber": 187
+    },
+    {
+      "commentId": 2629099280,
+      "issueNumber": 236
     }
   ],
   "ubiquity-os-marketplace/command-ask": [
@@ -41,6 +45,12 @@
     {
       "commentId": 2621902755,
       "issueNumber": 38
+    }
+  ],
+  "ubiquity-os-marketplace/daemon-pull-review": [
+    {
+      "commentId": 2629092790,
+      "issueNumber": 5
     }
   ]
 }
