@@ -123,11 +123,9 @@ async function isPullRequestApproved(context: ContextPlugin, issue: ListIssueFor
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
   const { reviewDecision } = await octokit.graphql<PullRequest>(QUERY_PULL_REQUEST, {
-    input: {
-      owner,
-      repo,
-      number: issue_number,
-    },
+    owner,
+    name: repo,
+    number: issue_number,
   });
   return reviewDecision === "APPROVED";
 }
