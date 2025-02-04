@@ -1,4 +1,4 @@
-import { PullRequest } from "@octokit/graphql-schema";
+import { Repository } from "@octokit/graphql-schema";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { DateTime } from "luxon";
 import { FOLLOWUP_HEADER } from "../types/constants";
@@ -87,8 +87,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   if (lastReminderComment) {
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
-    if (await isPullRequestApproved(context, issue)) {
-      logger.info(`Skipping issue ${issue.html_url} because the pull-request was approved.`, { issue });
+    if (await areLinkedPullRequestsApproved(context, issue)) {
+      logger.info(`Skipping issue ${issue.html_url} because the pull-request was approved.`);
     } else {
       if (
         mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
@@ -118,14 +118,29 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   }
 }
 
-async function isPullRequestApproved(context: ContextPlugin, issue: ListIssueForRepo) {
-  const { octokit } = context;
+async function areLinkedPullRequestsApproved(context: ContextPlugin, issue: ListIssueForRepo) {
+  const { octokit, logger } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
-  const { reviewDecision } = await octokit.graphql<PullRequest>(QUERY_PULL_REQUEST, {
-    owner,
-    name: repo,
-    number: issue_number,
-  });
-  return reviewDecision === "APPROVED";
+  const pullRequestsFromAssignees = (await collectLinkedPullRequests(context, { repo, owner, issue_number })).filter((o) =>
+    issue.assignees?.some((assignee) => assignee.id === o.author.id)
+  );
+
+  for (const pullRequest of pullRequestsFromAssignees) {
+    const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
+    try {
+      const data = await octokit.graphql<{ repository: Repository }>(QUERY_PULL_REQUEST, {
+        owner: prOwner,
+        name: prRepo,
+        number: prNumber,
+      });
+      logger.debug(`Pull request ${pullRequest.url} review decision: ${data.repository.pullRequest?.reviewDecision}`);
+      if (data.repository.pullRequest?.reviewDecision !== "APPROVED") {
+        return false;
+      }
+    } catch (e) {
+      logger.error(`Could not get pull-request approval state ${pullRequest.url}.`, { e });
+    }
+  }
+  return true;
 }
