@@ -88,7 +88,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
     if (await areLinkedPullRequestsApproved(context, issue)) {
-      logger.info(`Skipping issue ${issue.html_url} because the pull-request was approved.`);
+      // If the issue was approved but is not merged yet, nudge the assignee
+      await remindAssigneesForIssue(context, issue);
     } else {
       if (
         mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
