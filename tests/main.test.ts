@@ -182,9 +182,12 @@ describe("User start/stop", () => {
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     const comments = db.issueComments.getAll();
-    const latestComment = comments[comments.length - 1];
-    const partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
-    expect(latestComment.body).toContain(partialComment);
+    let latestComment = comments.filter((comment) => comment.issueId === 3).pop();
+    let partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
+    expect(latestComment?.body).toContain(partialComment);
+    latestComment = comments.filter((comment) => comment.issueId === 4).pop();
+    partialComment = "Passed the disqualification threshold and no activity is detected, removing assignees: @user2.";
+    expect(latestComment?.body).toContain(partialComment);
   });
 
   it("Should have nothing to do within the warning period", async () => {
