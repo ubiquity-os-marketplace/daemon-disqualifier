@@ -26,12 +26,12 @@ export async function areLinkedPullRequestsApproved(context: ContextPlugin, issu
         number: prNumber,
       });
       logger.debug(`Pull request ${pullRequest.url} review decision: ${data.repository.pullRequest?.reviewDecision}`);
-      if (data.repository.pullRequest?.reviewDecision !== "APPROVED") {
-        return false;
+      if (data.repository.pullRequest?.reviewDecision === "APPROVED") {
+        return true;
       }
     } catch (e) {
       logger.error(`Could not get pull-request approval state ${pullRequest.url}.`, { e });
     }
   }
-  return true;
+  return false;
 }
