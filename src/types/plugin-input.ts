@@ -91,6 +91,13 @@ export const pluginSettingsSchema = T.Object(
       description: "Whether a pull request is required for the given issue on disqualify",
       examples: ["true", "false"],
     }),
+    topUps: T.Object(
+      {
+        enabled: T.Boolean({ default: true }),
+        amounts: T.Record(T.String(), T.Integer()),
+      },
+      { default: {} }
+    ),
     /**
      * List of events to consider as valid activity on a task
      */
