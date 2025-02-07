@@ -3,6 +3,8 @@ import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import db from "../src/cron/database-handler";
 import { ContextPlugin } from "../src/types/plugin-input";
 
+jest.unstable_mockModule("@octokit/rest", () => {});
+
 describe("CRON tests", () => {
   beforeEach(async () => {
     db.data = {};
@@ -31,6 +33,31 @@ describe("CRON tests", () => {
     jest.unstable_mockModule("@octokit/rest", () => ({
       Octokit: jest.fn(() => ({
         rest: {
+          apps: {
+            getRepoInstallation: jest.fn(() => ({
+              data: {
+                id: 1,
+              },
+            })),
+          },
+          issues: {
+            getComment,
+            updateComment,
+          },
+        },
+      })),
+    }));
+
+    jest.unstable_mockModule("@ubiquity-os/plugin-sdk/octokit", () => ({
+      customOctokit: jest.fn(() => ({
+        rest: {
+          apps: {
+            getRepoInstallation: jest.fn(() => ({
+              data: {
+                id: 1,
+              },
+            })),
+          },
           issues: {
             getComment,
             updateComment,
