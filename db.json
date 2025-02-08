@@ -19,6 +19,14 @@
     {
       "commentId": 2629099280,
       "issueNumber": 236
+    },
+    {
+      "commentId": 2636121533,
+      "issueNumber": 256
+    },
+    {
+      "commentId": 2637629071,
+      "issueNumber": 183
     }
   ],
   "ubiquity-os-marketplace/command-ask": [
@@ -51,6 +59,42 @@
     {
       "commentId": 2629092790,
       "issueNumber": 5
+    },
+    {
+      "commentId": 2644724615,
+      "issueNumber": 4
+    }
+  ],
+  "ubiquity-os-marketplace/daemon-disqualifier": [
+    {
+      "commentId": 2630191908,
+      "issueNumber": 57
+    },
+    {
+      "commentId": 2639881445,
+      "issueNumber": 51
+    }
+  ],
+  "ubiquity-os-marketplace/.github": [
+    {
+      "commentId": 2637923474,
+      "issueNumber": 4
+    }
+  ],
+  "ubiquity-os-marketplace/ubiquity-os-kernel-telegram": [
+    {
+      "commentId": 2639459529,
+      "issueNumber": 20
+    }
+  ],
+  "ubiquity-os-marketplace/text-vector-embeddings": [
+    {
+      "commentId": 2641367176,
+      "issueNumber": 15
+    },
+    {
+      "commentId": 2641809192,
+      "issueNumber": 79
     }
   ]
 }

@@ -1,11 +1,12 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest } from "@jest/globals";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
-import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
+import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import dotenv from "dotenv";
 import ms from "ms";
+import { http, HttpResponse } from "msw";
 import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
 import { run } from "../src/run";
 import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
@@ -182,9 +183,12 @@ describe("User start/stop", () => {
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     const comments = db.issueComments.getAll();
-    const latestComment = comments[comments.length - 1];
-    const partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
-    expect(latestComment.body).toContain(partialComment);
+    let latestComment = comments.filter((comment) => comment.issueId === 3).pop();
+    let partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
+    expect(latestComment?.body).toContain(partialComment);
+    latestComment = comments.filter((comment) => comment.issueId === 4).pop();
+    partialComment = "Passed the disqualification threshold and no activity is detected, removing assignees: @user2.";
+    expect(latestComment?.body).toContain(partialComment);
   });
 
   it("Should have nothing to do within the warning period", async () => {
@@ -200,6 +204,60 @@ describe("User start/stop", () => {
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
+  });
+
+  it("Should remind the user when the pull-request is approved but deadlined is passed, without closing the PR", async () => {
+    const context = createContext(1, 2);
+    const infoSpy = jest.spyOn(context.logger, "info");
+
+    const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
+    expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
+
+    server.use(
+      http.post("https://api.github.com/graphql", () => {
+        return HttpResponse.json({
+          data: {
+            repository: {
+              pullRequest: {
+                reviewDecision: "APPROVED",
+              },
+              issue: {
+                closedByPullRequestsReferences: {
+                  edges: [
+                    {
+                      node: {
+                        url: "https://github.com/ubiquity/test-repo/pull/1",
+                        title: "test",
+                        body: "test",
+                        state: "OPEN",
+                        number: 1,
+                        author: { login: "ubiquity", id: 1 },
+                      },
+                    },
+                    {
+                      node: {
+                        url: "https://github.com/ubiquity/test-repo/pull/1",
+                        title: "test",
+                        body: "test",
+                        state: "CLOSED",
+                        number: 2,
+                        author: { login: "user2", id: 2 },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        });
+      })
+    );
+    await run(context);
+
+    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(4)} sending a reminder.`);
+
+    const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
+    expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
   });
 
   it("Should handle collecting linked PRs", async () => {

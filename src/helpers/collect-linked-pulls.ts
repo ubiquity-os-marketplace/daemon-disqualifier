@@ -16,10 +16,10 @@ type IssueWithClosedByPrs = {
 };
 
 const query = /* GraphQL */ `
-  query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {
+  query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!, $includeClosedPrs: Boolean = false) {
     repository(owner: $owner, name: $repo) {
       issue(number: $issue_number) {
-        closedByPullRequestsReferences(first: 100, includeClosedPrs: false) {
+        closedByPullRequestsReferences(first: 100, includeClosedPrs: $includeClosedPrs) {
           edges {
             node {
               id
@@ -59,13 +59,15 @@ export async function collectLinkedPullRequests(
     owner: string;
     repo: string;
     issue_number: number;
-  }
+  },
+  includeClosedPrs = false
 ) {
   const { owner, repo, issue_number } = issue;
   const result = await context.octokit.graphql<IssueWithClosedByPrs>(query, {
     owner,
     repo,
     issue_number,
+    includeClosedPrs,
   });
 
   return result.repository.issue.closedByPullRequestsReferences.edges.map((edge) => edge.node);
