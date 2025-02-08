@@ -9,35 +9,6 @@ tasks don't stall, and subtracts XP.
 
 Daemon Disqualifier is built as a TypeScript-based GitHub Action that monitors pull request activity and manages reviewer assignments. The system uses a combination of event-driven processing and scheduled tasks to maintain an efficient code review workflow.
 
-### Core Components
-
-#### Action Infrastructure
-- **Entry Point** (`src/index.ts`): Bootstraps the action and initializes core services
-- **Runner** (`src/run.ts`): Orchestrates the main action workflow
-- **Worker** (`src/worker.ts`): Handles background processing tasks
-
-#### Cron System
-- **Database Handler** (`src/cron/database-handler.ts`): Manages state persistence
-- **Workflow Engine** (`src/cron/workflow.ts`): Executes scheduled tasks
-- **Periodic Checks**: Automated monitoring of pull request activity
-
-#### Activity Monitoring
-- **User Activity Watcher** (`src/handlers/watch-user-activity.ts`): Tracks reviewer interactions
-- **Time Management** (`src/handlers/time-format.ts`): Handles time-based operations and formatting
-
-#### Helper Utilities
-- **Pull Request Management** (`src/helpers/`):
-  - `collect-linked-pulls.ts`: Manages related pull request connections
-  - `get-assignee-activity.ts`: Tracks assignee interactions
-  - `pull-request-draft.ts`: Handles draft PR states
-  - `remind-and-remove.ts`: Manages notifications and unassignment
-  - `task-update.ts`: Updates task states and metadata
-
-#### Type System
-- **GitHub Types** (`src/types/github-types.ts`): Type definitions for GitHub API interactions
-- **Environment Types** (`src/types/env.d.ts`): Environment configuration types
-- **Plugin Types** (`src/types/plugin-input.ts`): Plugin configuration interfaces
-
 ### Testing Infrastructure
 
 The project includes a comprehensive test suite using Jest:
@@ -83,26 +54,23 @@ bun run test
 ```yaml
 - plugin: ubiquity-os/daemon-disqualifier
   with:
+    # Time period after which inactive reviewers are unassigned
     disqualification: "7 days"
+    # Time period after which warning notifications are sent
     warning: "3.5 days"
+    # Enable faster processing for priority items
     prioritySpeed: true
+    # Enforce pull request requirement
     pullRequestRequired: true
     watch:
+      # Repositories to exclude from monitoring
       optOut:
         - "repoName"
         - "repoName2"
-    eventWhitelist: # these are the tail of the webhook event i.e. pull_request.review_requested
+    # List of GitHub webhook events to process (these are the tail of the webhook event i.e. pull_request.review_requested)
+    eventWhitelist:
       - "review_requested"
       - "ready_for_review"
       - "commented"
       - "committed"
 ```
-
-### Configuration Options
-
-- `disqualification`: Time period after which inactive reviewers are unassigned
-- `warning`: Time period after which warning notifications are sent
-- `prioritySpeed`: Enable faster processing for priority items
-- `pullRequestRequired`: Enforce pull request requirement
-- `watch.optOut`: Repositories to exclude from monitoring
-- `eventWhitelist`: List of GitHub webhook events to process
