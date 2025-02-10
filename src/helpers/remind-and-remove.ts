@@ -26,7 +26,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const topUpsRemaining = await getTopUpsRemaining(context);
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
-  } else if ((config.pullRequestRequired && !hasLinkedPr) || topUpsRemaining <= 0) {
+  } else if ((config.pullRequestRequired && !hasLinkedPr) || topUpsRemaining < 0) {
     await unassignUserFromIssue(context, issue);
   } else {
     logger.info(`Passed the reminder threshold on ${issue.html_url} sending a reminder.`);
@@ -124,12 +124,12 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   const remainingTopUps = await getTopUpsRemaining(context);
   const logMessage = logger.info(
-    `Passed the disqualification threshold and ${remainingTopUps <= 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
+    `Passed the disqualification threshold and ${remainingTopUps < 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
     {
       issue: issue.html_url,
     }
   );
-  await commentHandler.postComment(context, logMessage);
+  await commentHandler.postComment(context, logMessage, { raw: true });
   await octokit.rest.issues.removeAssignees({
     owner,
     repo,

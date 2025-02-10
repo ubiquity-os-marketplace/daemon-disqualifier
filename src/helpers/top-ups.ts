@@ -51,6 +51,6 @@ export async function getTopUpsRemaining(context: ContextPlugin): Promise<number
   const diffTime = currentDate.getTime() - assignmentDate.getTime();
   const daysAssigned = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  context.logger.debug("top ups", { topUps: topUpLimit, topUpTimelapse, assignmentDate, daysAssigned });
+  context.logger.debug("Remaining top ups", { topUps: topUpLimit, topUpTimelapse, assignmentDate, daysAssigned });
   return topUpLimit;
 }
