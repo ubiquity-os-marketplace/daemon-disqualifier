@@ -34,8 +34,8 @@ export async function getTopUpsRemaining(context: ContextPlugin): Promise<number
   if (!context.config.disqualification) {
     return Infinity;
   }
-  const prioList = Object.keys(context.config.topUps.amounts);
-  const priorityLabel = context.payload.issue.labels?.find((label) => prioList.includes(label.name));
+  const priorityList = Object.keys(context.config.topUps.amounts);
+  const priorityLabel = context.payload.issue.labels?.find((label) => priorityList.includes(label.name));
   if (!priorityLabel) {
     return 0;
   }
@@ -50,7 +50,8 @@ export async function getTopUpsRemaining(context: ContextPlugin): Promise<number
   const currentDate = new Date();
   const diffTime = currentDate.getTime() - assignmentDate.getTime();
   const daysAssigned = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const remainingTopUps = topUpLimit - daysAssigned;
 
-  context.logger.debug("Remaining top ups", { topUps: topUpLimit, topUpTimelapse, assignmentDate, daysAssigned });
-  return topUpLimit;
+  context.logger.debug("Remaining top ups", { topUpLimit, topUpTimelapse, assignmentDate, daysAssigned, remainingTopUps });
+  return remainingTopUps;
 }

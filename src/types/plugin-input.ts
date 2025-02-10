@@ -94,7 +94,7 @@ export const pluginSettingsSchema = T.Object(
     topUps: T.Object(
       {
         enabled: T.Boolean({ default: true }),
-        amounts: T.Record(T.String(), T.Integer(), { default: {} }),
+        amounts: T.Record(T.String(), T.Integer({ minimum: 0 }), { default: {} }),
       },
       { default: {} }
     ),
