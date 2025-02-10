@@ -1,11 +1,12 @@
 import db from "../cron/database-handler";
-import { FOLLOWUP_HEADER, UNASSIGN_HEADER } from "../types/constants";
+import { FOLLOWUP_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { parseIssueUrl } from "./github-url";
 import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
+import { getTopUpsRemaining } from "./top-ups";
 
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
   const { logger, config } = context;
@@ -22,9 +23,10 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const issueItem = parseIssueUrl(issue.html_url);
 
   const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
+  const topUpsRemaining = await getTopUpsRemaining(context);
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
-  } else if (config.pullRequestRequired && !hasLinkedPr) {
+  } else if ((config.pullRequestRequired && !hasLinkedPr) || topUpsRemaining <= 0) {
     await unassignUserFromIssue(context, issue);
   } else {
     logger.info(`Passed the reminder threshold on ${issue.html_url} sending a reminder.`);
@@ -40,12 +42,14 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
     logger.error(`Missing Assignees from ${issue.html_url}`);
     return false;
   }
+
   const logins = issue.assignees
     .map((o) => o?.login)
     .filter((o) => !!o)
     .join(", @");
+  const topUps = await getTopUpsRemaining(context);
 
-  const logMessage = logger.info(`@${logins}, this task has been idle for a while. Please provide an update.\n\n`, {
+  const logMessage = logger.info(`@${logins}, this task has been idle for a while. Please provide an update.\n\n<h5>Top ups remaining: ${topUps}</h5>`, {
     taskAssignees: issue.assignees.map((o) => o?.id),
   });
 
@@ -110,7 +114,7 @@ export async function removeEntryFromDatabase(issue: ListIssueForRepo) {
 }
 
 async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
-  const { octokit, logger } = context;
+  const { octokit, logger, commentHandler } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
@@ -118,20 +122,14 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
+  const remainingTopUps = await getTopUpsRemaining(context);
   const logMessage = logger.info(
-    `Passed the disqualification threshold and no activity is detected, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
+    `Passed the disqualification threshold and ${remainingTopUps <= 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
     {
       issue: issue.html_url,
     }
   );
-  const metadata = createStructuredMetadata(UNASSIGN_HEADER, logMessage);
-
-  await octokit.rest.issues.createComment({
-    owner,
-    repo,
-    issue_number,
-    body: [logMessage.logMessage.raw, metadata].join("\n"),
-  });
+  await commentHandler.postComment(context, logMessage);
   await octokit.rest.issues.removeAssignees({
     owner,
     repo,

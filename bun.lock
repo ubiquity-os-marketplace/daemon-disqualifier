@@ -8,8 +8,8 @@
         "@octokit/graphql-schema": "^15.25.0",
         "@octokit/rest": "^21.0.2",
         "@sinclair/typebox": "0.34.3",
-        "@ubiquity-os/plugin-sdk": "^2.0.3",
-        "@ubiquity-os/ubiquity-os-logger": "^1.3.2",
+        "@ubiquity-os/plugin-sdk": "^3.0.0",
+        "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
         "dotenv": "16.4.5",
         "lowdb": "^7.0.1",
         "luxon": "3.4.4",
@@ -538,9 +538,9 @@
 
     "@typescript-eslint/visitor-keys": ["@typescript-eslint/visitor-keys@8.21.0", "", { "dependencies": { "@typescript-eslint/types": "8.21.0", "eslint-visitor-keys": "^4.2.0" } }, "sha512-BkLMNpdV6prozk8LlyK/SOoWLmUFi+ZD+pcqti9ILCbVvHGk1ui1g4jJOc2WDLaeExz2qWwojxlPce5PljcT3w=="],
 
-    "@ubiquity-os/plugin-sdk": ["@ubiquity-os/plugin-sdk@2.0.3", "", { "dependencies": { "@actions/core": "^1.11.1", "@actions/github": "^6.0.0", "@octokit/core": "^6.1.2", "@octokit/plugin-paginate-graphql": "^5.2.4", "@octokit/plugin-paginate-rest": "^11.3.5", "@octokit/plugin-rest-endpoint-methods": "^13.2.6", "@octokit/plugin-retry": "^7.1.2", "@octokit/plugin-throttling": "^9.3.2", "@octokit/rest": "^21.0.2", "@octokit/types": "^13.6.1", "@octokit/webhooks": "^13.3.0", "@ubiquity-os/ubiquity-os-logger": "^1.3.2", "dotenv": "^16.4.5", "hono": "^4.6.9" }, "peerDependencies": { "@sinclair/typebox": "0.34.3" } }, "sha512-HoFG8vZmH4Uw59PBQ609PL4vGWHlv6fNsFpJiEaXFxUtXSrZg77ESM34V17VZ1IlWOhis1SzqoJwa/UErFBHpw=="],
+    "@ubiquity-os/plugin-sdk": ["@ubiquity-os/plugin-sdk@3.0.0", "", { "dependencies": { "@actions/core": "^1.11.1", "@actions/github": "^6.0.0", "@octokit/core": "^6.1.2", "@octokit/plugin-paginate-graphql": "^5.2.4", "@octokit/plugin-paginate-rest": "^11.3.5", "@octokit/plugin-rest-endpoint-methods": "^13.2.6", "@octokit/plugin-retry": "^7.1.2", "@octokit/plugin-throttling": "^9.3.2", "@octokit/rest": "^21.0.2", "@octokit/types": "^13.6.1", "@octokit/webhooks": "^13.3.0", "@ubiquity-os/ubiquity-os-logger": "^1.4.0", "dotenv": "^16.4.5", "hono": "^4.6.9" }, "peerDependencies": { "@sinclair/typebox": "0.34.3" } }, "sha512-wvUSEYjcy2u6cZHAoSLqfa3kOCkCdOIeMX7Lh+dPxEc0hm3P6cq2b2xAyVZUCiVf5nsIt+xnb2xH0Bk9LSyr2g=="],
 
-    "@ubiquity-os/ubiquity-os-logger": ["@ubiquity-os/ubiquity-os-logger@1.3.2", "", {}, "sha512-oTIzR8z4jAQmaeJp98t1bZUKE3Ws9pas0sbxt58fC37MwXclPMWrLO+a0JlhPkdJYsvpv/q/79wC2MKVhOIVXQ=="],
+    "@ubiquity-os/ubiquity-os-logger": ["@ubiquity-os/ubiquity-os-logger@1.4.0", "", {}, "sha512-giybluPmu0sreEWi60t9X8NxC5d48X7oQAb9RjXR7wX/ZNYugbAaKgj0TYEqECvSVDqgzpKo7UNerh1UQBscGw=="],
 
     "JSONStream": ["JSONStream@1.3.5", "", { "dependencies": { "jsonparse": "^1.2.0", "through": ">=2.2.7 <3" }, "bin": { "JSONStream": "./bin.js" } }, "sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ=="],
 

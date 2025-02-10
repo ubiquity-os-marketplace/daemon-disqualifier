@@ -127,6 +127,13 @@ export function parsePriorityLabel(labels: (IssueLabel | string)[]): number {
   return 1;
 }
 
+export function getPriorityValue(context: ContextPlugin) {
+  if (!("issue" in context.payload)) {
+    return 0;
+  }
+  return Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels) : 1);
+}
+
 export function parsePriceLabel(labels: (IssueLabel | string)[]): number | null {
   const priceLabel = labels?.map((label) => (typeof label === "string" ? label : label.name || "")).find((name) => name.toLowerCase().startsWith("price:"));
 

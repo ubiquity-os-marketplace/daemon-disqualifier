@@ -1,10 +1,9 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
-import { postComment } from "@ubiquity-os/plugin-sdk";
 import db from "../cron/database-handler";
 import { updateCronState } from "../cron/workflow";
 import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { removeEntryFromDatabase } from "../helpers/remind-and-remove";
-import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
+import { getPriorityValue, parsePriceLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ContextPlugin } from "../types/plugin-input";
 import { formatMillisecondsToHumanReadable } from "./time-format";
@@ -27,7 +26,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     !shouldIgnoreIssue(context.payload.issue as IssueType)
   ) {
     const message = ["[!IMPORTANT]"];
-    const priorityValue = Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels) : 1);
+    const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {
       message.push(`- Be sure to link a pull-request before the first reminder to avoid disqualification.`);
     }
@@ -37,7 +36,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     );
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
-    const commentData = await postComment(context, log);
+    const commentData = await context.commentHandler.postComment(context, log);
     if (commentData) {
       await db.update((data) => {
         const dbKey = `${context.payload.repository.owner?.login}/${context.payload.repository.name}`;
