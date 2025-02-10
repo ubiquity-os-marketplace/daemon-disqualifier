@@ -1,3 +1,4 @@
+import { formatMillisecondsToHumanReadable } from "../handlers/time-format";
 import { ContextPlugin } from "../types/plugin-input";
 import { parsePriorityLabel } from "./task-metadata";
 
@@ -50,8 +51,14 @@ export async function getTopUpsRemaining(context: ContextPlugin): Promise<number
   const currentDate = new Date();
   const diffTime = currentDate.getTime() - assignmentDate.getTime();
   const daysAssigned = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const remainingTopUps = topUpLimit - daysAssigned;
+  const remainingTopUps = topUpLimit - daysAssigned / topUpTimelapse;
 
-  context.logger.debug("Remaining top ups", { topUpLimit, topUpTimelapse, assignmentDate, daysAssigned, remainingTopUps });
+  context.logger.debug("Remaining top ups", {
+    topUpLimit,
+    topUpTimelapse: formatMillisecondsToHumanReadable(topUpTimelapse),
+    assignmentDate,
+    daysAssigned,
+    remainingTopUps,
+  });
   return remainingTopUps;
 }
