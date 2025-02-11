@@ -28,37 +28,42 @@ async function getIssueAssignmentDate(context: ContextPlugin): Promise<Date | nu
   return assignmentEvent ? new Date(assignmentEvent.created_at) : null;
 }
 
-export async function getTopUpsRemaining(context: ContextPlugin): Promise<number> {
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
+
+export async function getTopUpsRemaining(context: ContextPlugin) {
+  const defaultTopUps = { remainingTopUps: 0, topUpLimit: 0 };
+
   if (!("issue" in context.payload)) {
-    return 0;
+    return defaultTopUps;
   }
   if (!context.config.disqualification) {
-    return Infinity;
+    return { remainingTopUps: Infinity, topUpLimit: Infinity };
   }
   const priorityList = Object.keys(context.config.topUps.amounts);
   const priorityLabel = context.payload.issue.labels?.find((label) => priorityList.includes(label.name));
   if (!priorityLabel) {
-    return 0;
+    return defaultTopUps;
   }
   const topUpLimit = context.config.topUps.amounts[priorityLabel.name];
-  const topUpTimelapse = context.config.disqualification / parsePriorityLabel([priorityLabel]);
+  const topUpTimelapse = context.config.disqualification / parsePriorityLabel([priorityLabel]) / DAY_IN_MS;
   const assignmentDate = await getIssueAssignmentDate(context);
 
   if (!assignmentDate) {
-    return 0;
+    return defaultTopUps;
   }
 
   const currentDate = new Date();
-  const diffTime = currentDate.getTime() - assignmentDate.getTime();
-  const daysAssigned = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const remainingTopUps = topUpLimit - daysAssigned / topUpTimelapse;
+  const diffTime = currentDate.getTime() + DAY_IN_MS * 8 - assignmentDate.getTime();
+  const daysAssigned = Math.floor(diffTime / DAY_IN_MS);
+  const remainingTopUps = Math.round(topUpLimit - daysAssigned / topUpTimelapse);
 
   context.logger.debug("Remaining top ups", {
     topUpLimit,
-    topUpTimelapse: formatMillisecondsToHumanReadable(topUpTimelapse),
+    topUpTimelapse: formatMillisecondsToHumanReadable(topUpTimelapse * DAY_IN_MS),
     assignmentDate,
     daysAssigned,
     remainingTopUps,
   });
-  return remainingTopUps;
+
+  return { remainingTopUps, topUpLimit };
 }

@@ -95,6 +95,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
       ) {
         await unassignUserFromIssue(context, issue);
         await closeLinkedPullRequests(context, issue);
+      } else if (mostRecentActivityDate.plus({ milliseconds: warning }) <= now) {
+        await remindAssigneesForIssue(context, issue);
       } else {
         logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
           now: now.toLocaleString(DateTime.DATETIME_MED),

@@ -23,10 +23,10 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const issueItem = parseIssueUrl(issue.html_url);
 
   const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
-  const topUpsRemaining = await getTopUpsRemaining(context);
+  const { remainingTopUps } = await getTopUpsRemaining(context);
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
-  } else if ((config.pullRequestRequired && !hasLinkedPr) || topUpsRemaining < 0) {
+  } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingTopUps < 0) {
     await unassignUserFromIssue(context, issue);
   } else {
     logger.info(`Passed the reminder threshold on ${issue.html_url} sending a reminder.`);
@@ -47,11 +47,14 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
     .map((o) => o?.login)
     .filter((o) => !!o)
     .join(", @");
-  const topUps = await getTopUpsRemaining(context);
+  const { remainingTopUps, topUpLimit } = await getTopUpsRemaining(context);
 
-  const logMessage = logger.info(`@${logins}, this task has been idle for a while. Please provide an update.\n\n<h5>Top ups remaining: ${topUps}</h5>`, {
-    taskAssignees: issue.assignees.map((o) => o?.id),
-  });
+  const logMessage = logger.info(
+    `@${logins}, this task has been idle for a while. Please provide an update.\n\n<h5>You used ${topUpLimit - remainingTopUps} / ${topUpLimit} top ups</h5>`,
+    {
+      taskAssignees: issue.assignees.map((o) => o?.id),
+    }
+  );
 
   const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
 
@@ -122,7 +125,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
-  const remainingTopUps = await getTopUpsRemaining(context);
+  const { remainingTopUps } = await getTopUpsRemaining(context);
   const logMessage = logger.info(
     `Passed the disqualification threshold and ${remainingTopUps < 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
     {
