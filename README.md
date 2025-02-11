@@ -3,6 +3,8 @@
 Watches user activity on issues, sends reminders on disqualification threshold, and eventually unassigns inactive user to ensure that
 tasks don't stall, and subtracts XP.
 
+The system utilizes a dedicated CRON workflow (cron.yml) that runs periodically to manage and update reminders. This CRON system maintains state in a database and automatically enables/disables itself based on pending updates. It tracks user activity by updating comment timestamps and handles the reminder notifications and automatic unassign of inactive users according to the configured time frames.
+
 ## Technical Architecture
 
 ### Overview
