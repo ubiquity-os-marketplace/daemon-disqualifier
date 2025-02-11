@@ -59,7 +59,7 @@ export async function getTopUpsRemaining(context: ContextPlugin) {
 
   context.logger.debug("Remaining top ups", {
     topUpLimit,
-    topUpTimelapse: formatMillisecondsToHumanReadable(topUpTimeLapse * DAY_IN_MS),
+    topUpTimeLapse: formatMillisecondsToHumanReadable(topUpTimeLapse * DAY_IN_MS),
     assignmentDate,
     daysAssigned,
     remainingTopUps,
