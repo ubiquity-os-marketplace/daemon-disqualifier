@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest 
 import { drop } from "@mswjs/data";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
+import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import dotenv from "dotenv";
@@ -346,10 +347,21 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: false,
+      topUps: {
+        amounts: {
+          "Priority 1": 5,
+          "Priority 2": 4,
+          "Priority 3": 3,
+          "Priority 4": 2,
+          "Priority 5": 1,
+        },
+        enabled: true,
+      },
     },
     octokit: new Octokit({ throttle: { enabled: false } }),
     eventName: "issue_comment.created",
     env: {},
     command: null,
+    commentHandler: new CommentHandler(),
   };
 }
