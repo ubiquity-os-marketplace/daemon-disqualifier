@@ -45,7 +45,7 @@ export async function getTopUpsRemaining(context: ContextPlugin) {
     return defaultTopUps;
   }
   const topUpLimit = context.config.topUps.amounts[priorityLabel.name];
-  const topUpTimelapse = context.config.disqualification / parsePriorityLabel([priorityLabel]) / DAY_IN_MS;
+  const topUpTimeLapse = context.config.disqualification / parsePriorityLabel([priorityLabel]) / DAY_IN_MS;
   const assignmentDate = await getIssueAssignmentDate(context);
 
   if (!assignmentDate) {
@@ -55,11 +55,11 @@ export async function getTopUpsRemaining(context: ContextPlugin) {
   const currentDate = new Date();
   const diffTime = currentDate.getTime() - assignmentDate.getTime();
   const daysAssigned = parseFloat((diffTime / DAY_IN_MS).toFixed(2));
-  const remainingTopUps = Math.ceil(topUpLimit - daysAssigned / topUpTimelapse);
+  const remainingTopUps = Math.ceil(topUpLimit - daysAssigned / topUpTimeLapse);
 
   context.logger.debug("Remaining top ups", {
     topUpLimit,
-    topUpTimelapse: formatMillisecondsToHumanReadable(topUpTimelapse * DAY_IN_MS),
+    topUpTimelapse: formatMillisecondsToHumanReadable(topUpTimeLapse * DAY_IN_MS),
     assignmentDate,
     daysAssigned,
     remainingTopUps,
