@@ -44,6 +44,26 @@
         "examples": ["true", "false"],
         "type": "boolean"
       },
+      "topUps": {
+        "default": {},
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "default": true,
+            "type": "boolean"
+          },
+          "amounts": {
+            "default": {},
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
       "eventWhitelist": {
         "default": ["pull_request.review_requested", "pull_request.ready_for_review", "pull_request_review_comment.created", "issue_comment.created", "push"],
         "description": "List of webhook event names to consider as valid activity on a task",
