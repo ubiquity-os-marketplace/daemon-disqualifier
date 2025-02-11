@@ -26,7 +26,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const { remainingTopUps } = await getTopUpsRemaining(context);
   if (config.warning <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
-  } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingTopUps < 0) {
+  } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingTopUps <= 0) {
     await unassignUserFromIssue(context, issue);
   } else {
     logger.info(`Passed the reminder threshold on ${issue.html_url} sending a reminder.`);
@@ -50,7 +50,7 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
   const { remainingTopUps, topUpLimit } = await getTopUpsRemaining(context);
 
   const logMessage = logger.info(
-    `@${logins}, this task has been idle for a while. Please provide an update.\n\n<h5>You used ${topUpLimit - remainingTopUps} / ${topUpLimit} top ups</h5>`,
+    `@${logins}, this task has been idle for a while. Please provide an update.\n\n<h5>You used <code>${topUpLimit - remainingTopUps + 1}</code> of <code>${topUpLimit}</code> top-ups</h5>`,
     {
       taskAssignees: issue.assignees.map((o) => o?.id),
     }
@@ -127,7 +127,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   const { remainingTopUps } = await getTopUpsRemaining(context);
   const logMessage = logger.info(
-    `Passed the disqualification threshold and ${remainingTopUps < 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
+    `Passed the disqualification threshold and ${remainingTopUps <= 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
     {
       issue: issue.html_url,
     }

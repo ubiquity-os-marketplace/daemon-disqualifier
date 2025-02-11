@@ -53,9 +53,9 @@ export async function getTopUpsRemaining(context: ContextPlugin) {
   }
 
   const currentDate = new Date();
-  const diffTime = currentDate.getTime() + DAY_IN_MS * 8 - assignmentDate.getTime();
-  const daysAssigned = Math.floor(diffTime / DAY_IN_MS);
-  const remainingTopUps = Math.round(topUpLimit - daysAssigned / topUpTimelapse);
+  const diffTime = currentDate.getTime() - assignmentDate.getTime();
+  const daysAssigned = parseFloat((diffTime / DAY_IN_MS).toFixed(2));
+  const remainingTopUps = Math.ceil(topUpLimit - daysAssigned / topUpTimelapse);
 
   context.logger.debug("Remaining top ups", {
     topUpLimit,
