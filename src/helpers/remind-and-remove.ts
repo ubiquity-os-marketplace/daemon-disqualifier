@@ -28,6 +28,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingTopUps <= 0) {
     await unassignUserFromIssue(context, issue);
+    await closeLinkedPullRequests(context, issue);
   } else {
     logger.info(`Passed the reminder threshold on ${issue.html_url} sending a reminder.`);
     await remindAssignees(context, issue);
