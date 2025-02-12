@@ -35,7 +35,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   }
 }
 
-async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
+export async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
   const { octokit, logger, config } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 

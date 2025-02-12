@@ -7,7 +7,7 @@ import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 import { parseIssueUrl } from "./github-url";
 import { areLinkedPullRequestsApproved } from "./pull-request";
-import { closeLinkedPullRequests, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
+import { closeLinkedPullRequests, remindAssignees, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
@@ -87,8 +87,10 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
     if (await areLinkedPullRequestsApproved(context, issue)) {
-      // If the issue was approved but is not merged yet, nudge the assignee
-      await remindAssigneesForIssue(context, issue);
+      if (context.config.warning > 0) {
+        // If the issue was approved but is not merged yet, nudge the assignee
+        await remindAssignees(context, issue);
+      }
     } else {
       if (
         mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
