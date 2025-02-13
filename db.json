@@ -106,5 +106,11 @@
       "commentId": 2646636635,
       "issueNumber": 27
     }
+  ],
+  "ubiquity-os-marketplace/plugin-demo": [
+    {
+      "commentId": 2656623774,
+      "issueNumber": 3
+    }
   ]
 }
