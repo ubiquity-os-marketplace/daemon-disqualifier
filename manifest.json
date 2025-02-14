@@ -57,7 +57,7 @@
             "type": "object",
             "patternProperties": {
               "^(.*)$": {
-                "minimum": 0,
+                "minimum": 1,
                 "type": "integer"
               }
             }
