@@ -55,6 +55,10 @@ describe("User start/stop", () => {
       disqualification: 604800000,
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+      topUps: {
+        amounts: {},
+        enabled: true,
+      },
     });
     expect(() =>
       Value.Decode(
@@ -108,6 +112,10 @@ describe("User start/stop", () => {
       prioritySpeed: true,
       watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+      topUps: {
+        amounts: {},
+        enabled: true,
+      },
     });
   });
   it("Should run", async () => {

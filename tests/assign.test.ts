@@ -43,6 +43,9 @@ describe("watchUserActivity", () => {
         },
       },
     },
+    commentHandler: {
+      postComment: jest.fn(),
+    },
   } as unknown as ContextPlugin;
 
   beforeEach(() => {

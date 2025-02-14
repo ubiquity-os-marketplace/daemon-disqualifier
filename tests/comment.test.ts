@@ -14,6 +14,7 @@ jest.unstable_mockModule("../src/helpers/github-url", () => ({
 }));
 jest.unstable_mockModule("../src/helpers/structured-metadata", () => ({
   createStructuredMetadata: jest.fn(() => ""),
+  getCommentsFromMetadata: jest.fn(() => ({})),
 }));
 
 describe("remindAssigneesForIssue", () => {
@@ -35,6 +36,10 @@ describe("remindAssigneesForIssue", () => {
         warning: 1,
         disqualification: 1,
         pullRequestRequired: false,
+      },
+      payload: {},
+      commentHandler: {
+        postComment: jest.fn(),
       },
     } as unknown as ContextPlugin;
 
