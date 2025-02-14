@@ -76,7 +76,7 @@ export async function getTaskAssignmentDetails(
   return metadata;
 }
 
-function parseTimeLabel(labels: (IssueLabel | string)[]): number {
+export function parseTimeLabel(labels: (IssueLabel | string)[]): number {
   let taskTimeEstimate = 0;
 
   for (const label of labels) {
