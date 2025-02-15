@@ -51,7 +51,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
   const { remainingTopUps, topUpLimit } = await getTopUpsRemaining(context);
 
   const logMessage = logger.info(
-    `@${logins}, this task has been idle for a while. Please provide an update.\n\n<h5>You used <code>${topUpLimit - remainingTopUps + 1}</code> of <code>${topUpLimit}</code> top-ups</h5>`,
+    `@${logins}, you have used <code>${topUpLimit - remainingTopUps}</code> of <code>${topUpLimit}</code> available deadline extensions. Please provide an update on your progress.`,
     {
       taskAssignees: issue.assignees.map((o) => o?.id),
     }
