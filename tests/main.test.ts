@@ -134,10 +134,7 @@ describe("User start/stop", () => {
     expect(errorSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`), expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
-      taskAssignees: [2],
-      caller: STRINGS.LOGS_ANON_CALLER,
-    });
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(
       expect.stringContaining("Passed the disqualification threshold and no activity is detected, removing assignees: @user2."),
       expect.anything()
@@ -153,10 +150,7 @@ describe("User start/stop", () => {
 
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
-      taskAssignees: [2],
-      caller: STRINGS.LOGS_ANON_CALLER,
-    });
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
   });
 
@@ -171,10 +165,7 @@ describe("User start/stop", () => {
 
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
-      taskAssignees: [2],
-      caller: STRINGS.LOGS_ANON_CALLER,
-    });
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
@@ -192,10 +183,10 @@ describe("User start/stop", () => {
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
     const comments = db.issueComments.getAll();
-    let latestComment = comments.filter((comment) => comment.issueId === 3).pop();
-    let partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
+    let latestComment = comments.filter((comment) => comment.issueId === 4).pop();
+    let partialComment = "@user2, this task has been idle for a while. Please provide an update.\n<!-- Ubiquity - Followup -";
     expect(latestComment?.body).toContain(partialComment);
-    latestComment = comments.filter((comment) => comment.issueId === 4).pop();
+    latestComment = comments.filter((comment) => comment.issueId === 3).pop();
     partialComment = "Passed the disqualification threshold and no activity is detected, removing assignees: @user2.";
     expect(latestComment?.body).toContain(partialComment);
   });
@@ -263,7 +254,10 @@ describe("User start/stop", () => {
     );
     await run(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(4)} sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(
+      `@${STRINGS.USER}, this task has been idle for a while. Please provide an update on your progress.`,
+      expect.anything()
+    );
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -363,7 +357,7 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
           "Priority 4": 2,
           "Priority 5": 1,
         },
-        enabled: true,
+        enabled: false,
       },
     },
     octokit: new Octokit({ throttle: { enabled: false } }),

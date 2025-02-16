@@ -12,7 +12,7 @@ export async function getTopUpsRemaining(context: ContextPlugin) {
   if (!("issue" in context.payload)) {
     return defaultTopUps;
   }
-  if (!context.config.disqualification) {
+  if (!context.config.disqualification || !context.config.topUps.enabled) {
     return { remainingTopUps: Infinity, topUpLimit: Infinity };
   }
 
