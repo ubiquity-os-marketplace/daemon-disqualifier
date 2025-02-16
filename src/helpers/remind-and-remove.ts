@@ -50,12 +50,13 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     .join(", @");
   const { remainingTopUps, topUpLimit } = await getTopUpsRemaining(context);
 
-  const logMessage = logger.info(
-    `@${logins}, you have used <code>${topUpLimit - remainingTopUps}</code> of <code>${topUpLimit}</code> available deadline extensions. Please provide an update on your progress.`,
-    {
-      taskAssignees: issue.assignees.map((o) => o?.id),
-    }
-  );
+  const reminderContent = !context.config.disqualification
+    ? "this task has been idle for a while"
+    : `you have used <code>${topUpLimit - remainingTopUps + 1}</code> of <code>${topUpLimit}</code> available deadline extensions`;
+
+  const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
+    taskAssignees: issue.assignees.map((o) => o?.id),
+  });
 
   const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
 

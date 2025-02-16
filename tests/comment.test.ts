@@ -34,10 +34,12 @@ describe("remindAssigneesForIssue", () => {
       },
       config: {
         warning: 1,
-        disqualification: 1,
+        disqualification: 0,
         pullRequestRequired: false,
       },
-      payload: {},
+      payload: {
+        issue: {},
+      },
       commentHandler: {
         postComment: jest.fn(),
       },
