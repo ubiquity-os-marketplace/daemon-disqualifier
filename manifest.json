@@ -12,21 +12,6 @@
         "description": "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
         "type": "string"
       },
-      "watch": {
-        "default": {},
-        "type": "object",
-        "properties": {
-          "optOut": {
-            "default": [],
-            "description": "List of repositories to opt-out from watching user activity within the organization",
-            "examples": ["repoName", "no-owner-required"],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "prioritySpeed": {
         "default": true,
         "description": "Whether to rush the follow ups by the priority level",
