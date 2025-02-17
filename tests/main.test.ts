@@ -40,7 +40,6 @@ describe("User start/stop", () => {
         Value.Default(pluginSettingsSchema, {
           warning: "12 days",
           disqualification: "2 days",
-          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
           eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
         })
       )
@@ -53,7 +52,6 @@ describe("User start/stop", () => {
       warning: 302400000,
       prioritySpeed: true,
       disqualification: 604800000,
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       topUps: {
         amounts: {},
@@ -66,7 +64,6 @@ describe("User start/stop", () => {
         Value.Default(pluginSettingsSchema, {
           warning: "12 foobars",
           disqualification: "2 days",
-          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
         })
       )
     ).toThrow(TransformDecodeError);
@@ -75,7 +72,6 @@ describe("User start/stop", () => {
     const settings = Value.Default(pluginSettingsSchema, {
       warning: "12 days",
       disqualification: "2 days",
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: [
         "pull_request.review_requested",
         "pull_request.ready_for_review",
@@ -91,15 +87,12 @@ describe("User start/stop", () => {
     const settings = Value.Default(pluginSettingsSchema, {
       warning: "12 days",
       disqualification: "2 days",
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
     });
     const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
     expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
   });
   it("Should define all defaults if omitted", () => {
-    const settings = Value.Default(pluginSettingsSchema, {
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] }, // has no default
-    });
+    const settings = Value.Default(pluginSettingsSchema, {});
 
     const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
 
@@ -110,7 +103,6 @@ describe("User start/stop", () => {
       warning: ms("3.5 days"),
       disqualification: ms("7 days"),
       prioritySpeed: true,
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       topUps: {
         amounts: {},
@@ -143,7 +135,7 @@ describe("User start/stop", () => {
   });
 
   it("Should include the previously excluded repo", async () => {
-    const context = createContext(1, 1, []);
+    const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
@@ -328,7 +320,7 @@ function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
-function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): ContextPlugin {
+function createContext(issueId: number, senderId: number): ContextPlugin {
   return {
     payload: {
       issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["issue"],
@@ -346,7 +338,6 @@ function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIV
       disqualification: ONE_DAY * 7,
       warning: ONE_DAY * 3.5,
       prioritySpeed: true,
-      watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: false,
       topUps: {

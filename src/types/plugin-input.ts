@@ -57,20 +57,6 @@ export const pluginSettingsSchema = T.Object(
       default: "3.5 days",
       description: "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
     }),
-    /**
-     * By default, all repositories are watched. Use this option to opt-out from watching specific repositories
-     * within your organization. The value is an array of repository names.
-     */
-    watch: T.Object(
-      {
-        optOut: T.Array(T.String(), {
-          default: [],
-          description: "List of repositories to opt-out from watching user activity within the organization",
-          examples: ["repoName", "no-owner-required"],
-        }),
-      },
-      { default: {} }
-    ),
     /*
      * Whether to rush the follow-ups by the priority level
      */

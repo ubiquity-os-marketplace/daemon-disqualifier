@@ -1,7 +1,6 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import db from "../cron/database-handler";
 import { updateCronState } from "../cron/workflow";
-import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { removeEntryFromDatabase } from "../helpers/remind-and-remove";
 import { getPriorityValue, parsePriceLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
@@ -13,18 +12,7 @@ type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["d
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
-  const repos = await getWatchedRepos(context);
-
-  if (!repos?.length) {
-    return { message: logger.info("No watched repos have been found, no work to do.").logMessage.raw };
-  }
-
-  if (
-    context.eventName === "issues.assigned" &&
-    repos.some((repo) => repo.id === context.payload.repository.id) &&
-    "issue" in context.payload &&
-    !shouldIgnoreIssue(context.payload.issue as IssueType)
-  ) {
+  if (context.eventName === "issues.assigned" && "issue" in context.payload && !shouldIgnoreIssue(context.payload.issue as IssueType)) {
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {

@@ -14,9 +14,6 @@ Content-Type: application/json
   },
   "settings": {
     "warning": "1 minute",
-    "watch": {
-      "optOut": []
-    },
     "disqualification": "2 minutes",
     "pullRequestRequired": true
   },

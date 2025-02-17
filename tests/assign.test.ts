@@ -2,10 +2,6 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { ContextPlugin } from "../src/types/plugin-input";
 
-jest.unstable_mockModule("../src/helpers/get-watched-repos", () => ({
-  getWatchedRepos: jest.fn(() => [{ id: 123 }]),
-}));
-
 jest.unstable_mockModule("@ubiquity-os/plugin-sdk", () => ({
   postComment: jest.fn(),
 }));
@@ -28,9 +24,6 @@ describe("watchUserActivity", () => {
       warning: 3600000, // 1 hour
       disqualification: 7200000, // 2 hours
       pullRequestRequired: true,
-      watch: {
-        optOut: [],
-      },
     },
     octokit: {
       paginate: jest.fn(() => []),
