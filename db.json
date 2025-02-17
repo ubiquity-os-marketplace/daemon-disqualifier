@@ -19,16 +19,36 @@
     {
       "commentId": 2629099280,
       "issueNumber": 236
+    },
+    {
+      "commentId": 2636121533,
+      "issueNumber": 256
+    },
+    {
+      "commentId": 2637629071,
+      "issueNumber": 183
+    },
+    {
+      "commentId": 2647227886,
+      "issueNumber": 262
+    },
+    {
+      "commentId": 2661110862,
+      "issueNumber": 275
     }
   ],
   "ubiquity-os-marketplace/command-ask": [
     {
-      "commentId": 2619678137,
-      "issueNumber": 51
-    },
-    {
       "commentId": 2620364131,
       "issueNumber": 52
+    },
+    {
+      "commentId": 2658173532,
+      "issueNumber": 66
+    },
+    {
+      "commentId": 2658269647,
+      "issueNumber": 51
     }
   ],
   "ubiquity-os-marketplace/command-start-stop": [
@@ -45,18 +65,58 @@
     {
       "commentId": 2621902755,
       "issueNumber": 38
+    },
+    {
+      "commentId": 2661539258,
+      "issueNumber": 47
     }
   ],
   "ubiquity-os-marketplace/daemon-pull-review": [
     {
       "commentId": 2629092790,
       "issueNumber": 5
+    },
+    {
+      "commentId": 2644724615,
+      "issueNumber": 4
     }
   ],
   "ubiquity-os-marketplace/daemon-disqualifier": [
     {
       "commentId": 2630191908,
       "issueNumber": 57
+    },
+    {
+      "commentId": 2639881445,
+      "issueNumber": 51
+    }
+  ],
+  "ubiquity-os-marketplace/.github": [
+    {
+      "commentId": 2637923474,
+      "issueNumber": 4
+    }
+  ],
+  "ubiquity-os-marketplace/text-vector-embeddings": [
+    {
+      "commentId": 2641809192,
+      "issueNumber": 79
+    },
+    {
+      "commentId": 2646636635,
+      "issueNumber": 27
+    }
+  ],
+  "ubiquity-os-marketplace/plugin-demo": [
+    {
+      "commentId": 2656623774,
+      "issueNumber": 3
+    }
+  ],
+  "ubiquity-os-marketplace/.ubiquity-os": [
+    {
+      "commentId": 2658033284,
+      "issueNumber": 14
     }
   ]
 }
