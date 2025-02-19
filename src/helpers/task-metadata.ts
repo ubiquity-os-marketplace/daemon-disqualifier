@@ -8,6 +8,36 @@ type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForR
   color?: string | null;
 };
 
+export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issueNumber: number) {
+  const { logger, octokit, payload } = context;
+
+  if (!repo.owner) {
+    throw logger.error("No owner was found in the payload", { payload });
+  }
+
+  const events = await octokit.paginate(octokit.rest.issues.listEvents, {
+    owner: repo.owner.login,
+    repo: repo.name,
+    issue_number: issueNumber,
+  });
+
+  const assignedEvents = events
+    .filter((o) => o.event === "assigned")
+    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
+
+  const latestUserAssignment = assignedEvents.find((o) => ("assigner" in o ? o.assigner?.type === "User" : o.actor?.type === "User"));
+  const latestBotAssignment = assignedEvents.find((o) => ("assigner" in o ? o.assigner?.type === "Bot" : o.actor?.type === "Bot"));
+  let mostRecentAssignmentEvent = latestUserAssignment || latestBotAssignment;
+
+  if (latestUserAssignment && latestBotAssignment && DateTime.fromISO(latestUserAssignment.created_at) > DateTime.fromISO(latestBotAssignment.created_at)) {
+    mostRecentAssignmentEvent = latestUserAssignment;
+  } else {
+    mostRecentAssignmentEvent = latestBotAssignment;
+  }
+
+  return mostRecentAssignmentEvent;
+}
+
 /**
  * Retrieves assignment events from the timeline of an issue and calculates the disqualification threshold based on the time label.
  *
@@ -20,32 +50,13 @@ export async function getTaskAssignmentDetails(
   repo: ContextPlugin["payload"]["repository"],
   issue: ListIssueForRepo
 ): Promise<{ startPlusLabelDuration: string; taskAssignees: number[] } | false> {
-  const { logger, octokit, payload } = context;
+  const { logger, payload } = context;
 
   if (!repo.owner) {
     throw logger.error("No owner was found in the payload", { payload });
   }
 
-  const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
-    owner: repo.owner.login,
-    repo: repo.name,
-    issue_number: issue.number,
-  });
-
-  const assignedEvents = assignmentEvents
-    .filter((o) => o.event === "assigned")
-    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis());
-
-  const latestUserAssignment = assignedEvents.find((o) => o.actor?.type === "User");
-  const latestBotAssignment = assignedEvents.find((o) => o.actor?.type === "Bot");
-
-  let mostRecentAssignmentEvent = latestUserAssignment || latestBotAssignment;
-
-  if (latestUserAssignment && latestBotAssignment && DateTime.fromISO(latestUserAssignment.created_at) > DateTime.fromISO(latestBotAssignment.created_at)) {
-    mostRecentAssignmentEvent = latestUserAssignment;
-  } else {
-    mostRecentAssignmentEvent = latestBotAssignment;
-  }
+  const mostRecentAssignmentEvent = await getMostRecentUserAssignmentEvent(context, repo, issue.number);
 
   const metadata = {
     startPlusLabelDuration: DateTime.fromISO(issue.created_at).toISO() || "",
