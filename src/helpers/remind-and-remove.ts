@@ -156,7 +156,6 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
         });
         const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
 
-        // todon in pr
         await octokit.rest.issues.createComment({
           owner: prOwner,
           repo: prRepo,
