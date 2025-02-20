@@ -96,6 +96,38 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, args: Args) {
   return lastTopUpValue !== args.remainingTopUps;
 }
 
+async function buildReminderMessage(context: ContextPlugin, args: { remainingTopUps: number; topUpLimit: number } & Args) {
+  return !context.config.disqualification || !context.config.topUps.enabled || !(await shouldDisplayTopUpsReminder(context, args))
+    ? "this task has been idle for a while"
+    : `you have used <code>${args.topUpLimit - args.remainingTopUps + 1}</code> of <code>${args.topUpLimit}</code> available deadline extensions`;
+}
+
+async function constructBodyWithMetadata(
+  context: ContextPlugin,
+  {
+    reminderContent,
+    topUpLimit,
+    remainingTopUps,
+    issue,
+  }: { reminderContent: string; topUpLimit: number; remainingTopUps: number; owner: string; repo: string; issue_number: number; issue: ListIssueForRepo }
+) {
+  const { logger } = context;
+
+  const logins = issue.assignees
+    ?.map((o) => o?.login)
+    .filter((o) => !!o)
+    .join(", @");
+  const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
+    taskAssignees: issue.assignees?.map((o) => o?.id),
+    url: issue.html_url,
+    topUpLimit,
+    remainingTopUps,
+  });
+  const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
+
+  return [logMessage.logMessage.raw, metadata].join("\n");
+}
+
 export async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
   const { octokit, logger, config } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
@@ -105,33 +137,16 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     return false;
   }
 
-  const logins = issue.assignees
-    .map((o) => o?.login)
-    .filter((o) => !!o)
-    .join(", @");
   const { remainingTopUps, topUpLimit } = await getTopUpsRemaining(context);
 
   if (!config.pullRequestRequired) {
-    const reminderContent =
-      !context.config.disqualification ||
-      !context.config.topUps.enabled ||
-      !(await shouldDisplayTopUpsReminder(context, { issueNumber: issue_number, remainingTopUps }))
-        ? "this task has been idle for a while"
-        : `you have used <code>${topUpLimit - remainingTopUps + 1}</code> of <code>${topUpLimit}</code> available deadline extensions`;
-
-    const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
-      taskAssignees: issue.assignees.map((o) => o?.id),
-      url: issue.html_url,
-      topUpLimit,
-      remainingTopUps,
-    });
-    const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
-
+    const reminderContent = await buildReminderMessage(context, { topUpLimit, remainingTopUps, issueNumber: issue_number });
+    const body = await constructBodyWithMetadata(context, { issue, owner, repo, reminderContent, topUpLimit, remainingTopUps, issue_number });
     await octokit.rest.issues.createComment({
       owner,
       repo,
       issue_number,
-      body: [logMessage.logMessage.raw, metadata].join("\n"),
+      body: body,
     });
   } else {
     const openedLinkedPullRequests = (await collectLinkedPullRequests(context, { repo, owner, issue_number }))
@@ -141,26 +156,18 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     for (const pullRequest of openedLinkedPullRequests) {
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
       try {
-        const reminderContent =
-          !context.config.disqualification ||
-          !context.config.topUps.enabled ||
-          !(await shouldDisplayTopUpsReminder(context, { issueNumber: issue_number, pr: { prOwner, prRepo, prNumber }, remainingTopUps }))
-            ? "this task has been idle for a while"
-            : `you have used <code>${topUpLimit - remainingTopUps + 1}</code> of <code>${topUpLimit}</code> available deadline extensions`;
-
-        const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
-          taskAssignees: issue.assignees.map((o) => o?.id),
-          url: issue.html_url,
+        const reminderContent = await buildReminderMessage(context, {
           topUpLimit,
+          issueNumber: issue_number,
+          pr: { prOwner, prRepo, prNumber },
           remainingTopUps,
         });
-        const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
-
+        const body = await constructBodyWithMetadata(context, { issue, owner, repo, reminderContent, topUpLimit, remainingTopUps, issue_number });
         await octokit.rest.issues.createComment({
           owner: prOwner,
           repo: prRepo,
           issue_number: prNumber,
-          body: [logMessage.logMessage.raw, metadata].join("\n"),
+          body: body,
         });
         if (pullRequest.reviewDecision === "CHANGES_REQUESTED") {
           await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
@@ -177,24 +184,13 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     // This is a fallback if we failed to post the reminder to a pull-request, which can happen when posting cross
     // organizations, so we post to the parent issue instead, to make sure the user got a reminder.
     if (shouldPostToMainIssue) {
-      const reminderContent =
-        !context.config.disqualification ||
-        !context.config.topUps.enabled ||
-        !(await shouldDisplayTopUpsReminder(context, { issueNumber: issue_number, remainingTopUps }))
-          ? "this task has been idle for a while"
-          : `you have used <code>${topUpLimit - remainingTopUps + 1}</code> of <code>${topUpLimit}</code> available deadline extensions`;
-      const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
-        taskAssignees: issue.assignees.map((o) => o?.id),
-        url: issue.html_url,
-        topUpLimit,
-        remainingTopUps,
-      });
-      const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
+      const reminderContent = await buildReminderMessage(context, { topUpLimit, remainingTopUps, issueNumber: issue_number });
+      const body = await constructBodyWithMetadata(context, { issue, owner, repo, reminderContent, topUpLimit, remainingTopUps, issue_number });
       await octokit.rest.issues.createComment({
         owner,
         repo,
         issue_number,
-        body: [logMessage.logMessage.raw, metadata].join("\n"),
+        body: body,
       });
     }
   }
