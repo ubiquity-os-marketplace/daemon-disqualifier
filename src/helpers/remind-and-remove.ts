@@ -99,7 +99,7 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, args: Args) {
 async function buildReminderMessage(context: ContextPlugin, args: { remainingTopUps: number; topUpLimit: number } & Args) {
   return !context.config.disqualification || !context.config.topUps.enabled || !(await shouldDisplayTopUpsReminder(context, args))
     ? "this task has been idle for a while"
-    : `you have used <code>${args.topUpLimit - args.remainingTopUps + 1}</code> of <code>${args.topUpLimit}</code> available deadline extensions`;
+    : `you have used <code>**${args.topUpLimit - args.remainingTopUps + 1}**</code> of <code>**${args.topUpLimit}**</code> available deadline extensions`;
 }
 
 async function constructBodyWithMetadata(
