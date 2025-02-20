@@ -92,7 +92,7 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, args: Args) {
     }
     return acc;
   }, 0);
-  logger.debug("Last reminder top up value", { events: lastTopUpValue });
+  logger.debug("Last reminder top up value", { lastTopUpValue, remainingTopUps: args.remainingTopUps });
   return lastTopUpValue !== args.remainingTopUps;
 }
 
