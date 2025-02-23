@@ -9,6 +9,16 @@ import { createStructuredMetadata } from "./structured-metadata";
 import { getMostRecentUserAssignmentEvent } from "./task-metadata";
 import { getTopUpsRemaining } from "./top-ups";
 
+interface IssuePrTarget {
+  issueNumber: number;
+  remainingTopUps: number;
+  pr?: {
+    prOwner: string;
+    prRepo: string;
+    prNumber: number;
+  };
+}
+
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
   const { logger, config } = context;
 
@@ -36,28 +46,18 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   }
 }
 
-interface Args {
-  issueNumber: number;
-  remainingTopUps: number;
-  pr?: {
-    prOwner: string;
-    prRepo: string;
-    prNumber: number;
-  };
-}
-
-async function shouldDisplayTopUpsReminder(context: ContextPlugin, args: Args) {
+async function shouldDisplayTopUpsReminder(context: ContextPlugin, issueAndPrTargets: IssuePrTarget) {
   const { octokit, logger } = context;
-  const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, args.issueNumber);
+  const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, issueAndPrTargets.issueNumber);
 
   if (!userAssignmentEvent) {
     logger.warn("No user assignment event was found, won't display top-up value");
     return false;
   }
 
-  const issueNumber = args.pr?.prNumber ?? args.issueNumber;
-  const owner = args.pr?.prOwner ?? context.payload.repository.owner?.login;
-  const repo = args.pr?.prRepo ?? context.payload.repository.name;
+  const issueNumber = issueAndPrTargets.pr?.prNumber ?? issueAndPrTargets.issueNumber;
+  const owner = issueAndPrTargets.pr?.prOwner ?? context.payload.repository.owner?.login;
+  const repo = issueAndPrTargets.pr?.prRepo ?? context.payload.repository.name;
 
   if (!owner) {
     logger.error("No owner was found in the payload, won't display top-up value");
@@ -92,11 +92,11 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, args: Args) {
     }
     return lastTopUpValue;
   }, 0);
-  logger.debug("Last reminder top up value", { lastTopUpValue, remainingTopUps: args.remainingTopUps });
-  return lastTopUpValue !== args.remainingTopUps;
+  logger.debug("Last reminder top up value", { lastTopUpValue, remainingTopUps: issueAndPrTargets.remainingTopUps });
+  return lastTopUpValue !== issueAndPrTargets.remainingTopUps;
 }
 
-async function buildReminderMessage(context: ContextPlugin, args: { remainingTopUps: number; topUpLimit: number } & Args) {
+async function buildReminderMessage(context: ContextPlugin, args: { remainingTopUps: number; topUpLimit: number } & IssuePrTarget) {
   return !context.config.disqualification || !context.config.topUps.enabled || !(await shouldDisplayTopUpsReminder(context, args))
     ? "this task has been idle for a while"
     : `you have used <code>**${args.topUpLimit - args.remainingTopUps + 1}**</code> of <code>**${args.topUpLimit}**</code> available deadline extensions`;
