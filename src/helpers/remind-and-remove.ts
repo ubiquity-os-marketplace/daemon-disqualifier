@@ -72,25 +72,25 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, args: Args) {
       repo: repo,
       issue_number: issueNumber,
     })
-  ).reduce((acc, o) => {
+  ).reduce((lastTopUpValue, event) => {
     if (
-      "created_at" in o &&
-      "actor" in o &&
-      "body" in o &&
-      o.event === "commented" &&
-      new Date(o.created_at).getTime() >= new Date(userAssignmentEvent.created_at).getTime() &&
-      o.actor?.type === "Bot" &&
-      o.body?.includes("remainingTopUps")
+      "created_at" in event &&
+      "actor" in event &&
+      "body" in event &&
+      event.event === "commented" &&
+      new Date(event.created_at).getTime() >= new Date(userAssignmentEvent.created_at).getTime() &&
+      event.actor?.type === "Bot" &&
+      event.body?.includes("remainingTopUps")
     ) {
-      const res = regex.exec(o.body);
+      const res = regex.exec(event.body);
       const value = Number(res?.[1]);
-      if (!acc || value < acc) {
+      if (!lastTopUpValue || value < lastTopUpValue) {
         return value;
       } else {
-        return acc;
+        return lastTopUpValue;
       }
     }
-    return acc;
+    return lastTopUpValue;
   }, 0);
   logger.debug("Last reminder top up value", { lastTopUpValue, remainingTopUps: args.remainingTopUps });
   return lastTopUpValue !== args.remainingTopUps;
