@@ -47,7 +47,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   const {
     logger,
     payload,
-    config: { eventWhitelist, warning, disqualification, prioritySpeed },
+    config: { eventWhitelist, followUpInterval, negligenceThreshold, prioritySpeed },
   } = context;
   const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
   const now = DateTime.local();
@@ -99,13 +99,13 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
   });
 
-  const disqualificationTimeDifference = disqualification - warning;
+  const disqualificationTimeDifference = negligenceThreshold - followUpInterval;
 
   if (lastReminderComment) {
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
     if (await areLinkedPullRequestsApproved(context, issue)) {
-      if (context.config.warning > 0) {
+      if (context.config.followUpInterval > 0) {
         // If the issue was approved but is not merged yet, nudge the assignee
         await remindAssignees(context, issue);
       }
@@ -115,7 +115,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
       ) {
         await unassignUserFromIssue(context, issue);
         await closeLinkedPullRequests(context, issue);
-      } else if (mostRecentActivityDate.plus({ milliseconds: warning }) <= now) {
+      } else if (mostRecentActivityDate.plus({ milliseconds: followUpInterval }) <= now) {
         await remindAssigneesForIssue(context, issue);
       } else {
         logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
@@ -127,7 +127,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
       }
     }
   } else {
-    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? warning / priorityLevel : warning }) <= now) {
+    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? followUpInterval / priorityLevel : followUpInterval }) <= now) {
       await remindAssigneesForIssue(context, issue);
     } else {
       logger.info(`Nothing to do for ${issue.html_url} still within due-time.`, {

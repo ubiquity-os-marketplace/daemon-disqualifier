@@ -7,11 +7,11 @@ import { parseIssueUrl } from "./github-url";
 import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
 import { getMostRecentUserAssignmentEvent } from "./task-metadata";
-import { getTopUpsRemaining } from "./top-ups";
+import { getRemainingAvailableExtensions } from "./top-ups";
 
 interface IssuePrTarget {
   issueNumber: number;
-  remainingTopUps: number;
+  remainingExtensions: number;
   pr?: {
     prOwner: string;
     prRepo: string;
@@ -22,7 +22,7 @@ interface IssuePrTarget {
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
   const { logger, config } = context;
 
-  if (config.disqualification <= 0) {
+  if (config.negligenceThreshold <= 0) {
     logger.info("The unassign threshold is <= 0, won't unassign users.");
   } else {
     await removeAllAssignees(context, issue);
@@ -34,10 +34,10 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const issueItem = parseIssueUrl(issue.html_url);
 
   const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
-  const { remainingTopUps } = await getTopUpsRemaining(context);
-  if (config.warning <= 0) {
+  const { remainingExtensions } = await getRemainingAvailableExtensions(context);
+  if (config.followUpInterval <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
-  } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingTopUps <= 0) {
+  } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingExtensions <= 0) {
     await unassignUserFromIssue(context, issue);
     await closeLinkedPullRequests(context, issue);
   } else {
@@ -80,7 +80,7 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, issueAndPrTar
       event.event === "commented" &&
       new Date(event.created_at).getTime() >= new Date(userAssignmentEvent.created_at).getTime() &&
       event.actor?.type === "Bot" &&
-      event.body?.includes("remainingTopUps")
+      event.body?.includes("remainingExtensions")
     ) {
       const res = regex.exec(event.body);
       const value = Number(res?.[1]);
@@ -92,24 +92,32 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, issueAndPrTar
     }
     return lastTopUpValue;
   }, 0);
-  logger.debug("Last reminder top up value", { lastTopUpValue, remainingTopUps: issueAndPrTargets.remainingTopUps });
-  return lastTopUpValue !== issueAndPrTargets.remainingTopUps;
+  logger.debug("Last reminder top up value", { lastTopUpValue, remainingExtensions: issueAndPrTargets.remainingExtensions });
+  return lastTopUpValue !== issueAndPrTargets.remainingExtensions;
 }
 
-async function buildReminderMessage(context: ContextPlugin, args: { remainingTopUps: number; topUpLimit: number } & IssuePrTarget) {
-  return !context.config.disqualification || !context.config.topUps.enabled || !(await shouldDisplayTopUpsReminder(context, args))
+async function buildReminderMessage(context: ContextPlugin, args: { remainingExtensions: number; extensionsLimit: number } & IssuePrTarget) {
+  return !context.config.negligenceThreshold || !context.config.availableDeadlineExtensions.enabled || !(await shouldDisplayTopUpsReminder(context, args))
     ? "this task has been idle for a while"
-    : `you have used <code>**${args.topUpLimit - args.remainingTopUps + 1}**</code> of <code>**${args.topUpLimit}**</code> available deadline extensions`;
+    : `you have used <code>**${args.extensionsLimit - args.remainingExtensions + 1}**</code> of <code>**${args.extensionsLimit}**</code> available deadline extensions`;
 }
 
 async function constructBodyWithMetadata(
   context: ContextPlugin,
   {
     reminderContent,
-    topUpLimit,
-    remainingTopUps,
+    extensionsLimit,
+    remainingExtensions,
     issue,
-  }: { reminderContent: string; topUpLimit: number; remainingTopUps: number; owner: string; repo: string; issue_number: number; issue: ListIssueForRepo }
+  }: {
+    reminderContent: string;
+    extensionsLimit: number;
+    remainingExtensions: number;
+    owner: string;
+    repo: string;
+    issue_number: number;
+    issue: ListIssueForRepo;
+  }
 ) {
   const { logger } = context;
 
@@ -120,8 +128,8 @@ async function constructBodyWithMetadata(
   const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
     taskAssignees: issue.assignees?.map((o) => o?.id),
     url: issue.html_url,
-    topUpLimit,
-    remainingTopUps,
+    extensionsLimit,
+    remainingExtensions,
   });
   const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
 
@@ -137,11 +145,19 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     return false;
   }
 
-  const { remainingTopUps, topUpLimit } = await getTopUpsRemaining(context);
+  const { remainingExtensions, extensionsLimit } = await getRemainingAvailableExtensions(context);
 
   if (!config.pullRequestRequired) {
-    const reminderContent = await buildReminderMessage(context, { topUpLimit, remainingTopUps, issueNumber: issue_number });
-    const body = await constructBodyWithMetadata(context, { issue, owner, repo, reminderContent, topUpLimit, remainingTopUps, issue_number });
+    const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+    const body = await constructBodyWithMetadata(context, {
+      issue,
+      owner,
+      repo,
+      reminderContent,
+      extensionsLimit,
+      remainingExtensions,
+      issue_number,
+    });
     await octokit.rest.issues.createComment({
       owner,
       repo,
@@ -157,12 +173,20 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
       try {
         const reminderContent = await buildReminderMessage(context, {
-          topUpLimit,
+          extensionsLimit,
           issueNumber: issue_number,
           pr: { prOwner, prRepo, prNumber },
-          remainingTopUps,
+          remainingExtensions,
         });
-        const body = await constructBodyWithMetadata(context, { issue, owner, repo, reminderContent, topUpLimit, remainingTopUps, issue_number });
+        const body = await constructBodyWithMetadata(context, {
+          issue,
+          owner,
+          repo,
+          reminderContent,
+          extensionsLimit,
+          remainingExtensions,
+          issue_number,
+        });
         await octokit.rest.issues.createComment({
           owner: prOwner,
           repo: prRepo,
@@ -184,8 +208,16 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     // This is a fallback if we failed to post the reminder to a pull-request, which can happen when posting cross
     // organizations, so we post to the parent issue instead, to make sure the user got a reminder.
     if (shouldPostToMainIssue) {
-      const reminderContent = await buildReminderMessage(context, { topUpLimit, remainingTopUps, issueNumber: issue_number });
-      const body = await constructBodyWithMetadata(context, { issue, owner, repo, reminderContent, topUpLimit, remainingTopUps, issue_number });
+      const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+      const body = await constructBodyWithMetadata(context, {
+        issue,
+        owner,
+        repo,
+        reminderContent,
+        extensionsLimit,
+        remainingExtensions,
+        issue_number,
+      });
       await octokit.rest.issues.createComment({
         owner,
         repo,
@@ -217,9 +249,9 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
-  const { remainingTopUps } = await getTopUpsRemaining(context);
+  const { remainingExtensions } = await getRemainingAvailableExtensions(context);
   const logMessage = logger.info(
-    `Passed the disqualification threshold and ${remainingTopUps <= 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
+    `Passed the disqualification threshold and ${remainingExtensions <= 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
     {
       issue: issue.html_url,
     }

@@ -6,24 +6,24 @@ import { getAssignedEvent } from "./task-update";
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
-export async function getTopUpsRemaining(context: ContextPlugin) {
-  const defaultTopUps = { remainingTopUps: 0, topUpLimit: 0 };
+export async function getRemainingAvailableExtensions(context: ContextPlugin) {
+  const defaultExtensions = { remainingExtensions: 0, extensionsLimit: 0 };
 
   if (!("issue" in context.payload)) {
-    return defaultTopUps;
+    return defaultExtensions;
   }
-  if (!context.config.disqualification || !context.config.topUps.enabled) {
-    return { remainingTopUps: Infinity, topUpLimit: Infinity };
+  if (!context.config.negligenceThreshold || !context.config.availableDeadlineExtensions.enabled) {
+    return { remainingExtensions: Infinity, extensionsLimit: Infinity };
   }
 
-  const priorityList = Object.keys(context.config.topUps.amounts);
+  const priorityList = Object.keys(context.config.availableDeadlineExtensions.amounts);
   const priorityLabel = context.payload.issue.labels?.find((label) => priorityList.includes(label.name));
 
   if (!priorityLabel) {
-    return defaultTopUps;
+    return defaultExtensions;
   }
-  const topUpLimit = context.config.topUps.amounts[priorityLabel.name];
-  let topUpTimeLapse = Math.max(1, context.config.disqualification / parsePriorityLabel([priorityLabel]));
+  const extensionsLimit = context.config.availableDeadlineExtensions.amounts[priorityLabel.name];
+  let topUpTimeLapse = Math.max(1, context.config.negligenceThreshold / parsePriorityLabel([priorityLabel]));
 
   // If the total time for top-ups is inferior to the actual time label of the task,
   // we use the time label as a reference
@@ -31,9 +31,9 @@ export async function getTopUpsRemaining(context: ContextPlugin) {
 
   if (labels?.length) {
     const timeLabelValue = parseTimeLabel(labels);
-    const totalTimeLapse = topUpTimeLapse * topUpLimit;
+    const totalTimeLapse = topUpTimeLapse * extensionsLimit;
     if (totalTimeLapse < timeLabelValue) {
-      topUpTimeLapse = timeLabelValue / topUpLimit;
+      topUpTimeLapse = timeLabelValue / extensionsLimit;
     }
   }
 
@@ -41,22 +41,22 @@ export async function getTopUpsRemaining(context: ContextPlugin) {
   const assignmentDate = assignmentEvent?.created_at ? new Date(assignmentEvent.created_at) : null;
 
   if (!assignmentDate) {
-    return defaultTopUps;
+    return defaultExtensions;
   }
 
   const currentDate = new Date();
   const diffTime = currentDate.getTime() - assignmentDate.getTime();
   const daysAssigned = parseFloat((diffTime / DAY_IN_MS).toFixed(2));
-  const remainingTopUps = Math.ceil(topUpLimit - topUpLimit * (diffTime / (topUpLimit * topUpTimeLapse)));
+  const remainingExtensions = Math.ceil(extensionsLimit - extensionsLimit * (diffTime / (extensionsLimit * topUpTimeLapse)));
 
-  context.logger.debug("Remaining top ups", {
-    topUpLimit,
+  context.logger.debug("Remaining extensions", {
+    extensionsLimit,
     topUpTimeLapse: formatMillisecondsToHumanReadable(topUpTimeLapse),
     diffTime: formatMillisecondsToHumanReadable(diffTime),
     assignmentDate,
     daysAssigned,
-    remainingTopUps,
+    remainingExtensions,
   });
 
-  return { remainingTopUps, topUpLimit };
+  return { remainingExtensions, extensionsLimit };
 }

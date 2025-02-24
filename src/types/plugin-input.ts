@@ -53,7 +53,7 @@ export const pluginSettingsSchema = T.Object(
     /**
      * Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days
      */
-    warning: thresholdType({
+    followUpInterval: thresholdType({
       default: "3.5 days",
       description: "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
     }),
@@ -64,7 +64,7 @@ export const pluginSettingsSchema = T.Object(
     /**
      * Delay to unassign users. 0 means disabled. Any other value is counted in days, e.g. 7 days
      */
-    disqualification: thresholdType({
+    negligenceThreshold: thresholdType({
       default: "7 days",
       description: "Delay to unassign users. 0 means disabled and any other value is counted in days, e.g. 7 days",
       examples: ["7 days", "1 day"],
@@ -77,7 +77,7 @@ export const pluginSettingsSchema = T.Object(
       description: "Whether a pull request is required for the given issue on disqualify",
       examples: ["true", "false"],
     }),
-    topUps: T.Object(
+    availableDeadlineExtensions: T.Object(
       {
         enabled: T.Boolean({ default: true }),
         amounts: T.Record(T.String(), T.Integer({ minimum: 1 }), { default: {} }),

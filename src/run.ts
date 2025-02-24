@@ -4,7 +4,7 @@ import { ContextPlugin } from "./types/plugin-input";
 async function populateTopUpThresholds(context: ContextPlugin) {
   const { config, octokit, logger } = context;
 
-  if (!config.topUps.enabled || Object.keys(config.topUps.amounts).length) {
+  if (!config.availableDeadlineExtensions.enabled || Object.keys(config.availableDeadlineExtensions.amounts).length) {
     return;
   }
   if (!context.payload.repository.owner?.login) {
@@ -40,10 +40,10 @@ async function populateTopUpThresholds(context: ContextPlugin) {
   }
 
   const highestPriority = Math.max(...priorityLabels.map((label) => label.value)) + 1;
-  config.topUps.amounts = priorityLabels.reduce((acc, curr) => {
+  config.availableDeadlineExtensions.amounts = priorityLabels.reduce((acc, curr) => {
     return { ...acc, [curr.name]: Math.max(1, highestPriority - curr.value) };
   }, {});
-  logger.debug("Populated top up amounts", { topUps: config.topUps.amounts });
+  logger.debug("Populated top up amounts", { topUps: config.availableDeadlineExtensions.amounts });
 }
 
 export async function run(context: ContextPlugin) {

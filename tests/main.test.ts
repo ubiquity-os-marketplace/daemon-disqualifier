@@ -49,11 +49,11 @@ describe("User start/stop", () => {
     const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, { ...cfg }));
     expect(pluginSettings).toEqual({
       pullRequestRequired: true,
-      warning: 302400000,
+      followUpInterval: 302400000,
       prioritySpeed: true,
-      disqualification: 604800000,
+      negligenceThreshold: 604800000,
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
-      topUps: {
+      availableDeadlineExtensions: {
         amounts: {},
         enabled: true,
       },
@@ -62,8 +62,8 @@ describe("User start/stop", () => {
       Value.Decode(
         pluginSettingsSchema,
         Value.Default(pluginSettingsSchema, {
-          warning: "12 foobars",
-          disqualification: "2 days",
+          followUpInterval: "12 foobars",
+          negligenceThreshold: "2 days",
         })
       )
     ).toThrow(TransformDecodeError);
@@ -100,11 +100,11 @@ describe("User start/stop", () => {
 
     expect(decodedSettings).toEqual({
       pullRequestRequired: true,
-      warning: ms("3.5 days"),
-      disqualification: ms("7 days"),
+      followUpInterval: ms("3.5 days"),
+      negligenceThreshold: ms("7 days"),
       prioritySpeed: true,
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
-      topUps: {
+      availableDeadlineExtensions: {
         amounts: {},
         enabled: true,
       },
@@ -335,12 +335,12 @@ function createContext(issueId: number, senderId: number): ContextPlugin {
     },
     logger: new Logs("debug"),
     config: {
-      disqualification: ONE_DAY * 7,
-      warning: ONE_DAY * 3.5,
+      negligenceThreshold: ONE_DAY * 7,
+      followUpInterval: ONE_DAY * 3.5,
       prioritySpeed: true,
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: false,
-      topUps: {
+      availableDeadlineExtensions: {
         amounts: {
           "Priority 1": 5,
           "Priority 2": 4,
