@@ -57,22 +57,25 @@ bun run test
 - plugin: ubiquity-os/daemon-disqualifier
   with:
     # Time period after which inactive reviewers are unassigned
-    disqualification: "7 days"
+    negligenceThreshold: "7 days"
     # Time period after which warning notifications are sent
-    warning: "3.5 days"
+    followUpInterval: "3.5 days"
     # Enable faster processing for priority items
     prioritySpeed: true
     # Enforce pull request requirement
     pullRequestRequired: true
-    watch:
-      # Repositories to exclude from monitoring
-      optOut:
-        - "repoName"
-        - "repoName2"
     # List of GitHub webhook events to process (these are the tail of the webhook event i.e. pull_request.review_requested)
     eventWhitelist:
       - "review_requested"
       - "ready_for_review"
       - "commented"
       - "committed"
+    availableDeadlineExtensions:
+      enabled: true
+      amounts:
+        - "Priority: 1 (Normal)": 5
+        - "Priority: 2 (Medium)": 4
+        - "Priority: 3 (High)": 3
+        - "Priority: 4 (Urgent)": 2
+        - "Priority: 5 (Emergency)": 1
 ```

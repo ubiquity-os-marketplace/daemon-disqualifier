@@ -7,7 +7,7 @@ import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 import { parseIssueUrl } from "./github-url";
 import { areLinkedPullRequestsApproved } from "./pull-request";
-import { closeLinkedPullRequests, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
+import { closeLinkedPullRequests, remindAssignees, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
@@ -15,21 +15,14 @@ function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDat
   return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
 }
 
-export async function updateTaskReminder(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
-  const {
-    octokit,
-    logger,
-    payload,
-    config: { eventWhitelist, warning, disqualification, prioritySpeed },
-  } = context;
-  const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
-  const now = DateTime.local();
-
-  if (!handledMetadata) return;
-
+export async function getAssignedEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
+  const { octokit, payload, logger } = context;
   if (!repo.owner) {
     throw logger.error("No owner was found in the payload", { payload });
   }
+  const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
+
+  if (!handledMetadata) return;
 
   const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
     owner: repo.owner.login,
@@ -41,6 +34,31 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     .filter((o) => o.event === "assigned" && handledMetadata.taskAssignees.includes(o.actor.id))
     .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
     .shift();
+
+  if (!assignedEvent) {
+    logger.error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
+    return;
+  }
+
+  return assignedEvent;
+}
+
+export async function updateTaskReminder(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
+  const {
+    logger,
+    payload,
+    config: { eventWhitelist, followUpInterval, negligenceThreshold, prioritySpeed },
+  } = context;
+  const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
+  const now = DateTime.local();
+
+  if (!handledMetadata) return;
+
+  if (!repo.owner) {
+    throw logger.error("No owner was found in the payload", { payload });
+  }
+
+  const assignedEvent = await getAssignedEvent(context, repo, issue);
 
   if (!assignedEvent) {
     logger.error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
@@ -81,20 +99,24 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
   });
 
-  const disqualificationTimeDifference = disqualification - warning;
+  const disqualificationTimeDifference = negligenceThreshold - followUpInterval;
 
   if (lastReminderComment) {
     const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
     mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
     if (await areLinkedPullRequestsApproved(context, issue)) {
-      // If the issue was approved but is not merged yet, nudge the assignee
-      await remindAssigneesForIssue(context, issue);
+      if (context.config.followUpInterval > 0) {
+        // If the issue was approved but is not merged yet, nudge the assignee
+        await remindAssignees(context, issue);
+      }
     } else {
       if (
         mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
       ) {
         await unassignUserFromIssue(context, issue);
         await closeLinkedPullRequests(context, issue);
+      } else if (mostRecentActivityDate.plus({ milliseconds: followUpInterval }) <= now) {
+        await remindAssigneesForIssue(context, issue);
       } else {
         logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
           now: now.toLocaleString(DateTime.DATETIME_MED),
@@ -105,7 +127,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
       }
     }
   } else {
-    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? warning / priorityLevel : warning }) <= now) {
+    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? followUpInterval / priorityLevel : followUpInterval }) <= now) {
       await remindAssigneesForIssue(context, issue);
     } else {
       logger.info(`Nothing to do for ${issue.html_url} still within due-time.`, {
