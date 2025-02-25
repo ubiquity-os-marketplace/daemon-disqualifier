@@ -64,11 +64,6 @@ bun run test
     prioritySpeed: true
     # Enforce pull request requirement
     pullRequestRequired: true
-    watch:
-      # Repositories to exclude from monitoring
-      optOut:
-        - "repoName"
-        - "repoName2"
     # List of GitHub webhook events to process (these are the tail of the webhook event i.e. pull_request.review_requested)
     eventWhitelist:
       - "review_requested"
