@@ -7,7 +7,7 @@ import { parseIssueUrl } from "./github-url";
 import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
 import { getMostRecentUserAssignmentEvent } from "./task-metadata";
-import { getRemainingAvailableExtensions } from "./top-ups";
+import { getRemainingAvailableExtensions } from "./deadline-extensions";
 
 interface IssuePrTarget {
   issueNumber: number;
@@ -46,12 +46,12 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   }
 }
 
-async function shouldDisplayTopUpsReminder(context: ContextPlugin, issueAndPrTargets: IssuePrTarget) {
+async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, issueAndPrTargets: IssuePrTarget) {
   const { octokit, logger } = context;
   const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, issueAndPrTargets.issueNumber);
 
   if (!userAssignmentEvent) {
-    logger.warn("No user assignment event was found, won't display top-up value");
+    logger.warn("No user assignment event was found, won't display remaining extensions value");
     return false;
   }
 
@@ -60,19 +60,19 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, issueAndPrTar
   const repo = issueAndPrTargets.pr?.prRepo ?? context.payload.repository.name;
 
   if (!owner) {
-    logger.error("No owner was found in the payload, won't display top-up value");
+    logger.error("No owner was found in the payload, won't display remaining extensions value");
     return false;
   }
 
-  const regex = new RegExp(/"remainingTopUps": (\d+)/, "i");
+  const regex = new RegExp(/"remainingExtensions": (\d+)/, "i");
 
-  const lastTopUpValue = (
+  const lastRemainingExtensionsValue = (
     await octokit.paginate(octokit.rest.issues.listEventsForTimeline, {
       owner: owner,
       repo: repo,
       issue_number: issueNumber,
     })
-  ).reduce((lastTopUpValue, event) => {
+  ).reduce((lastRemainingExtensionsValue, event) => {
     if (
       "created_at" in event &&
       "actor" in event &&
@@ -84,20 +84,22 @@ async function shouldDisplayTopUpsReminder(context: ContextPlugin, issueAndPrTar
     ) {
       const res = regex.exec(event.body);
       const value = Number(res?.[1]);
-      if (!lastTopUpValue || value < lastTopUpValue) {
+      if (!lastRemainingExtensionsValue || value < lastRemainingExtensionsValue) {
         return value;
       } else {
-        return lastTopUpValue;
+        return lastRemainingExtensionsValue;
       }
     }
-    return lastTopUpValue;
+    return lastRemainingExtensionsValue;
   }, 0);
-  logger.debug("Last reminder top up value", { lastTopUpValue, remainingExtensions: issueAndPrTargets.remainingExtensions });
-  return lastTopUpValue !== issueAndPrTargets.remainingExtensions;
+  logger.debug("Last remaining extensions value", { lastRemainingExtensionsValue, remainingExtensions: issueAndPrTargets.remainingExtensions });
+  return lastRemainingExtensionsValue !== issueAndPrTargets.remainingExtensions;
 }
 
 async function buildReminderMessage(context: ContextPlugin, args: { remainingExtensions: number; extensionsLimit: number } & IssuePrTarget) {
-  return !context.config.negligenceThreshold || !context.config.availableDeadlineExtensions.enabled || !(await shouldDisplayTopUpsReminder(context, args))
+  return !context.config.negligenceThreshold ||
+    !context.config.availableDeadlineExtensions.enabled ||
+    !(await shouldDisplayRemainingExtensionsReminder(context, args))
     ? "this task has been idle for a while"
     : `you have used <code>**${args.extensionsLimit - args.remainingExtensions + 1}**</code> of <code>**${args.extensionsLimit}**</code> available deadline extensions`;
 }

@@ -82,7 +82,15 @@ export const pluginSettingsSchema = T.Object(
         enabled: T.Boolean({ default: true }),
         amounts: T.Record(T.String(), T.Integer({ minimum: 1 }), { default: {} }),
       },
-      { default: {} }
+      {
+        default: {},
+        description: "The amount of deadline extensions available for a given priority label (how many reminders can be sent before disqualifying the user).",
+        examples: [
+          {
+            amounts: { "Priority: 1 (Normal)": 5, "Priority: 2 (Medium)": 4 },
+          },
+        ],
+      }
     ),
     /**
      * List of events to consider as valid activity on a task

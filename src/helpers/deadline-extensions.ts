@@ -23,7 +23,7 @@ export async function getRemainingAvailableExtensions(context: ContextPlugin) {
     return defaultExtensions;
   }
   const extensionsLimit = context.config.availableDeadlineExtensions.amounts[priorityLabel.name];
-  let topUpTimeLapse = Math.max(1, context.config.negligenceThreshold / parsePriorityLabel([priorityLabel]));
+  let extensionTimeLapse = Math.max(1, context.config.negligenceThreshold / parsePriorityLabel([priorityLabel]));
 
   // If the total time for top-ups is inferior to the actual time label of the task,
   // we use the time label as a reference
@@ -31,9 +31,9 @@ export async function getRemainingAvailableExtensions(context: ContextPlugin) {
 
   if (labels?.length) {
     const timeLabelValue = parseTimeLabel(labels);
-    const totalTimeLapse = topUpTimeLapse * extensionsLimit;
+    const totalTimeLapse = extensionTimeLapse * extensionsLimit;
     if (totalTimeLapse < timeLabelValue) {
-      topUpTimeLapse = timeLabelValue / extensionsLimit;
+      extensionTimeLapse = timeLabelValue / extensionsLimit;
     }
   }
 
@@ -47,11 +47,11 @@ export async function getRemainingAvailableExtensions(context: ContextPlugin) {
   const currentDate = new Date();
   const diffTime = currentDate.getTime() - assignmentDate.getTime();
   const daysAssigned = parseFloat((diffTime / DAY_IN_MS).toFixed(2));
-  const remainingExtensions = Math.ceil(extensionsLimit - extensionsLimit * (diffTime / (extensionsLimit * topUpTimeLapse)));
+  const remainingExtensions = Math.ceil(extensionsLimit - extensionsLimit * (diffTime / (extensionsLimit * extensionTimeLapse)));
 
   context.logger.debug("Remaining extensions", {
     extensionsLimit,
-    topUpTimeLapse: formatMillisecondsToHumanReadable(topUpTimeLapse),
+    extensionTimeLapse: formatMillisecondsToHumanReadable(extensionTimeLapse),
     diffTime: formatMillisecondsToHumanReadable(diffTime),
     assignmentDate,
     daysAssigned,
