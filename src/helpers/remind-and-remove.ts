@@ -3,11 +3,11 @@ import { FOLLOWUP_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
+import { getRemainingAvailableExtensions } from "./deadline-extensions";
 import { parseIssueUrl } from "./github-url";
 import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
 import { getMostRecentUserAssignmentEvent } from "./task-metadata";
-import { getRemainingAvailableExtensions } from "./deadline-extensions";
 
 interface IssuePrTarget {
   issueNumber: number;
@@ -115,9 +115,6 @@ async function constructBodyWithMetadata(
     reminderContent: string;
     extensionsLimit: number;
     remainingExtensions: number;
-    owner: string;
-    repo: string;
-    issue_number: number;
     issue: ListIssueForRepo;
   }
 ) {
@@ -153,12 +150,9 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
     const body = await constructBodyWithMetadata(context, {
       issue,
-      owner,
-      repo,
       reminderContent,
       extensionsLimit,
       remainingExtensions,
-      issue_number,
     });
     await octokit.rest.issues.createComment({
       owner,
@@ -182,12 +176,9 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
         });
         const body = await constructBodyWithMetadata(context, {
           issue,
-          owner,
-          repo,
           reminderContent,
           extensionsLimit,
           remainingExtensions,
-          issue_number,
         });
         await octokit.rest.issues.createComment({
           owner: prOwner,
@@ -213,12 +204,9 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
       const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
       const body = await constructBodyWithMetadata(context, {
         issue,
-        owner,
-        repo,
         reminderContent,
         extensionsLimit,
         remainingExtensions,
-        issue_number,
       });
       await octokit.rest.issues.createComment({
         owner,
