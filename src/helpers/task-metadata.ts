@@ -31,7 +31,7 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
 
   if (latestUserAssignment && latestBotAssignment && DateTime.fromISO(latestUserAssignment.created_at) > DateTime.fromISO(latestBotAssignment.created_at)) {
     mostRecentAssignmentEvent = latestUserAssignment;
-  } else {
+  } else if (latestBotAssignment) {
     mostRecentAssignmentEvent = latestBotAssignment;
   }
 
