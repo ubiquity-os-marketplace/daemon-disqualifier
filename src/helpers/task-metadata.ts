@@ -49,17 +49,14 @@ export async function getTaskAssignmentDetails(
   context: ContextPlugin,
   repo: ContextPlugin["payload"]["repository"],
   issue: ListIssueForRepo
-): Promise<{ startPlusLabelDuration: string; taskAssignees: number[] } | false> {
+): Promise<{ taskAssignees: number[] } | false> {
   const { logger, payload } = context;
 
   if (!repo.owner) {
     throw logger.error("No owner was found in the payload", { payload });
   }
 
-  const mostRecentAssignmentEvent = await getMostRecentUserAssignmentEvent(context, repo, issue.number);
-
   const metadata = {
-    startPlusLabelDuration: DateTime.fromISO(issue.created_at).toISO() || "",
     taskAssignees: issue.assignees ? issue.assignees.map((o) => o.id) : issue.assignee ? [issue.assignee.id] : [],
   };
 
@@ -77,12 +74,6 @@ export async function getTaskAssignmentDetails(
     logger.error(`Invalid disqualification threshold found on ${issue.html_url}`);
     return false;
   }
-
-  // if there are no assignment events, we can assume the disqualification threshold is the issue creation date
-  metadata.startPlusLabelDuration =
-    DateTime.fromISO(mostRecentAssignmentEvent?.created_at || issue.created_at)
-      .plus({ milliseconds: durationInMs })
-      .toISO() || "";
 
   return metadata;
 }
