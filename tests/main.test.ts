@@ -128,7 +128,7 @@ describe("User start/stop", () => {
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Passed the disqualification threshold and no activity is detected, removing assignees: @user2."),
+      expect.stringContaining("@user2 you have shown no activity and have been disqualified from this task."),
       expect.anything()
     );
     expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
@@ -143,7 +143,10 @@ describe("User start/stop", () => {
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
-    expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith(
+      expect.stringContaining("@user2 you have shown no activity and have been disqualified from this task."),
+      expect.anything()
+    );
   });
 
   it("Should eject the user after the disqualification period", async () => {
@@ -158,7 +161,7 @@ describe("User start/stop", () => {
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
     expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
-    expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith("@user2 you have shown no activity and have been disqualified from this task.", expect.anything());
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
@@ -179,7 +182,7 @@ describe("User start/stop", () => {
     let partialComment = "@user2, this task has been idle for a while. Please provide an update.\n<!-- Ubiquity - Followup -";
     expect(latestComment?.body).toContain(partialComment);
     latestComment = comments.filter((comment) => comment.issueId === 3).pop();
-    partialComment = "Passed the disqualification threshold and no activity is detected, removing assignees: @user2.";
+    partialComment = "@user2 you have shown no activity and have been disqualified from this task.";
     expect(latestComment?.body).toContain(partialComment);
   });
 

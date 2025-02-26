@@ -241,7 +241,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   const { remainingExtensions } = await getRemainingAvailableExtensions(context);
   const logMessage = logger.info(
-    `Passed the disqualification threshold and ${remainingExtensions <= 0 ? "no more top-ups are remaining" : "no activity is detected"}, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
+    `${logins.map((o) => `@${o}`).join(", ")} you have ${remainingExtensions <= 0 ? "used all available deadline extensions" : "shown no activity"} and have been disqualified from this task.`,
     {
       issue: issue.html_url,
     }
