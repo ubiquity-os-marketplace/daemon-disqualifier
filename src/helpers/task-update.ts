@@ -102,8 +102,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   const disqualificationTimeDifference = negligenceThreshold - followUpInterval;
 
   if (lastReminderComment) {
-    const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
-    mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
+    mostRecentActivityDate = DateTime.fromISO(lastReminderComment.created_at);
     if (await areLinkedPullRequestsApproved(context, issue)) {
       if (context.config.followUpInterval > 0) {
         // If the issue was approved but is not merged yet, nudge the assignee
