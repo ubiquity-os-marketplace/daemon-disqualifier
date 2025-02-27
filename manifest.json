@@ -7,32 +7,17 @@
     "default": {},
     "type": "object",
     "properties": {
-      "warning": {
+      "followUpInterval": {
         "default": "3.5 days",
         "description": "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
         "type": "string"
-      },
-      "watch": {
-        "default": {},
-        "type": "object",
-        "properties": {
-          "optOut": {
-            "default": [],
-            "description": "List of repositories to opt-out from watching user activity within the organization",
-            "examples": ["repoName", "no-owner-required"],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
       },
       "prioritySpeed": {
         "default": true,
         "description": "Whether to rush the follow ups by the priority level",
         "type": "boolean"
       },
-      "disqualification": {
+      "negligenceThreshold": {
         "default": "7 days",
         "description": "Delay to unassign users. 0 means disabled and any other value is counted in days, e.g. 7 days",
         "examples": ["7 days", "1 day"],
@@ -43,6 +28,35 @@
         "description": "Whether a pull request is required for the given issue on disqualify",
         "examples": ["true", "false"],
         "type": "boolean"
+      },
+      "availableDeadlineExtensions": {
+        "default": {},
+        "description": "The amount of deadline extensions available for a given priority label (how many reminders can be sent before disqualifying the user).",
+        "examples": [
+          {
+            "amounts": {
+              "Priority: 1 (Normal)": 5,
+              "Priority: 2 (Medium)": 4
+            }
+          }
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "default": true,
+            "type": "boolean"
+          },
+          "amounts": {
+            "default": {},
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "minimum": 1,
+                "type": "integer"
+              }
+            }
+          }
+        }
       },
       "eventWhitelist": {
         "default": ["pull_request.review_requested", "pull_request.ready_for_review", "pull_request_review_comment.created", "issue_comment.created", "push"],

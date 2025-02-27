@@ -1,16 +1,28 @@
 import db from "../cron/database-handler";
-import { FOLLOWUP_HEADER, UNASSIGN_HEADER } from "../types/constants";
+import { FOLLOWUP_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
+import { getRemainingAvailableExtensions } from "./deadline-extensions";
 import { parseIssueUrl } from "./github-url";
 import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
+import { getMostRecentUserAssignmentEvent } from "./task-metadata";
+
+interface IssuePrTarget {
+  issueNumber: number;
+  remainingExtensions: number;
+  pr?: {
+    prOwner: string;
+    prRepo: string;
+    prNumber: number;
+  };
+}
 
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
   const { logger, config } = context;
 
-  if (config.disqualification <= 0) {
+  if (config.negligenceThreshold <= 0) {
     logger.info("The unassign threshold is <= 0, won't unassign users.");
   } else {
     await removeAllAssignees(context, issue);
@@ -22,17 +34,108 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const issueItem = parseIssueUrl(issue.html_url);
 
   const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
-  if (config.warning <= 0) {
+  const { remainingExtensions } = await getRemainingAvailableExtensions(context);
+  if (config.followUpInterval <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
-  } else if (config.pullRequestRequired && !hasLinkedPr) {
+  } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingExtensions <= 0) {
     await unassignUserFromIssue(context, issue);
+    await closeLinkedPullRequests(context, issue);
   } else {
     logger.info(`Passed the reminder threshold on ${issue.html_url} sending a reminder.`);
     await remindAssignees(context, issue);
   }
 }
 
-async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
+async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, issueAndPrTargets: IssuePrTarget) {
+  const { octokit, logger } = context;
+  const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, issueAndPrTargets.issueNumber);
+
+  if (!userAssignmentEvent) {
+    logger.warn("No user assignment event was found, won't display remaining extensions value");
+    return false;
+  }
+
+  const issueNumber = issueAndPrTargets.pr?.prNumber ?? issueAndPrTargets.issueNumber;
+  const owner = issueAndPrTargets.pr?.prOwner ?? context.payload.repository.owner?.login;
+  const repo = issueAndPrTargets.pr?.prRepo ?? context.payload.repository.name;
+
+  if (!owner) {
+    logger.error("No owner was found in the payload, won't display remaining extensions value");
+    return false;
+  }
+
+  const regex = new RegExp(/"remainingExtensions": (\d+)/, "i");
+
+  const lastRemainingExtensionsValue = (
+    await octokit.paginate(octokit.rest.issues.listEventsForTimeline, {
+      owner: owner,
+      repo: repo,
+      issue_number: issueNumber,
+    })
+  ).reduce((lastRemainingExtensionsValue, event) => {
+    if (
+      "created_at" in event &&
+      "actor" in event &&
+      "body" in event &&
+      event.event === "commented" &&
+      new Date(event.created_at).getTime() >= new Date(userAssignmentEvent.created_at).getTime() &&
+      event.actor?.type === "Bot" &&
+      event.body?.includes("remainingExtensions")
+    ) {
+      const res = regex.exec(event.body);
+      const value = Number(res?.[1]);
+      if (!lastRemainingExtensionsValue || value < lastRemainingExtensionsValue) {
+        return value;
+      } else {
+        return lastRemainingExtensionsValue;
+      }
+    }
+    return lastRemainingExtensionsValue;
+  }, 0);
+  logger.debug("Last remaining extensions value", { lastRemainingExtensionsValue, remainingExtensions: issueAndPrTargets.remainingExtensions });
+  return lastRemainingExtensionsValue !== issueAndPrTargets.remainingExtensions;
+}
+
+async function buildReminderMessage(context: ContextPlugin, args: { remainingExtensions: number; extensionsLimit: number } & IssuePrTarget) {
+  return !context.config.negligenceThreshold ||
+    !context.config.availableDeadlineExtensions.enabled ||
+    !(await shouldDisplayRemainingExtensionsReminder(context, args))
+    ? "this task has been idle for a while"
+    : `you have used <code>**${args.extensionsLimit - args.remainingExtensions + 1}**</code> of <code>**${args.extensionsLimit}**</code> available deadline extensions`;
+}
+
+async function constructBodyWithMetadata(
+  context: ContextPlugin,
+  {
+    reminderContent,
+    extensionsLimit,
+    remainingExtensions,
+    issue,
+  }: {
+    reminderContent: string;
+    extensionsLimit: number;
+    remainingExtensions: number;
+    issue: ListIssueForRepo;
+  }
+) {
+  const { logger } = context;
+
+  const logins = issue.assignees
+    ?.map((o) => o?.login)
+    .filter((o) => !!o)
+    .join(", @");
+  const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
+    taskAssignees: issue.assignees?.map((o) => o?.id),
+    url: issue.html_url,
+    extensionsLimit,
+    remainingExtensions,
+  });
+  const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
+
+  return [logMessage.logMessage.raw, metadata].join("\n");
+}
+
+export async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
   const { octokit, logger, config } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
@@ -40,23 +143,22 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
     logger.error(`Missing Assignees from ${issue.html_url}`);
     return false;
   }
-  const logins = issue.assignees
-    .map((o) => o?.login)
-    .filter((o) => !!o)
-    .join(", @");
 
-  const logMessage = logger.info(`@${logins}, this task has been idle for a while. Please provide an update.\n\n`, {
-    taskAssignees: issue.assignees.map((o) => o?.id),
-  });
-
-  const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
+  const { remainingExtensions, extensionsLimit } = await getRemainingAvailableExtensions(context);
 
   if (!config.pullRequestRequired) {
+    const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+    const body = await constructBodyWithMetadata(context, {
+      issue,
+      reminderContent,
+      extensionsLimit,
+      remainingExtensions,
+    });
     await octokit.rest.issues.createComment({
       owner,
       repo,
       issue_number,
-      body: [logMessage.logMessage.raw, metadata].join("\n"),
+      body: body,
     });
   } else {
     const openedLinkedPullRequests = (await collectLinkedPullRequests(context, { repo, owner, issue_number }))
@@ -66,11 +168,23 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
     for (const pullRequest of openedLinkedPullRequests) {
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
       try {
+        const reminderContent = await buildReminderMessage(context, {
+          extensionsLimit,
+          issueNumber: issue_number,
+          pr: { prOwner, prRepo, prNumber },
+          remainingExtensions,
+        });
+        const body = await constructBodyWithMetadata(context, {
+          issue,
+          reminderContent,
+          extensionsLimit,
+          remainingExtensions,
+        });
         await octokit.rest.issues.createComment({
           owner: prOwner,
           repo: prRepo,
           issue_number: prNumber,
-          body: [logMessage.logMessage.raw, metadata].join("\n"),
+          body: body,
         });
         if (pullRequest.reviewDecision === "CHANGES_REQUESTED") {
           await octokit.graphql(MUTATION_PULL_REQUEST_TO_DRAFT, {
@@ -87,11 +201,18 @@ async function remindAssignees(context: ContextPlugin, issue: ListIssueForRepo) 
     // This is a fallback if we failed to post the reminder to a pull-request, which can happen when posting cross
     // organizations, so we post to the parent issue instead, to make sure the user got a reminder.
     if (shouldPostToMainIssue) {
+      const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+      const body = await constructBodyWithMetadata(context, {
+        issue,
+        reminderContent,
+        extensionsLimit,
+        remainingExtensions,
+      });
       await octokit.rest.issues.createComment({
         owner,
         repo,
         issue_number,
-        body: [logMessage.logMessage.raw, metadata].join("\n"),
+        body: body,
       });
     }
   }
@@ -110,7 +231,7 @@ export async function removeEntryFromDatabase(issue: ListIssueForRepo) {
 }
 
 async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
-  const { octokit, logger } = context;
+  const { octokit, logger, commentHandler } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
@@ -118,20 +239,14 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
+  const { remainingExtensions } = await getRemainingAvailableExtensions(context);
   const logMessage = logger.info(
-    `Passed the disqualification threshold and no activity is detected, removing assignees: ${logins.map((o) => `@${o}`).join(", ")}.`,
+    `${logins.map((o) => `@${o}`).join(", ")} you have ${remainingExtensions <= 0 ? "used all available deadline extensions" : "shown no activity"} and have been disqualified from this task.`,
     {
       issue: issue.html_url,
     }
   );
-  const metadata = createStructuredMetadata(UNASSIGN_HEADER, logMessage);
-
-  await octokit.rest.issues.createComment({
-    owner,
-    repo,
-    issue_number,
-    body: [logMessage.logMessage.raw, metadata].join("\n"),
-  });
+  await commentHandler.postComment(context, logMessage, { raw: true });
   await octokit.rest.issues.removeAssignees({
     owner,
     repo,

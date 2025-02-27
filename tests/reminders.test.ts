@@ -13,8 +13,10 @@ describe("Reminder tests", () => {
   it("Should post reminders only on opened linked pull-requests", async () => {
     jest.unstable_mockModule("../src/helpers/task-metadata", () => {
       return {
-        getTaskAssignmentDetails: jest.fn(() => ({ startPlusLabelDuration: "1", taskAssignees: [1] })),
+        getTaskAssignmentDetails: jest.fn(() => ({ taskAssignees: [1] })),
         parsePriorityLabel: jest.fn(),
+        parseTimeLabel: jest.fn(),
+        getMostRecentUserAssignmentEvent: jest.fn(() => ({ id: 1 })),
       };
     });
     jest.unstable_mockModule("../src/helpers/get-assignee-activity", () => {
