@@ -90,7 +90,6 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     })
   );
 
-  console.log(JSON.stringify(lastReminders));
   const lastReminderComment = lastReminders.flat().shift();
 
   logger.debug(`Handling metadata and disqualification threshold for ${issue.html_url}`, {
