@@ -48,10 +48,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
 
 async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, issueAndPrTargets: IssuePrTarget) {
   const { octokit, logger } = context;
-  const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, {
-    assignee: context.payload.sender?.login,
-    labels: [],
-  } as unknown as ListIssueForRepo);
+  const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, issueAndPrTargets.issueNumber);
 
   if (!userAssignmentEvent) {
     logger.warn("No user assignment event was found, won't display remaining extensions value");
