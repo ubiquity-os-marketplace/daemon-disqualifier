@@ -16,7 +16,7 @@ describe("Reminder tests", () => {
         getTaskAssignmentDetails: jest.fn(() => ({ taskAssignees: [1] })),
         parsePriorityLabel: jest.fn(),
         parseTimeLabel: jest.fn(),
-        getMostRecentUserAssignmentEvent: jest.fn(),
+        getMostRecentUserAssignmentEvent: jest.fn(() => ({ id: 1 })),
       };
     });
     jest.unstable_mockModule("../src/helpers/get-assignee-activity", () => {
