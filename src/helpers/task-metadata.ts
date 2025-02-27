@@ -8,17 +8,21 @@ type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForR
   color?: string | null;
 };
 
-export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issueNumber: number) {
+export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
   const { logger, octokit, payload } = context;
 
   if (!repo.owner) {
     throw logger.error("No owner was found in the payload", { payload });
   }
 
+  const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
+
+  if (!handledMetadata) return;
+
   const events = await octokit.paginate(octokit.rest.issues.listEvents, {
     owner: repo.owner.login,
     repo: repo.name,
-    issue_number: issueNumber,
+    issue_number: issue.number,
   });
 
   const assignedEvents = events

@@ -9,38 +9,10 @@ import { parseIssueUrl } from "./github-url";
 import { areLinkedPullRequestsApproved } from "./pull-request";
 import { closeLinkedPullRequests, remindAssignees, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
-import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
+import { getMostRecentUserAssignmentEvent, getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
 function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime {
   return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
-}
-
-export async function getAssignedEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
-  const { octokit, payload, logger } = context;
-  if (!repo.owner) {
-    throw logger.error("No owner was found in the payload", { payload });
-  }
-  const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
-
-  if (!handledMetadata) return;
-
-  const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
-    owner: repo.owner.login,
-    repo: repo.name,
-    issue_number: issue.number,
-  });
-
-  const assignedEvent = assignmentEvents
-    .filter((o) => o.event === "assigned" && handledMetadata.taskAssignees.includes(o.actor.id))
-    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
-    .shift();
-
-  if (!assignedEvent) {
-    logger.error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
-    return;
-  }
-
-  return assignedEvent;
 }
 
 export async function updateTaskReminder(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
@@ -58,7 +30,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     throw logger.error("No owner was found in the payload", { payload });
   }
 
-  const assignedEvent = await getAssignedEvent(context, repo, issue);
+  const assignedEvent = await getMostRecentUserAssignmentEvent(context, repo, issue);
 
   if (!assignedEvent) {
     logger.error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);

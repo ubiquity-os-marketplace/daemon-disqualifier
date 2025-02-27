@@ -1,8 +1,7 @@
 import { formatMillisecondsToHumanReadable } from "../handlers/time-format";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
-import { parsePriorityLabel, parseTimeLabel } from "./task-metadata";
-import { getAssignedEvent } from "./task-update";
+import { getMostRecentUserAssignmentEvent, parsePriorityLabel, parseTimeLabel } from "./task-metadata";
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -37,7 +36,7 @@ export async function getRemainingAvailableExtensions(context: ContextPlugin) {
     }
   }
 
-  const assignmentEvent = await getAssignedEvent(context, context.payload.repository, context.payload.issue as ListIssueForRepo);
+  const assignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, context.payload.issue as ListIssueForRepo);
   const assignmentDate = assignmentEvent?.created_at ? new Date(assignmentEvent.created_at) : null;
 
   if (!assignmentDate) {
