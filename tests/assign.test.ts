@@ -21,8 +21,8 @@ describe("watchUserActivity", () => {
       },
     },
     config: {
-      warning: 3600000, // 1 hour
-      disqualification: 7200000, // 2 hours
+      followUpInterval: 3600000, // 1 hour
+      negligenceThreshold: 7200000, // 2 hours
       pullRequestRequired: true,
     },
     octokit: {

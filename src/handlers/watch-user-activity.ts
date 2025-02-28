@@ -18,9 +18,11 @@ export async function watchUserActivity(context: ContextPlugin) {
     if (context.config.pullRequestRequired) {
       message.push(`- Be sure to link a pull-request before the first reminder to avoid disqualification.`);
     }
-    message.push(`- Reminders will be sent every \`${formatMillisecondsToHumanReadable(context.config.warning / priorityValue)}\` if there is no activity.`);
     message.push(
-      `- Assignees will be disqualified after \`${formatMillisecondsToHumanReadable(context.config.disqualification / priorityValue)}\` of inactivity.`
+      `- Reminders will be sent every \`${formatMillisecondsToHumanReadable(context.config.followUpInterval / priorityValue)}\` if there is no activity.`
+    );
+    message.push(
+      `- Assignees will be disqualified after \`${formatMillisecondsToHumanReadable(context.config.negligenceThreshold / priorityValue)}\` of inactivity.`
     );
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;

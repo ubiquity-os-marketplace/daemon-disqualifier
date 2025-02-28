@@ -1,10 +1,10 @@
 import { watchUserActivity } from "./handlers/watch-user-activity";
 import { ContextPlugin } from "./types/plugin-input";
 
-async function populateTopUpThresholds(context: ContextPlugin) {
+async function populateDeadlineExtensionsThresholds(context: ContextPlugin) {
   const { config, octokit, logger } = context;
 
-  if (!config.topUps.enabled || Object.keys(config.topUps.amounts).length) {
+  if (!config.availableDeadlineExtensions.enabled || Object.keys(config.availableDeadlineExtensions.amounts).length) {
     return;
   }
   if (!context.payload.repository.owner?.login) {
@@ -17,7 +17,7 @@ async function populateTopUpThresholds(context: ContextPlugin) {
   });
 
   if (!data.length) {
-    logger.debug("No labels have been found, won't populate top ups.", { data });
+    logger.debug("No labels have been found, won't populate deadline extension amounts.", { data });
     return;
   }
 
@@ -35,19 +35,19 @@ async function populateTopUpThresholds(context: ContextPlugin) {
     .filter((label) => label !== null);
 
   if (!priorityLabels.length) {
-    logger.debug("No priority labels have been found, won't populate top ups.", { data });
+    logger.debug("No priority labels have been found, won't populate deadline extension amounts.", { data });
     return;
   }
 
   const highestPriority = Math.max(...priorityLabels.map((label) => label.value)) + 1;
-  config.topUps.amounts = priorityLabels.reduce((acc, curr) => {
+  config.availableDeadlineExtensions.amounts = priorityLabels.reduce((acc, curr) => {
     return { ...acc, [curr.name]: Math.max(1, highestPriority - curr.value) };
   }, {});
-  logger.debug("Populated top up amounts", { topUps: config.topUps.amounts });
+  logger.debug("Populated available deadline extensions amounts", { availableDeadlineExtensions: config.availableDeadlineExtensions.amounts });
 }
 
 export async function run(context: ContextPlugin) {
   context.logger.debug("Will run with the following configuration:", { configuration: context.config });
-  await populateTopUpThresholds(context);
+  await populateDeadlineExtensionsThresholds(context);
   return watchUserActivity(context);
 }

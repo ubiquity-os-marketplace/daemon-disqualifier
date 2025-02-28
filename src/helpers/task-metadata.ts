@@ -8,13 +8,19 @@ type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForR
   color?: string | null;
 };
 
-export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issueNumber: number) {
+export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo | number) {
   const { logger, octokit, payload } = context;
 
   if (!repo.owner) {
     throw logger.error("No owner was found in the payload", { payload });
   }
 
+  if (typeof issue !== "number") {
+    const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
+    if (!handledMetadata) return;
+  }
+
+  const issueNumber = typeof issue === "number" ? issue : issue.number;
   const events = await octokit.paginate(octokit.rest.issues.listEvents, {
     owner: repo.owner.login,
     repo: repo.name,
@@ -31,7 +37,7 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
 
   if (latestUserAssignment && latestBotAssignment && DateTime.fromISO(latestUserAssignment.created_at) > DateTime.fromISO(latestBotAssignment.created_at)) {
     mostRecentAssignmentEvent = latestUserAssignment;
-  } else {
+  } else if (latestBotAssignment) {
     mostRecentAssignmentEvent = latestBotAssignment;
   }
 
@@ -49,17 +55,14 @@ export async function getTaskAssignmentDetails(
   context: ContextPlugin,
   repo: ContextPlugin["payload"]["repository"],
   issue: ListIssueForRepo
-): Promise<{ startPlusLabelDuration: string; taskAssignees: number[] } | false> {
+): Promise<{ taskAssignees: number[] } | false> {
   const { logger, payload } = context;
 
   if (!repo.owner) {
     throw logger.error("No owner was found in the payload", { payload });
   }
 
-  const mostRecentAssignmentEvent = await getMostRecentUserAssignmentEvent(context, repo, issue.number);
-
   const metadata = {
-    startPlusLabelDuration: DateTime.fromISO(issue.created_at).toISO() || "",
     taskAssignees: issue.assignees ? issue.assignees.map((o) => o.id) : issue.assignee ? [issue.assignee.id] : [],
   };
 
@@ -77,12 +80,6 @@ export async function getTaskAssignmentDetails(
     logger.error(`Invalid disqualification threshold found on ${issue.html_url}`);
     return false;
   }
-
-  // if there are no assignment events, we can assume the disqualification threshold is the issue creation date
-  metadata.startPlusLabelDuration =
-    DateTime.fromISO(mostRecentAssignmentEvent?.created_at || issue.created_at)
-      .plus({ milliseconds: durationInMs })
-      .toISO() || "";
 
   return metadata;
 }

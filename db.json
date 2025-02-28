@@ -35,6 +35,14 @@
     {
       "commentId": 2661110862,
       "issueNumber": 275
+    },
+    {
+      "commentId": 2662012407,
+      "issueNumber": 208
+    },
+    {
+      "commentId": 2676698115,
+      "issueNumber": 270
     }
   ],
   "ubiquity-os-marketplace/command-ask": [
@@ -47,8 +55,12 @@
       "issueNumber": 66
     },
     {
-      "commentId": 2658269647,
+      "commentId": 2664211203,
       "issueNumber": 51
+    },
+    {
+      "commentId": 2679663008,
+      "issueNumber": 69
     }
   ],
   "ubiquity-os-marketplace/command-start-stop": [
@@ -79,6 +91,14 @@
     {
       "commentId": 2644724615,
       "issueNumber": 4
+    },
+    {
+      "commentId": 2674012304,
+      "issueNumber": 11
+    },
+    {
+      "commentId": 2676719089,
+      "issueNumber": 7
     }
   ],
   "ubiquity-os-marketplace/daemon-disqualifier": [
@@ -105,6 +125,10 @@
     {
       "commentId": 2646636635,
       "issueNumber": 27
+    },
+    {
+      "commentId": 2677164326,
+      "issueNumber": 15
     }
   ],
   "ubiquity-os-marketplace/plugin-demo": [
@@ -117,6 +141,16 @@
     {
       "commentId": 2658033284,
       "issueNumber": 14
+    }
+  ],
+  "ubiquity-os-marketplace/daemon-pricing": [
+    {
+      "commentId": 2662333735,
+      "issueNumber": 64
+    },
+    {
+      "commentId": 2677436467,
+      "issueNumber": 82
     }
   ]
 }
