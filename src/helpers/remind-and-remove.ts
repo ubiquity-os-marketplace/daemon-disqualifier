@@ -263,7 +263,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
       },
     } as unknown as Context,
     logMessage,
-    { raw: true }
+    { raw: true, updateComment: false }
   );
   await octokit.rest.issues.removeAssignees({
     owner,
