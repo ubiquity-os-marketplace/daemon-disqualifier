@@ -1,3 +1,4 @@
+import { Context } from "@ubiquity-os/plugin-sdk";
 import db from "../cron/database-handler";
 import { FOLLOWUP_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
@@ -246,7 +247,24 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
       issue: issue.html_url,
     }
   );
-  await commentHandler.postComment(context, logMessage, { raw: true });
+  await commentHandler.postComment(
+    {
+      ...context,
+      // Make sure to post to the proper issue for disqualification, as the context might be from some other issue / pull-request
+      payload: {
+        ...context.payload,
+        issue,
+        repository: {
+          owner: {
+            login: owner,
+          },
+          name: repo,
+        },
+      },
+    } as unknown as Context,
+    logMessage,
+    { raw: true, updateComment: false }
+  );
   await octokit.rest.issues.removeAssignees({
     owner,
     repo,
