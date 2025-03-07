@@ -97,12 +97,28 @@ async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, 
   return lastRemainingExtensionsValue !== issueAndPrTargets.remainingExtensions;
 }
 
-async function buildReminderMessage(context: ContextPlugin, args: { remainingExtensions: number; extensionsLimit: number } & IssuePrTarget) {
-  return !context.config.negligenceThreshold ||
+async function buildReminderMessage(
+  context: ContextPlugin,
+  args: { issue: ListIssueForRepo; remainingExtensions: number; extensionsLimit: number } & IssuePrTarget
+) {
+  const logins = args.issue.assignees
+    ?.map((o) => o?.login)
+    .filter((o) => !!o)
+    .join(", @");
+  const shouldDisplayExtensions =
+    !context.config.negligenceThreshold ||
     !context.config.availableDeadlineExtensions.enabled ||
-    !(await shouldDisplayRemainingExtensionsReminder(context, args))
+    !(await shouldDisplayRemainingExtensionsReminder(context, args));
+  const currentExtensionsMilestone = args.extensionsLimit - args.remainingExtensions + 1;
+
+  const reminderContent = !shouldDisplayExtensions
     ? "this task has been idle for a while"
-    : `you have used <code>**${args.extensionsLimit - args.remainingExtensions + 1}**</code> of <code>**${args.extensionsLimit}**</code> available deadline extensions`;
+    : `you have used <code>**${currentExtensionsMilestone}**</code> of <code>**${args.extensionsLimit}**</code> available deadline extensions`;
+
+  const reminderNextDate = shouldDisplayExtensions ? " The new deadline is on" : "";
+
+  return `@${logins}, ${reminderContent}. Please provide an update on your progress.${reminderNextDate}`;
+  // TODO: deadline should be assigned date + (current reminder + 1 * time lapse)
 }
 
 async function constructBodyWithMetadata(
@@ -121,11 +137,7 @@ async function constructBodyWithMetadata(
 ) {
   const { logger } = context;
 
-  const logins = issue.assignees
-    ?.map((o) => o?.login)
-    .filter((o) => !!o)
-    .join(", @");
-  const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
+  const logMessage = logger.info(reminderContent, {
     taskAssignees: issue.assignees?.map((o) => o?.id),
     url: issue.html_url,
     extensionsLimit,
@@ -148,7 +160,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
   const { remainingExtensions, extensionsLimit } = await getRemainingAvailableExtensions(context);
 
   if (!config.pullRequestRequired) {
-    const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+    const reminderContent = await buildReminderMessage(context, { issue, extensionsLimit, remainingExtensions, issueNumber: issue_number });
     const body = await constructBodyWithMetadata(context, {
       issue,
       reminderContent,
@@ -170,6 +182,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
       try {
         const reminderContent = await buildReminderMessage(context, {
+          issue,
           extensionsLimit,
           issueNumber: issue_number,
           pr: { prOwner, prRepo, prNumber },
@@ -202,7 +215,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     // This is a fallback if we failed to post the reminder to a pull-request, which can happen when posting cross
     // organizations, so we post to the parent issue instead, to make sure the user got a reminder.
     if (shouldPostToMainIssue) {
-      const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+      const reminderContent = await buildReminderMessage(context, { issue, extensionsLimit, remainingExtensions, issueNumber: issue_number });
       const body = await constructBodyWithMetadata(context, {
         issue,
         reminderContent,
