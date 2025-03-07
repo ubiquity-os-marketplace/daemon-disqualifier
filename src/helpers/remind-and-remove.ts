@@ -105,9 +105,7 @@ async function buildReminderMessage(context: ContextPlugin, args: { issue: ListI
     .filter((o) => !!o)
     .join(", @");
   const shouldDisplayExtensions =
-    !context.config.negligenceThreshold ||
-    !context.config.availableDeadlineExtensions.enabled ||
-    !(await shouldDisplayRemainingExtensionsReminder(context, args));
+    context.config.negligenceThreshold && context.config.availableDeadlineExtensions.enabled && (await shouldDisplayRemainingExtensionsReminder(context, args));
   const currentExtensionsMilestone = args.extensions.extensionsLimit - args.remainingExtensions + 1;
 
   const reminderContent = !shouldDisplayExtensions
@@ -116,7 +114,16 @@ async function buildReminderMessage(context: ContextPlugin, args: { issue: ListI
 
   const reminderNextDate =
     shouldDisplayExtensions && args.extensions.assignmentDate
-      ? ` The new deadline is on ${new Date(args.extensions.assignmentDate.getTime() + (currentExtensionsMilestone + 1) * args.extensions.extensionTimeLapse)}`
+      ? ` The new deadline is on ${new Date(
+          args.extensions.assignmentDate.getTime() + (currentExtensionsMilestone + 1) * args.extensions.extensionTimeLapse
+        ).toLocaleString("en-US", {
+          day: "numeric",
+          month: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC",
+          hour12: true,
+        })} UTC.`
       : "";
 
   return `@${logins}, ${reminderContent}. Please provide an update on your progress.${reminderNextDate}`;

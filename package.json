@@ -10,7 +10,7 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "start": "bun --watch src/worker.ts",
+    "start": "bun --watch --no-clear-screen src/worker.ts",
     "prebuild": "dotenv -- cross-env bun run supabase:generate:remote",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
