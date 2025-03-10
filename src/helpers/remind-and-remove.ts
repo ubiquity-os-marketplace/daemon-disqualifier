@@ -107,26 +107,26 @@ async function buildReminderMessage(context: ContextPlugin, args: { issue: ListI
   const shouldDisplayExtensions =
     context.config.negligenceThreshold && context.config.availableDeadlineExtensions.enabled && (await shouldDisplayRemainingExtensionsReminder(context, args));
   const currentExtensionsMilestone = args.extensions.extensionsLimit - args.remainingExtensions + 1;
-
   const reminderContent = !shouldDisplayExtensions
     ? "this task has been idle for a while"
     : `you have used <code>**${currentExtensionsMilestone}**</code> of <code>**${args.extensions.extensionsLimit}**</code> available deadline extensions`;
+  const message = [`@${logins}, ${reminderContent}.`, "Please provide an update on your progress."];
 
-  const reminderNextDate =
-    shouldDisplayExtensions && args.extensions.assignmentDate
-      ? ` The new deadline is on ${new Date(
-          args.extensions.assignmentDate.getTime() + (currentExtensionsMilestone + 1) * args.extensions.extensionTimeLapse
-        ).toLocaleString("en-US", {
-          day: "numeric",
-          month: "long",
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: "UTC",
-          hour12: true,
-        })} UTC.`
-      : "";
-
-  return `@${logins}, ${reminderContent}. Please provide an update on your progress.${reminderNextDate}`;
+  if (shouldDisplayExtensions && args.extensions.assignmentDate) {
+    message.push(
+      `The new deadline is on ${new Date(
+        args.extensions.assignmentDate.getTime() + (currentExtensionsMilestone + 1) * args.extensions.extensionTimeLapse
+      ).toLocaleString("en-US", {
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC",
+        hour12: true,
+      })} UTC.`
+    );
+  }
+  return message.join(" ");
 }
 
 async function constructBodyWithMetadata(
