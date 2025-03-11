@@ -5,14 +5,16 @@ import { getMostRecentUserAssignmentEvent, parsePriorityLabel, parseTimeLabel } 
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
-export async function getRemainingAvailableExtensions(context: ContextPlugin) {
-  const defaultExtensions = { remainingExtensions: 0, extensionsLimit: 0 };
+export async function getRemainingAvailableExtensions(
+  context: ContextPlugin
+): Promise<{ remainingExtensions: number; extensionsLimit: number; extensionTimeLapse: number; assignmentDate?: Date }> {
+  const defaultExtensions = { remainingExtensions: 0, extensionsLimit: 0, extensionTimeLapse: 0 };
 
   if (!("issue" in context.payload)) {
     return defaultExtensions;
   }
   if (!context.config.negligenceThreshold || !context.config.availableDeadlineExtensions.enabled) {
-    return { remainingExtensions: Infinity, extensionsLimit: Infinity };
+    return { remainingExtensions: Infinity, extensionsLimit: Infinity, extensionTimeLapse: Infinity };
   }
 
   const priorityList = Object.keys(context.config.availableDeadlineExtensions.amounts);
@@ -57,5 +59,5 @@ export async function getRemainingAvailableExtensions(context: ContextPlugin) {
     remainingExtensions,
   });
 
-  return { remainingExtensions, extensionsLimit };
+  return { remainingExtensions, extensionsLimit, extensionTimeLapse, assignmentDate };
 }

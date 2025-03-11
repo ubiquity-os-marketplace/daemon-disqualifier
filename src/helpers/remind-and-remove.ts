@@ -20,6 +20,8 @@ interface IssuePrTarget {
   };
 }
 
+type Extensions = Awaited<ReturnType<typeof getRemainingAvailableExtensions>>;
+
 export async function unassignUserFromIssue(context: ContextPlugin, issue: ListIssueForRepo) {
   const { logger, config } = context;
 
@@ -97,39 +99,54 @@ async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, 
   return lastRemainingExtensionsValue !== issueAndPrTargets.remainingExtensions;
 }
 
-async function buildReminderMessage(context: ContextPlugin, args: { remainingExtensions: number; extensionsLimit: number } & IssuePrTarget) {
-  return !context.config.negligenceThreshold ||
-    !context.config.availableDeadlineExtensions.enabled ||
-    !(await shouldDisplayRemainingExtensionsReminder(context, args))
+async function buildReminderMessage(context: ContextPlugin, args: { issue: ListIssueForRepo; extensions: Extensions } & IssuePrTarget) {
+  const logins = args.issue.assignees
+    ?.map((o) => o?.login)
+    .filter((o) => !!o)
+    .join(", @");
+  const shouldDisplayExtensions =
+    context.config.negligenceThreshold && context.config.availableDeadlineExtensions.enabled && (await shouldDisplayRemainingExtensionsReminder(context, args));
+  const currentExtensionsMilestone = args.extensions.extensionsLimit - args.remainingExtensions + 1;
+  const reminderContent = !shouldDisplayExtensions
     ? "this task has been idle for a while"
-    : `you have used <code>**${args.extensionsLimit - args.remainingExtensions + 1}**</code> of <code>**${args.extensionsLimit}**</code> available deadline extensions`;
+    : `you have used <code>**${currentExtensionsMilestone}**</code> of <code>**${args.extensions.extensionsLimit}**</code> available deadline extensions`;
+  const message = [`@${logins}, ${reminderContent}.`, "Please provide an update on your progress."];
+
+  if (shouldDisplayExtensions && args.extensions.assignmentDate) {
+    message.push(
+      `The new deadline is on <code>**${new Date(
+        args.extensions.assignmentDate.getTime() + (currentExtensionsMilestone + 1) * args.extensions.extensionTimeLapse
+      ).toLocaleString("en-US", {
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC",
+        hour12: true,
+      })} UTC**</code>.`
+    );
+  }
+  return message.join(" ");
 }
 
 async function constructBodyWithMetadata(
   context: ContextPlugin,
   {
     reminderContent,
-    extensionsLimit,
-    remainingExtensions,
+    extensions,
     issue,
   }: {
     reminderContent: string;
-    extensionsLimit: number;
-    remainingExtensions: number;
     issue: ListIssueForRepo;
+    extensions: Extensions;
   }
 ) {
   const { logger } = context;
 
-  const logins = issue.assignees
-    ?.map((o) => o?.login)
-    .filter((o) => !!o)
-    .join(", @");
-  const logMessage = logger.info(`@${logins}, ${reminderContent}. Please provide an update on your progress.`, {
+  const logMessage = logger.info(reminderContent, {
     taskAssignees: issue.assignees?.map((o) => o?.id),
     url: issue.html_url,
-    extensionsLimit,
-    remainingExtensions,
+    ...extensions,
   });
   const metadata = createStructuredMetadata(FOLLOWUP_HEADER, logMessage);
 
@@ -145,15 +162,15 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     return false;
   }
 
-  const { remainingExtensions, extensionsLimit } = await getRemainingAvailableExtensions(context);
+  const extensions = await getRemainingAvailableExtensions(context);
+  const { remainingExtensions } = extensions;
 
   if (!config.pullRequestRequired) {
-    const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+    const reminderContent = await buildReminderMessage(context, { issue, extensions, remainingExtensions, issueNumber: issue_number });
     const body = await constructBodyWithMetadata(context, {
       issue,
       reminderContent,
-      extensionsLimit,
-      remainingExtensions,
+      extensions,
     });
     await octokit.rest.issues.createComment({
       owner,
@@ -170,7 +187,8 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
       try {
         const reminderContent = await buildReminderMessage(context, {
-          extensionsLimit,
+          issue,
+          extensions,
           issueNumber: issue_number,
           pr: { prOwner, prRepo, prNumber },
           remainingExtensions,
@@ -178,8 +196,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
         const body = await constructBodyWithMetadata(context, {
           issue,
           reminderContent,
-          extensionsLimit,
-          remainingExtensions,
+          extensions,
         });
         await octokit.rest.issues.createComment({
           owner: prOwner,
@@ -202,12 +219,11 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     // This is a fallback if we failed to post the reminder to a pull-request, which can happen when posting cross
     // organizations, so we post to the parent issue instead, to make sure the user got a reminder.
     if (shouldPostToMainIssue) {
-      const reminderContent = await buildReminderMessage(context, { extensionsLimit, remainingExtensions, issueNumber: issue_number });
+      const reminderContent = await buildReminderMessage(context, { issue, extensions, remainingExtensions, issueNumber: issue_number });
       const body = await constructBodyWithMetadata(context, {
         issue,
         reminderContent,
-        extensionsLimit,
-        remainingExtensions,
+        extensions,
       });
       await octokit.rest.issues.createComment({
         owner,
