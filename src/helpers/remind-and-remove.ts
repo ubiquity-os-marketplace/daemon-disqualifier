@@ -114,7 +114,7 @@ async function buildReminderMessage(context: ContextPlugin, args: { issue: ListI
 
   if (shouldDisplayExtensions && args.extensions.assignmentDate) {
     message.push(
-      `The new deadline is on ${new Date(
+      `The new deadline is on <code>**${new Date(
         args.extensions.assignmentDate.getTime() + (currentExtensionsMilestone + 1) * args.extensions.extensionTimeLapse
       ).toLocaleString("en-US", {
         day: "numeric",
@@ -123,7 +123,7 @@ async function buildReminderMessage(context: ContextPlugin, args: { issue: ListI
         minute: "2-digit",
         timeZone: "UTC",
         hour12: true,
-      })} UTC.`
+      })} UTC**</code>.`
     );
   }
   return message.join(" ");
