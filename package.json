@@ -30,6 +30,7 @@
     "open-source"
   ],
   "dependencies": {
+    "@actions/github": "^6.0.0",
     "@octokit/auth-app": "^7.1.4",
     "@octokit/graphql-schema": "^15.25.0",
     "@octokit/rest": "^21.0.2",
