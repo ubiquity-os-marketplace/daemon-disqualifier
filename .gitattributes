@@ -1,2 +1,4 @@
 dist/* linguist-generated
-bun.lockb linguist-generated
+*.lock linguist-generated
+*.lockb linguist-generated
+db.json linguist-generated
