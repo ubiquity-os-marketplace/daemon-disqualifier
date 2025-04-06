@@ -41,6 +41,12 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   if (config.followUpInterval <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingExtensions <= 0) {
+    logger.debug("No linked pull-request or no more remaining extensions, will attempt to un-assign the user.", {
+      issue: issue.html_url,
+      pullRequestRequired: config.pullRequestRequired,
+      hasLinkedPr,
+      remainingExtensions,
+    });
     await unassignUserFromIssue(context, issue);
     await closeLinkedPullRequests(context, issue);
   } else {

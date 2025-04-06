@@ -78,7 +78,9 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     if (await areLinkedPullRequestsApproved(context, issue)) {
       if (context.config.followUpInterval > 0) {
         // If the issue was approved but is not merged yet, nudge the assignee
-        logger.debug("Will remind assignees because linked pull-requests are approved but not merged.");
+        logger.debug("Will remind assignees because linked pull-requests are approved but not merged.", {
+          issue: issue.html_url,
+        });
         await remindAssignees(context, issue);
       }
     } else {
@@ -86,6 +88,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
         mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
       ) {
         logger.debug("Will attempt to un-assign and close linked pull-requests.", {
+          issue: issue.html_url,
           mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
           prioritySpeed,
           disqualificationTimeDifference,
@@ -97,6 +100,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
         await remindAssigneesForIssue(context, issue);
       } else {
         logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
+          issue: issue.html_url,
           now: now.toLocaleString(DateTime.DATETIME_MED),
           assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
           lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
@@ -107,6 +111,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   } else {
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? followUpInterval / priorityLevel : followUpInterval }) <= now) {
       logger.debug("Will attempt to remind assignees, no initial reminder was sent yet.", {
+        issue: issue.html_url,
         mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
         prioritySpeed,
         followUpInterval,
@@ -116,6 +121,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
       await remindAssigneesForIssue(context, issue);
     } else {
       logger.info(`Nothing to do for ${issue.html_url} still within due-time.`, {
+        issue: issue.html_url,
         now: now.toLocaleString(DateTime.DATETIME_MED),
         assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
         lastReminderComment: "none",
