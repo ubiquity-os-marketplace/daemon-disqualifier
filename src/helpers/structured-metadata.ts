@@ -14,7 +14,7 @@ export function createStructuredMetadata(className: string, logReturn: LogReturn
   const jsonPretty = JSON.stringify(metadata, null, 2);
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
-  const runUrl = `${github.context.payload.repository?.html_url}/actions/runs/${github.context.runId}`;
+  const runUrl = github?.context ? `${github.context.payload.repository?.html_url}/actions/runs/${github.context.runId}` : "http://localhost";
   const ubiquityMetadataHeader = `<!-- ${HEADER_NAME} - ${className} - ${caller} - ${metadata?.revision} - ${runUrl}`;
 
   let metadataSerialized: string;
