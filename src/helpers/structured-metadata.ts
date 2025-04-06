@@ -1,4 +1,4 @@
-import github from "@actions/github";
+import * as github from "@actions/github";
 import { LogReturn } from "@ubiquity-os/ubiquity-os-logger";
 import { ContextPlugin } from "../types/plugin-input";
 
