@@ -37,7 +37,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const issueItem = parseIssueUrl(issue.html_url);
 
   const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
-  const { remainingExtensions } = await getRemainingAvailableExtensions(context);
+  const { remainingExtensions } = await getRemainingAvailableExtensions(context, issue);
   if (config.followUpInterval <= 0) {
     logger.info("The reminder threshold is <= 0, won't send any reminder.");
   } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingExtensions <= 0) {
@@ -51,16 +51,20 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
 
 async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, issueAndPrTargets: IssuePrTarget) {
   const { octokit, logger } = context;
-  const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, context.payload.repository, issueAndPrTargets.issueNumber);
+  const issueNumber = issueAndPrTargets.pr?.prNumber ?? issueAndPrTargets.issueNumber;
+  const owner = issueAndPrTargets.pr?.prOwner ?? context.payload.repository.owner?.login;
+  const repo = issueAndPrTargets.pr?.prRepo ?? context.payload.repository.name;
+
+  if (!owner) {
+    throw logger.error("No owner was found.", { issueAndPrTargets });
+  }
+
+  const userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, { owner: { login: owner }, name: repo }, issueNumber);
 
   if (!userAssignmentEvent) {
     logger.warn("No user assignment event was found, won't display remaining extensions value");
     return false;
   }
-
-  const issueNumber = issueAndPrTargets.pr?.prNumber ?? issueAndPrTargets.issueNumber;
-  const owner = issueAndPrTargets.pr?.prOwner ?? context.payload.repository.owner?.login;
-  const repo = issueAndPrTargets.pr?.prRepo ?? context.payload.repository.name;
 
   if (!owner) {
     logger.error("No owner was found in the payload, won't display remaining extensions value");
@@ -162,7 +166,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     return false;
   }
 
-  const extensions = await getRemainingAvailableExtensions(context);
+  const extensions = await getRemainingAvailableExtensions(context, issue);
   const { remainingExtensions } = extensions;
 
   if (!config.pullRequestRequired) {
@@ -256,7 +260,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
-  const { remainingExtensions } = await getRemainingAvailableExtensions(context);
+  const { remainingExtensions } = await getRemainingAvailableExtensions(context, issue);
   const logMessage = logger.info(
     `${logins.map((o) => `@${o}`).join(", ")} you have ${remainingExtensions <= 0 ? "used all available deadline extensions" : "shown no activity"} and have been disqualified from this task.`,
     {

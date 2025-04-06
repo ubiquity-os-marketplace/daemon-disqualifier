@@ -21,7 +21,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     payload,
     config: { eventWhitelist, followUpInterval, negligenceThreshold, prioritySpeed },
   } = context;
-  const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
+  const handledMetadata = await getTaskAssignmentDetails(context, issue);
   const now = DateTime.local();
 
   if (!handledMetadata) return;
