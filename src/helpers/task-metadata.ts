@@ -19,7 +19,10 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
 
   if (typeof issue !== "number") {
     const handledMetadata = await getTaskAssignmentDetails(context, issue);
-    if (!handledMetadata) return;
+    if (!handledMetadata) {
+      logger.debug("No handledMetadata was found in the issue.");
+      return;
+    }
   }
 
   const issueNumber = typeof issue === "number" ? issue : issue.number;
