@@ -6,6 +6,7 @@ import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getRemainingAvailableExtensions } from "./deadline-extensions";
 import { parseIssueUrl } from "./github-url";
+import { areLinkedPullRequestsApproved } from "./pull-request";
 import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
 import { getMostRecentUserAssignmentEvent } from "./task-metadata";
@@ -124,7 +125,10 @@ async function buildReminderMessage(context: ContextPlugin, args: { issue: ListI
     .filter((o) => !!o)
     .join(", @");
   const shouldDisplayExtensions =
-    context.config.negligenceThreshold && context.config.availableDeadlineExtensions.enabled && (await shouldDisplayRemainingExtensionsReminder(context, args));
+    !(await areLinkedPullRequestsApproved(context, args.issue)) &&
+    !!context.config.negligenceThreshold &&
+    context.config.availableDeadlineExtensions.enabled &&
+    (await shouldDisplayRemainingExtensionsReminder(context, args));
   const currentExtensionsMilestone = args.extensions.extensionsLimit - args.remainingExtensions + 1;
   const reminderContent = !shouldDisplayExtensions
     ? "this task has been idle for a while"
