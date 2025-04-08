@@ -69,6 +69,10 @@ async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, 
 
   // If no user assignment event was found on the pull-request, it might be found in the linked issue timeline
   if (!userAssignmentEvent && issueAndPrTargets.issueNumber !== issueNumber) {
+    logger.debug(`No user assignment event was found, retrying with issue number ${issueAndPrTargets.issueNumber}`, {
+      issueUrl: `https://github.com/${owner}/${repo}/issues/${issueAndPrTargets.issueNumber}`,
+      issueAndPrTargets,
+    });
     userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, { owner: { login: owner }, name: repo }, issueAndPrTargets.issueNumber);
   }
 
