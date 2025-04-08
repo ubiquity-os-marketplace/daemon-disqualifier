@@ -32,6 +32,8 @@ export function createStructuredMetadata(className: string, logReturn: LogReturn
   return metadataSerialized;
 }
 
+export const commentUpdateMetadataPattern = /<!-- daemon-disqualifier update [\s\S]*?-->/;
+
 export async function getCommentsFromMetadata(context: ContextPlugin, issueNumber: number, repoOwner: string, repoName: string, className: string) {
   const { octokit } = context;
   const ubiquityMetadataHeaderPattern = new RegExp(`<!-- ${HEADER_NAME} - ${className} - \\S+ - [\\s\\S]*?-->`);
