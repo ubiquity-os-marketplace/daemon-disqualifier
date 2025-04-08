@@ -26,6 +26,9 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
   }
 
   const issueNumber = typeof issue === "number" ? issue : issue.number;
+  logger.debug(`Trying to find assignment event for the issue ${repo.owner.login}/${repo.name}/${issueNumber}`, {
+    issueUrl: `https://github.com/${repo.owner.login}/${repo.name}/issues/${issueNumber}`,
+  });
   const events = await octokit.paginate(octokit.rest.issues.listEvents, {
     owner: repo.owner.login,
     repo: repo.name,
