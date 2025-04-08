@@ -312,6 +312,7 @@ async function setupTests() {
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
   createComment(3, 4, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
+  createComment(4, 3, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
 
   createEvent(1, 2, 2, daysPriorToNow(1));
   createEvent(2, 2, 3, daysPriorToNow(4));
