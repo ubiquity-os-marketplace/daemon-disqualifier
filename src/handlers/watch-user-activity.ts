@@ -100,7 +100,7 @@ async function updateReminders(context: ContextPlugin, repo: ContextPlugin["payl
         state: issue.state,
         priceLabel: parsePriceLabel(issue.labels),
       });
-      return;
+      continue;
     }
 
     if (issue.assignees?.length || issue.assignee) {
