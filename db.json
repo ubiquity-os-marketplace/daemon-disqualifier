@@ -77,6 +77,10 @@
       "issueNumber": 226
     },
     {
+      "commentId": 2775481624,
+      "issueNumber": 315
+    },
+    {
       "commentId": 2776555728,
       "issueNumber": 331
     },
@@ -166,10 +170,6 @@
     }
   ],
   "ubiquity-os-marketplace/daemon-disqualifier": [
-    {
-      "commentId": 2630191908,
-      "issueNumber": 57
-    },
     {
       "commentId": 2639881445,
       "issueNumber": 51
