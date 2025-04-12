@@ -51,15 +51,16 @@ export async function watchUserActivity(context: ContextPlugin) {
     return { message: "OK" };
   }
 
-  if (isIssueComment(context) && commentUpdateMetadataPattern.test(context.payload.comment.body)) {
-    const repo = context.payload.repository;
-    logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
-    await updateReminders(context, repo);
-    await updateCronState(context);
-
-    return { message: "OK" };
-  } else if (!isIssueComment(context)) {
-    return { message: logger.warn("The comment is not related to any daemon-disqualifier comment edit.").logMessage.raw };
+  if (isIssueComment(context)) {
+    if (commentUpdateMetadataPattern.test(context.payload.comment.body)) {
+      const repo = context.payload.repository;
+      logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
+      await updateReminders(context, repo);
+      await updateCronState(context);
+      return { message: "OK" };
+    } else {
+      return { message: logger.warn("The comment is not related to any daemon-disqualifier comment edit.").logMessage.raw };
+    }
   }
   return { message: logger.warn(`Unsupported event ${context.eventName}`).logMessage.raw };
 }
