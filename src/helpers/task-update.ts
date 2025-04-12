@@ -73,40 +73,41 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
 
   const disqualificationTimeDifference = negligenceThreshold - followUpInterval;
 
+  if (
+    context.config.followUpInterval > 0 &&
+    mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? followUpInterval / priorityLevel : followUpInterval }) <= now &&
+    (await areLinkedPullRequestsApproved(context, issue))
+  ) {
+    // If the issue was approved but is not merged yet, nudge the assignee
+    logger.debug("Will remind assignees because linked pull-requests are approved but not merged.", {
+      issue: issue.html_url,
+    });
+    await remindAssignees(context, issue);
+    return;
+  }
+
   if (lastReminderComment) {
     mostRecentActivityDate = DateTime.fromISO(lastReminderComment.created_at);
-    if (await areLinkedPullRequestsApproved(context, issue)) {
-      if (context.config.followUpInterval > 0) {
-        // If the issue was approved but is not merged yet, nudge the assignee
-        logger.debug("Will remind assignees because linked pull-requests are approved but not merged.", {
-          issue: issue.html_url,
-        });
-        await remindAssignees(context, issue);
-      }
+    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
+      logger.debug("Will attempt to un-assign and close linked pull-requests.", {
+        issue: issue.html_url,
+        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+        prioritySpeed,
+        disqualificationTimeDifference,
+        priorityLevel,
+      });
+      await unassignUserFromIssue(context, issue);
+      await closeLinkedPullRequests(context, issue);
+    } else if (mostRecentActivityDate.plus({ milliseconds: followUpInterval }) <= now) {
+      await remindAssigneesForIssue(context, issue);
     } else {
-      if (
-        mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
-      ) {
-        logger.debug("Will attempt to un-assign and close linked pull-requests.", {
-          issue: issue.html_url,
-          mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
-          prioritySpeed,
-          disqualificationTimeDifference,
-          priorityLevel,
-        });
-        await unassignUserFromIssue(context, issue);
-        await closeLinkedPullRequests(context, issue);
-      } else if (mostRecentActivityDate.plus({ milliseconds: followUpInterval }) <= now) {
-        await remindAssigneesForIssue(context, issue);
-      } else {
-        logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
-          issue: issue.html_url,
-          now: now.toLocaleString(DateTime.DATETIME_MED),
-          assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
-          lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
-          mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
-        });
-      }
+      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
+        issue: issue.html_url,
+        now: now.toLocaleString(DateTime.DATETIME_MED),
+        assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
+        lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
+        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+      });
     }
   } else {
     if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? followUpInterval / priorityLevel : followUpInterval }) <= now) {
