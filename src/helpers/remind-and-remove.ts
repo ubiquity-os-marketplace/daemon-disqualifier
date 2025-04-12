@@ -63,7 +63,8 @@ async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, 
   const repo = issueAndPrTargets.pr?.prRepo ?? context.payload.repository.name;
 
   if (!owner) {
-    throw logger.error("No owner was found.", { issueAndPrTargets });
+    logger.error("No owner was found in the payload, won't display remaining extensions value", { issueAndPrTargets });
+    return false;
   }
 
   let userAssignmentEvent = await getMostRecentUserAssignmentEvent(context, { owner: { login: owner }, name: repo }, issueNumber);
@@ -79,11 +80,6 @@ async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, 
 
   if (!userAssignmentEvent) {
     logger.warn("No user assignment event was found, won't display remaining extensions value");
-    return false;
-  }
-
-  if (!owner) {
-    logger.error("No owner was found in the payload, won't display remaining extensions value");
     return false;
   }
 
