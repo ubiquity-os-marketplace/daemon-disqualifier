@@ -2,7 +2,7 @@ import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/
 import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
 
-export type SupportedEvents = "pull_request_review_comment.created" | "issue_comment.created" | "push" | "issues.assigned";
+export type SupportedEvents = "issues.assigned" | "issue_comment.edited";
 
 export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents>;
 

@@ -21,7 +21,7 @@ export function createComment(id: number, issueId: number, user: string, type: "
     id,
     user: { login: user, type },
     issueId,
-    body: body || "test",
+    body: body || "Reminder\n\n<!-- daemon-disqualifier update date -->",
     created_at: created_at || new Date(Date.now() - ONE_DAY).toISOString(),
     performed_via_github_app: type === "Bot",
   });

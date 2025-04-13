@@ -64,6 +64,9 @@ describe("remindAssigneesForIssue", () => {
             number: 1,
             state: "OPEN",
             title: "title",
+            author: {
+              id: 1,
+            },
           },
         ]),
       };

@@ -312,6 +312,7 @@ async function setupTests() {
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
   createComment(3, 4, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
+  createComment(4, 3, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
 
   createEvent(1, 2, 2, daysPriorToNow(1));
   createEvent(2, 2, 3, daysPriorToNow(4));
@@ -326,15 +327,16 @@ function daysPriorToNow(days: number) {
 function createContext(issueId: number, senderId: number): ContextPlugin {
   return {
     payload: {
-      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["issue"],
-      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["sender"],
-      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["repository"],
-      action: "created",
+      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["issue"],
+      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["sender"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["repository"],
+      action: "edited",
       installation: { id: 1 } as unknown as ContextPlugin["payload"]["installation"],
       organization: { login: STRINGS.UBIQUITY } as unknown as ContextPlugin["payload"]["organization"],
+      changes: {},
       comment: db.issueComments.findFirst({
         where: { issueId: { equals: issueId } },
-      }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["comment"],
+      }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["comment"],
     },
     logger: new Logs("debug"),
     config: {
@@ -355,7 +357,7 @@ function createContext(issueId: number, senderId: number): ContextPlugin {
       },
     },
     octokit: new Octokit({ throttle: { enabled: false } }),
-    eventName: "issue_comment.created",
+    eventName: "issue_comment.edited",
     env: {},
     command: null,
     commentHandler: new CommentHandler(),

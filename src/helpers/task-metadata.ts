@@ -8,7 +8,9 @@ type IssueLabel = Partial<Omit<RestEndpointMethodTypes["issues"]["listLabelsForR
   color?: string | null;
 };
 
-export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo | number) {
+type Repo = { name: string; owner: { login: string } | null };
+
+export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, repo: Repo, issue: ListIssueForRepo | number) {
   const { logger, octokit, payload } = context;
 
   if (!repo.owner) {
@@ -16,11 +18,17 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
   }
 
   if (typeof issue !== "number") {
-    const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
-    if (!handledMetadata) return;
+    const handledMetadata = await getTaskAssignmentDetails(context, issue);
+    if (!handledMetadata) {
+      logger.debug("No handledMetadata was found in the issue.");
+      return;
+    }
   }
 
   const issueNumber = typeof issue === "number" ? issue : issue.number;
+  logger.debug(`Trying to find assignment event for the issue ${repo.owner.login}/${repo.name}/${issueNumber}`, {
+    issueUrl: `https://github.com/${repo.owner.login}/${repo.name}/issues/${issueNumber}`,
+  });
   const events = await octokit.paginate(octokit.rest.issues.listEvents, {
     owner: repo.owner.login,
     repo: repo.name,
@@ -51,16 +59,8 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
  *
  * It returns who is assigned and the initial calculated disqualification threshold (start + time label duration).
  */
-export async function getTaskAssignmentDetails(
-  context: ContextPlugin,
-  repo: ContextPlugin["payload"]["repository"],
-  issue: ListIssueForRepo
-): Promise<{ taskAssignees: number[] } | false> {
-  const { logger, payload } = context;
-
-  if (!repo.owner) {
-    throw logger.error("No owner was found in the payload", { payload });
-  }
+export async function getTaskAssignmentDetails(context: ContextPlugin, issue: ListIssueForRepo): Promise<{ taskAssignees: number[] } | false> {
+  const { logger } = context;
 
   const metadata = {
     taskAssignees: issue.assignees ? issue.assignees.map((o) => o.id) : issue.assignee ? [issue.assignee.id] : [],
@@ -74,8 +74,7 @@ export async function getTaskAssignmentDetails(
   const durationInMs = parseTimeLabel(issue.labels);
 
   if (durationInMs === 0) {
-    // it could mean there was no time label set on the issue
-    // but it could still be workable and priced
+    // it could mean there was no time label set on the issue, but it could still be workable and priced
   } else if (durationInMs < 0 || !durationInMs) {
     logger.error(`Invalid disqualification threshold found on ${issue.html_url}`);
     return false;
