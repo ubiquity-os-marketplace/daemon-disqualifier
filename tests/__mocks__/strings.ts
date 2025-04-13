@@ -62,7 +62,9 @@ export function botReminderComment() {
 <!-- Ubiquity - ${FOLLOWUP_HEADER} - function - 4b6c279
 {
 }
--->`;
+-->
+<!-- daemon-disqualifier update date -->
+`;
 }
 
 export function lastCheckWasOn(deadlineStr: string) {

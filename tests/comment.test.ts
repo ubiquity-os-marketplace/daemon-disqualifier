@@ -14,6 +14,7 @@ jest.unstable_mockModule("../src/helpers/github-url", () => ({
 }));
 jest.unstable_mockModule("../src/helpers/structured-metadata", () => ({
   createStructuredMetadata: jest.fn(() => ""),
+  getCommentsFromMetadata: jest.fn(() => ({})),
 }));
 
 describe("remindAssigneesForIssue", () => {
@@ -33,8 +34,14 @@ describe("remindAssigneesForIssue", () => {
       },
       config: {
         warning: 1,
-        disqualification: 1,
+        disqualification: 0,
         pullRequestRequired: false,
+      },
+      payload: {
+        issue: {},
+      },
+      commentHandler: {
+        postComment: jest.fn(),
       },
     } as unknown as ContextPlugin;
 
@@ -57,6 +64,9 @@ describe("remindAssigneesForIssue", () => {
             number: 1,
             state: "OPEN",
             title: "title",
+            author: {
+              id: 1,
+            },
           },
         ]),
       };

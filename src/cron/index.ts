@@ -49,7 +49,7 @@ async function main() {
         issue_number: comment.issueNumber,
       });
       const newBody = body + `\n<!-- daemon-disqualifier update ${Date().toLocaleString()} -->`;
-      logger.debug(`Update comment ${comment.commentId}`, { newBody });
+      logger.info(`Updated comment ${comment.commentId}`, { newBody });
       await repoOctokit.rest.issues.updateComment({
         owner,
         repo,

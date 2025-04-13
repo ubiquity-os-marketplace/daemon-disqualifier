@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest 
 import { drop } from "@mswjs/data";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
+import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import dotenv from "dotenv";
@@ -39,7 +40,6 @@ describe("User start/stop", () => {
         Value.Default(pluginSettingsSchema, {
           warning: "12 days",
           disqualification: "2 days",
-          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
           eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
         })
       )
@@ -49,19 +49,21 @@ describe("User start/stop", () => {
     const pluginSettings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, { ...cfg }));
     expect(pluginSettings).toEqual({
       pullRequestRequired: true,
-      warning: 302400000,
+      followUpInterval: 302400000,
       prioritySpeed: true,
-      disqualification: 604800000,
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+      negligenceThreshold: 604800000,
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+      availableDeadlineExtensions: {
+        amounts: {},
+        enabled: true,
+      },
     });
     expect(() =>
       Value.Decode(
         pluginSettingsSchema,
         Value.Default(pluginSettingsSchema, {
-          warning: "12 foobars",
-          disqualification: "2 days",
-          watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
+          followUpInterval: "12 foobars",
+          negligenceThreshold: "2 days",
         })
       )
     ).toThrow(TransformDecodeError);
@@ -70,7 +72,6 @@ describe("User start/stop", () => {
     const settings = Value.Default(pluginSettingsSchema, {
       warning: "12 days",
       disqualification: "2 days",
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: [
         "pull_request.review_requested",
         "pull_request.ready_for_review",
@@ -86,15 +87,12 @@ describe("User start/stop", () => {
     const settings = Value.Default(pluginSettingsSchema, {
       warning: "12 days",
       disqualification: "2 days",
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
     });
     const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
     expect(decodedSettings.eventWhitelist).toEqual(["review_requested", "ready_for_review", "commented", "committed"]);
   });
   it("Should define all defaults if omitted", () => {
-    const settings = Value.Default(pluginSettingsSchema, {
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] }, // has no default
-    });
+    const settings = Value.Default(pluginSettingsSchema, {});
 
     const decodedSettings = Value.Decode(pluginSettingsSchema, settings);
 
@@ -102,11 +100,14 @@ describe("User start/stop", () => {
 
     expect(decodedSettings).toEqual({
       pullRequestRequired: true,
-      warning: ms("3.5 days"),
-      disqualification: ms("7 days"),
+      followUpInterval: ms("3.5 days"),
+      negligenceThreshold: ms("7 days"),
       prioritySpeed: true,
-      watch: { optOut: [STRINGS.PRIVATE_REPO_NAME] },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
+      availableDeadlineExtensions: {
+        amounts: {},
+        enabled: true,
+      },
     });
   });
   it("Should run", async () => {
@@ -125,30 +126,27 @@ describe("User start/stop", () => {
     expect(errorSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`), expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
-      taskAssignees: [2],
-      caller: STRINGS.LOGS_ANON_CALLER,
-    });
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Passed the disqualification threshold and no activity is detected, removing assignees: @user2."),
+      expect.stringContaining("@user2 you have shown no activity and have been disqualified from this task."),
       expect.anything()
     );
     expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining(STRINGS.PRIVATE_REPO_NAME));
   });
 
   it("Should include the previously excluded repo", async () => {
-    const context = createContext(1, 1, []);
+    const context = createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
-      taskAssignees: [2],
-      caller: STRINGS.LOGS_ANON_CALLER,
-    });
-    expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith(
+      expect.stringContaining("@user2 you have shown no activity and have been disqualified from this task."),
+      expect.anything()
+    );
   });
 
   it("Should eject the user after the disqualification period", async () => {
@@ -162,11 +160,8 @@ describe("User start/stop", () => {
 
     expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update.\n\n`, {
-      taskAssignees: [2],
-      caller: STRINGS.LOGS_ANON_CALLER,
-    });
-    expect(infoSpy).toHaveBeenCalledWith("Passed the disqualification threshold and no activity is detected, removing assignees: @user2.", expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
+    expect(infoSpy).toHaveBeenCalledWith("@user2 you have shown no activity and have been disqualified from this task.", expect.anything());
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
@@ -184,10 +179,10 @@ describe("User start/stop", () => {
 
     const comments = db.issueComments.getAll();
     let latestComment = comments.filter((comment) => comment.issueId === 3).pop();
-    let partialComment = "@user2, this task has been idle for a while. Please provide an update.\\n\\n\\n<!-- Ubiquity - Followup -";
+    let partialComment = "@user2, this task has been idle for a while. Please provide an update on your progress.\\n<!-- Ubiquity - Followup -";
     expect(latestComment?.body).toContain(partialComment);
     latestComment = comments.filter((comment) => comment.issueId === 4).pop();
-    partialComment = "Passed the disqualification threshold and no activity is detected, removing assignees: @user2.";
+    partialComment = "@user2 you have shown no activity and have been disqualified from this task.";
     expect(latestComment?.body).toContain(partialComment);
   });
 
@@ -254,7 +249,10 @@ describe("User start/stop", () => {
     );
     await run(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(4)} sending a reminder.`);
+    expect(infoSpy).toHaveBeenCalledWith(
+      `@${STRINGS.USER}, this task has been idle for a while. Please provide an update on your progress.`,
+      expect.anything()
+    );
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -314,6 +312,7 @@ async function setupTests() {
   createComment(1, 1, STRINGS.UBIQUITY);
   createComment(2, 2, STRINGS.UBIQUITY);
   createComment(3, 4, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
+  createComment(4, 3, STRINGS.BOT, "Bot", botReminderComment(), daysPriorToNow(6));
 
   createEvent(1, 2, 2, daysPriorToNow(1));
   createEvent(2, 2, 3, daysPriorToNow(4));
@@ -325,31 +324,42 @@ function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
-function createContext(issueId: number, senderId: number, optOut = [STRINGS.PRIVATE_REPO_NAME]): ContextPlugin {
+function createContext(issueId: number, senderId: number): ContextPlugin {
   return {
     payload: {
-      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["issue"],
-      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["sender"],
-      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["repository"],
-      action: "created",
+      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["issue"],
+      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["sender"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["repository"],
+      action: "edited",
       installation: { id: 1 } as unknown as ContextPlugin["payload"]["installation"],
       organization: { login: STRINGS.UBIQUITY } as unknown as ContextPlugin["payload"]["organization"],
+      changes: {},
       comment: db.issueComments.findFirst({
         where: { issueId: { equals: issueId } },
-      }) as unknown as ContextPlugin<"issue_comment.created">["payload"]["comment"],
+      }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["comment"],
     },
     logger: new Logs("debug"),
     config: {
-      disqualification: ONE_DAY * 7,
-      warning: ONE_DAY * 3.5,
+      negligenceThreshold: ONE_DAY * 7,
+      followUpInterval: ONE_DAY * 3.5,
       prioritySpeed: true,
-      watch: { optOut },
       eventWhitelist: ["review_requested", "ready_for_review", "commented", "committed"],
       pullRequestRequired: false,
+      availableDeadlineExtensions: {
+        amounts: {
+          "Priority 1": 5,
+          "Priority 2": 4,
+          "Priority 3": 3,
+          "Priority 4": 2,
+          "Priority 5": 1,
+        },
+        enabled: false,
+      },
     },
     octokit: new Octokit({ throttle: { enabled: false } }),
-    eventName: "issue_comment.created",
+    eventName: "issue_comment.edited",
     env: {},
     command: null,
+    commentHandler: new CommentHandler(),
   };
 }

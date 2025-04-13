@@ -1,3 +1,4 @@
+import * as github from "@actions/github";
 import { LogReturn } from "@ubiquity-os/ubiquity-os-logger";
 import { ContextPlugin } from "../types/plugin-input";
 
@@ -13,7 +14,8 @@ export function createStructuredMetadata(className: string, logReturn: LogReturn
   const jsonPretty = JSON.stringify(metadata, null, 2);
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
-  const ubiquityMetadataHeader = `<!-- ${HEADER_NAME} - ${className} - ${caller} - ${metadata?.revision}`;
+  const runUrl = github?.context ? `${github.context.payload.repository?.html_url}/actions/runs/${github.context.runId}` : "http://localhost";
+  const ubiquityMetadataHeader = `<!-- ${HEADER_NAME} - ${className} - ${caller} - ${metadata?.revision} - ${runUrl}`;
 
   let metadataSerialized: string;
   const metadataSerializedVisible = ["```json", jsonPretty, "```"].join("\n");
@@ -29,6 +31,8 @@ export function createStructuredMetadata(className: string, logReturn: LogReturn
 
   return metadataSerialized;
 }
+
+export const commentUpdateMetadataPattern = /<!-- daemon-disqualifier update [\s\S]*?-->/;
 
 export async function getCommentsFromMetadata(context: ContextPlugin, issueNumber: number, repoOwner: string, repoName: string, className: string) {
   const { octokit } = context;

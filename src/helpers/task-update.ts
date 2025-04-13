@@ -7,9 +7,9 @@ import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 import { parseIssueUrl } from "./github-url";
 import { areLinkedPullRequestsApproved } from "./pull-request";
-import { closeLinkedPullRequests, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
+import { closeLinkedPullRequests, remindAssignees, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
-import { getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
+import { getMostRecentUserAssignmentEvent, getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
 
 function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDate?: DateTime): DateTime {
   return activityEventDate && activityEventDate > assignedEventDate ? activityEventDate : assignedEventDate;
@@ -17,12 +17,11 @@ function getMostRecentActivityDate(assignedEventDate: DateTime, activityEventDat
 
 export async function updateTaskReminder(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"], issue: ListIssueForRepo) {
   const {
-    octokit,
     logger,
     payload,
-    config: { eventWhitelist, warning, disqualification, prioritySpeed },
+    config: { eventWhitelist, followUpInterval, negligenceThreshold, prioritySpeed },
   } = context;
-  const handledMetadata = await getTaskAssignmentDetails(context, repo, issue);
+  const handledMetadata = await getTaskAssignmentDetails(context, issue);
   const now = DateTime.local();
 
   if (!handledMetadata) return;
@@ -31,16 +30,7 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
     throw logger.error("No owner was found in the payload", { payload });
   }
 
-  const assignmentEvents = await octokit.paginate(octokit.rest.issues.listEvents, {
-    owner: repo.owner.login,
-    repo: repo.name,
-    issue_number: issue.number,
-  });
-
-  const assignedEvent = assignmentEvents
-    .filter((o) => o.event === "assigned" && handledMetadata.taskAssignees.includes(o.actor.id))
-    .sort((a, b) => DateTime.fromISO(b.created_at).toMillis() - DateTime.fromISO(a.created_at).toMillis())
-    .shift();
+  const assignedEvent = await getMostRecentUserAssignmentEvent(context, repo, issue);
 
   if (!assignedEvent) {
     logger.error(`Failed to update activity for ${issue.html_url}, there is no assigned event.`);
@@ -77,38 +67,62 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   logger.debug(`Handling metadata and disqualification threshold for ${issue.html_url}`, {
     now: now.toLocaleString(DateTime.DATETIME_MED),
     assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
-    lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
+    lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "NULL",
     mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
   });
 
-  const disqualificationTimeDifference = disqualification - warning;
+  const disqualificationTimeDifference = negligenceThreshold - followUpInterval;
+
+  if (
+    context.config.followUpInterval > 0 &&
+    mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? followUpInterval / priorityLevel : followUpInterval }) <= now &&
+    (await areLinkedPullRequestsApproved(context, issue))
+  ) {
+    // If the issue was approved but is not merged yet, nudge the assignee
+    logger.debug("Will remind assignees because linked pull-requests are approved but not merged.", {
+      issue: issue.html_url,
+    });
+    await remindAssignees(context, issue);
+    return;
+  }
 
   if (lastReminderComment) {
-    const lastReminderTime = DateTime.fromISO(lastReminderComment.created_at);
-    mostRecentActivityDate = lastReminderTime > mostRecentActivityDate ? lastReminderTime : mostRecentActivityDate;
-    if (await areLinkedPullRequestsApproved(context, issue)) {
-      // If the issue was approved but is not merged yet, nudge the assignee
+    mostRecentActivityDate = DateTime.fromISO(lastReminderComment.created_at);
+    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now) {
+      logger.debug("Will attempt to un-assign and close linked pull-requests.", {
+        issue: issue.html_url,
+        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+        prioritySpeed,
+        disqualificationTimeDifference,
+        priorityLevel,
+      });
+      await unassignUserFromIssue(context, issue);
+      await closeLinkedPullRequests(context, issue);
+    } else if (mostRecentActivityDate.plus({ milliseconds: followUpInterval }) <= now) {
       await remindAssigneesForIssue(context, issue);
     } else {
-      if (
-        mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? disqualificationTimeDifference / priorityLevel : disqualificationTimeDifference }) <= now
-      ) {
-        await unassignUserFromIssue(context, issue);
-        await closeLinkedPullRequests(context, issue);
-      } else {
-        logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
-          now: now.toLocaleString(DateTime.DATETIME_MED),
-          assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
-          lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
-          mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
-        });
-      }
+      logger.info(`Reminder was sent for ${issue.html_url} already, not beyond disqualification deadline threshold yet.`, {
+        issue: issue.html_url,
+        now: now.toLocaleString(DateTime.DATETIME_MED),
+        assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
+        lastReminderComment: lastReminderComment ? DateTime.fromISO(lastReminderComment.created_at).toLocaleString(DateTime.DATETIME_MED) : "none",
+        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+      });
     }
   } else {
-    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? warning / priorityLevel : warning }) <= now) {
+    if (mostRecentActivityDate.plus({ milliseconds: prioritySpeed ? followUpInterval / priorityLevel : followUpInterval }) <= now) {
+      logger.debug("Will attempt to remind assignees, no initial reminder was sent yet.", {
+        issue: issue.html_url,
+        mostRecentActivityDate: mostRecentActivityDate.toLocaleString(DateTime.DATETIME_MED),
+        prioritySpeed,
+        followUpInterval,
+        priorityLevel,
+        now: now.toLocaleString(DateTime.DATETIME_MED),
+      });
       await remindAssigneesForIssue(context, issue);
     } else {
       logger.info(`Nothing to do for ${issue.html_url} still within due-time.`, {
+        issue: issue.html_url,
         now: now.toLocaleString(DateTime.DATETIME_MED),
         assignedDate: DateTime.fromISO(assignedEvent.created_at).toLocaleString(DateTime.DATETIME_MED),
         lastReminderComment: "none",

@@ -1,43 +1,37 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
-import { postComment } from "@ubiquity-os/plugin-sdk";
 import db from "../cron/database-handler";
 import { updateCronState } from "../cron/workflow";
-import { getWatchedRepos } from "../helpers/get-watched-repos";
 import { removeEntryFromDatabase } from "../helpers/remind-and-remove";
-import { parsePriceLabel, parsePriorityLabel } from "../helpers/task-metadata";
+import { commentUpdateMetadataPattern } from "../helpers/structured-metadata";
+import { getPriorityValue, parsePriceLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ContextPlugin } from "../types/plugin-input";
 import { formatMillisecondsToHumanReadable } from "./time-format";
 
 type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"]["0"];
 
+function isIssueComment(context: ContextPlugin): context is ContextPlugin<"issue_comment.edited"> {
+  return "comment" in context.payload;
+}
+
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
-  const repos = await getWatchedRepos(context);
-
-  if (!repos?.length) {
-    return { message: logger.info("No watched repos have been found, no work to do.").logMessage.raw };
-  }
-
-  if (
-    context.eventName === "issues.assigned" &&
-    repos.some((repo) => repo.id === context.payload.repository.id) &&
-    "issue" in context.payload &&
-    !shouldIgnoreIssue(context.payload.issue as IssueType)
-  ) {
+  if (context.eventName === "issues.assigned" && "issue" in context.payload && !shouldIgnoreIssue(context.payload.issue as IssueType)) {
     const message = ["[!IMPORTANT]"];
-    const priorityValue = Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels) : 1);
+    const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {
       message.push(`- Be sure to link a pull-request before the first reminder to avoid disqualification.`);
     }
-    message.push(`- Reminders will be sent every \`${formatMillisecondsToHumanReadable(context.config.warning / priorityValue)}\` if there is no activity.`);
     message.push(
-      `- Assignees will be disqualified after \`${formatMillisecondsToHumanReadable(context.config.disqualification / priorityValue)}\` of inactivity.`
+      `- Reminders will be sent every \`${formatMillisecondsToHumanReadable(context.config.followUpInterval / priorityValue)}\` if there is no activity.`
+    );
+    message.push(
+      `- Assignees will be disqualified after \`${formatMillisecondsToHumanReadable(context.config.negligenceThreshold / priorityValue)}\` of inactivity.`
     );
     const log = logger.error(message.map((o) => `> ${o}`).join("\n"));
     log.logMessage.diff = log.logMessage.raw;
-    const commentData = await postComment(context, log);
+    const commentData = await context.commentHandler.postComment(context, log);
     if (commentData) {
       await db.update((data) => {
         const dbKey = `${context.payload.repository.owner?.login}/${context.payload.repository.name}`;
@@ -53,14 +47,22 @@ export async function watchUserActivity(context: ContextPlugin) {
         return data;
       });
     }
+    // We return early not to run the reminders section, which is handled by the CRON (avoids multiple reminders)
+    return { message: "OK" };
   }
 
-  const repo = context.payload.repository;
-  logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
-  await updateReminders(context, repo);
-  await updateCronState(context);
-
-  return { message: "OK" };
+  if (isIssueComment(context)) {
+    if (commentUpdateMetadataPattern.test(context.payload.comment.body)) {
+      const repo = context.payload.repository;
+      logger.debug(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
+      await updateReminders(context, repo);
+      await updateCronState(context);
+      return { message: "OK" };
+    } else {
+      return { message: logger.warn("The comment is not related to any daemon-disqualifier comment edit.").logMessage.raw };
+    }
+  }
+  return { message: logger.warn(`Unsupported event ${context.eventName}`).logMessage.raw };
 }
 
 /*
@@ -88,26 +90,26 @@ async function updateReminders(context: ContextPlugin, repo: ContextPlugin["payl
     state: "open",
   });
 
-  await Promise.all(
-    issues.map(async (issue) => {
-      if (shouldIgnoreIssue(issue)) {
-        logger.info(`Skipping issue ${issue.html_url} due to the issue not meeting the right criteria.`, {
-          draft: issue.draft,
-          pullRequest: !!issue.pull_request,
-          locked: issue.locked,
-          state: issue.state,
-          priceLabel: parsePriceLabel(issue.labels),
-        });
-        return;
-      }
+  // We use a for of loop instead of a promise to actually give some delay between updates. It helps not reach API
+  // limits and concurrency when committing the updated DB
+  for (const issue of issues) {
+    if (shouldIgnoreIssue(issue)) {
+      logger.info(`Skipping issue ${issue.html_url} due to the issue not meeting the right criteria.`, {
+        draft: issue.draft,
+        pullRequest: !!issue.pull_request,
+        locked: issue.locked,
+        state: issue.state,
+        priceLabel: parsePriceLabel(issue.labels),
+      });
+      continue;
+    }
 
-      if (issue.assignees?.length || issue.assignee) {
-        logger.debug(`Checking assigned issue: ${issue.html_url}`);
-        await updateTaskReminder(context, repo, issue);
-      } else {
-        logger.info(`Skipping issue ${issue.html_url} because no user is assigned.`);
-        await removeEntryFromDatabase(issue);
-      }
-    })
-  );
+    if (issue.assignees?.length || issue.assignee) {
+      logger.debug(`Checking assigned issue: ${issue.html_url}`);
+      await updateTaskReminder(context, repo, issue);
+    } else {
+      logger.info(`Skipping issue ${issue.html_url} because no user is assigned.`);
+      await removeEntryFromDatabase(issue);
+    }
+  }
 }
