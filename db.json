@@ -87,18 +87,6 @@
     {
       "commentId": 2780720886,
       "issueNumber": 219
-    },
-    {
-      "commentId": 2859376134,
-      "issueNumber": 333
-    },
-    {
-      "commentId": 2879027081,
-      "issueNumber": 339
-    },
-    {
-      "commentId": 2880563548,
-      "issueNumber": 201
     }
   ],
   "ubiquity-os-marketplace/command-ask": [
@@ -117,10 +105,6 @@
     {
       "commentId": 2723125632,
       "issueNumber": 51
-    },
-    {
-      "commentId": 2884896428,
-      "issueNumber": 75
     }
   ],
   "ubiquity-os-marketplace/command-start-stop": [
@@ -251,22 +235,6 @@
     {
       "commentId": 2780350858,
       "issueNumber": 100
-    }
-  ],
-  "ubiquity/work.ubq.fi": [
-    {
-      "commentId": 2857246109,
-      "issueNumber": 206
-    }
-  ],
-  "ubiquity-os-marketplace/.github-private": [
-    {
-      "commentId": 2892905428,
-      "issueNumber": 8
-    },
-    {
-      "commentId": 2892913091,
-      "issueNumber": 9
     }
   ]
 }
