@@ -87,26 +87,6 @@
     {
       "commentId": 2780720886,
       "issueNumber": 219
-    },
-    {
-      "commentId": 2918054382,
-      "issueNumber": 201
-    },
-    {
-      "commentId": 2926414182,
-      "issueNumber": 215
-    },
-    {
-      "commentId": 2965783919,
-      "issueNumber": 263
-    },
-    {
-      "commentId": 2967317457,
-      "issueNumber": 353
-    },
-    {
-      "commentId": 2967481157,
-      "issueNumber": 352
     }
   ],
   "ubiquity-os-marketplace/command-ask": [
@@ -255,16 +235,6 @@
     {
       "commentId": 2780350858,
       "issueNumber": 100
-    },
-    {
-      "commentId": 2944694800,
-      "issueNumber": 71
-    }
-  ],
-  "ubiquity-os-marketplace/command-config": [
-    {
-      "commentId": 2969656990,
-      "issueNumber": 2
     }
   ]
 }
