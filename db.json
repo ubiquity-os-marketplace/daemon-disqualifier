@@ -236,5 +236,11 @@
       "commentId": 2780350858,
       "issueNumber": 100
     }
+  ],
+  "ubiquity-os-marketplace/daemon-merging": [
+    {
+      "commentId": 2976319955,
+      "issueNumber": 45
+    }
   ]
 }
