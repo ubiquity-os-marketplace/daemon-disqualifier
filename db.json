@@ -187,6 +187,10 @@
     {
       "commentId": 2637923474,
       "issueNumber": 4
+    },
+    {
+      "commentId": 2979845629,
+      "issueNumber": 6
     }
   ],
   "ubiquity-os-marketplace/text-vector-embeddings": [
