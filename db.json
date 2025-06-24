@@ -236,11 +236,5 @@
       "commentId": 2780350858,
       "issueNumber": 100
     }
-  ],
-  "ubiquity/permit2-rpc-manager": [
-    {
-      "commentId": 3001050228,
-      "issueNumber": 1
-    }
   ]
 }
