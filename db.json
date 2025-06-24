@@ -237,10 +237,10 @@
       "issueNumber": 100
     }
   ],
-  "ubiquity-os/plugins-wishlist": [
+  "ubiquity/permit2-rpc-manager": [
     {
-      "commentId": 3000435350,
-      "issueNumber": 68
+      "commentId": 3001050228,
+      "issueNumber": 1
     }
   ]
 }
