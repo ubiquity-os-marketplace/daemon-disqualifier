@@ -236,5 +236,11 @@
       "commentId": 2780350858,
       "issueNumber": 100
     }
+  ],
+  "ubiquity-os/plugins-wishlist": [
+    {
+      "commentId": 3000435350,
+      "issueNumber": 68
+    }
   ]
 }
