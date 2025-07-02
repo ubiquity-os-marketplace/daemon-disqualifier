@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   release-please:
@@ -17,3 +18,4 @@ jobs:
       - uses: googleapis/release-please-action@v4
         with:
           release-type: simple
+          target-branch: main
