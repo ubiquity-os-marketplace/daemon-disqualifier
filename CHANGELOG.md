@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0 (2025-07-02)
+
+
+### Bug Fixes
+
+* release-please ([cab247a](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/cab247ad7bbfd45dee3884385bd76596f786678f))
+* **release-please:** fixed the `release-please` workflow to properly run and tag ([729f533](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/729f533bee3beb476d355cf64bb7206d9ec34a4f))
+
 ## 1.0.0 (2024-07-09)
 
 ### Features
