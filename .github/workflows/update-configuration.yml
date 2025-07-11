@@ -16,4 +16,4 @@ jobs:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
         with:
-          treatAsEsm: 'true'
+          treatAsEsm: "true"
