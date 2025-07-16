@@ -87,10 +87,6 @@
     {
       "commentId": 2780720886,
       "issueNumber": 219
-    },
-    {
-      "commentId": 3070994899,
-      "issueNumber": 329
     }
   ],
   "ubiquity-os-marketplace/command-ask": [
@@ -209,10 +205,6 @@
     {
       "commentId": 2677164326,
       "issueNumber": 15
-    },
-    {
-      "commentId": 3073561581,
-      "issueNumber": 103
     }
   ],
   "ubiquity-os-marketplace/plugin-demo": [
@@ -247,12 +239,6 @@
     {
       "commentId": 2780350858,
       "issueNumber": 100
-    }
-  ],
-  "ubiquity/permit2-rpc-manager": [
-    {
-      "commentId": 3068404033,
-      "issueNumber": 6
     }
   ]
 }
