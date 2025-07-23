@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/compare/v1.0.0...v1.0.1) (2025-07-11)
+
+
+### Bug Fixes
+
+* the package is now compiled as ESM ([a9ba41d](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/a9ba41d47044ff69254553eb1373f61ec4830496))
+
 ## 1.0.0 (2025-07-02)
 
 
