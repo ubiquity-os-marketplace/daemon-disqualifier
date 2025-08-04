@@ -250,5 +250,11 @@
       "commentId": 3146487909,
       "issueNumber": 207
     }
+  ],
+  "ubiquity-os/plugin-sdk": [
+    {
+      "commentId": 3150225941,
+      "issueNumber": 35
+    }
   ]
 }
