@@ -240,5 +240,11 @@
       "commentId": 2780350858,
       "issueNumber": 100
     }
+  ],
+  "ubiquity-os-marketplace/command-config": [
+    {
+      "commentId": 3167848707,
+      "issueNumber": 18
+    }
   ]
 }
