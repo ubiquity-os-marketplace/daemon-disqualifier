@@ -89,6 +89,19 @@ async function main() {
         await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
         continue;
       }
+      const issueResponse = await repoOctokit.rest.issues.get({ owner, repo, issue_number: issueNumber });
+      const hasAssignees = !!(issueResponse.data.assignee || issueResponse.data.assignees?.length);
+      if (issueResponse.data.state !== "open" || !hasAssignees) {
+        logger.info("Removing entry due to issue closed or no assignees", {
+          owner,
+          repo,
+          issueNumber,
+          state: issueResponse.data.state,
+          assignees: issueResponse.data.assignees?.map((a) => a?.login),
+        });
+        await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
+        continue;
+      }
       const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}#issuecomment-${commentId}`;
       try {
         await enforceRateLimit();
@@ -100,10 +113,8 @@ async function main() {
           issue_number: issueNumber,
           comment_id: commentId,
         });
-
         const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
         logger.info(`Updated comment of ${url}`, { newBodyLength: newBody.length, totalIssues: issues.length, issueNumber, commentId });
-
         await repoOctokit.rest.issues.updateComment({
           owner: owner,
           repo: repo,
