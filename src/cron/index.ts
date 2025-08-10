@@ -2,7 +2,7 @@ import { createAppAuth } from "@octokit/auth-app";
 import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import pkg from "../../package.json" with { type: "json" };
-import { createKvDatabaseHandler } from "../adapters/kv-database-handler";
+import { createKvDatabaseHandler, IssueEntry } from "../adapters/kv-database-handler";
 
 const RATE_LIMIT_MAX_ITEMS_PER_WINDOW = 500;
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -57,8 +57,8 @@ async function main() {
     repositories: repositories.length,
   });
 
-  for (const { owner, repo, issueNumbers } of repositories) {
-    if (issueNumbers.length === 0) {
+  for (const { owner, repo, issues } of repositories) {
+    if (issues.length === 0) {
       continue;
     }
 
@@ -66,7 +66,7 @@ async function main() {
       logger.info(`Triggering update`, {
         organization: owner,
         repository: repo,
-        issueIds: issueNumbers,
+        issueIds: issues.map((i: IssueEntry) => i.issueNumber),
       });
 
       const installation = await octokit.rest.apps.getRepoInstallation({
@@ -83,7 +83,7 @@ async function main() {
         },
       });
 
-      const issueNumber = issueNumbers[0];
+      const { issueNumber, commentId } = issues[0];
       const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
       try {
         await enforceRateLimit();
@@ -96,7 +96,7 @@ async function main() {
         });
 
         const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
-        logger.info(`Updated body of ${url}`, { newBody, totalIssues: issueNumbers.length, issueNumber });
+        logger.info(`Updated body of ${url}`, { newBody, totalIssues: issues.length, issueNumber, commentId });
 
         await repoOctokit.rest.issues.update({
           owner: owner,
@@ -119,7 +119,7 @@ async function main() {
       logger.error("Failed to process repository", {
         owner,
         repo,
-        issueNumbers,
+        issues,
         e,
       });
     }

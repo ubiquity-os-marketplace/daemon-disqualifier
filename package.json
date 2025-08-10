@@ -11,6 +11,7 @@
   },
   "scripts": {
     "start": "bun --watch --no-clear-screen src/worker.ts",
+    "start:deno": "deno serve --unstable-sloppy-imports --allow-all --unstable-kv --watch --no-clear-screen --port 4000 src/worker.ts",
     "prebuild": "dotenv -- cross-env bun run supabase:generate:remote",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",

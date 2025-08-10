@@ -2,6 +2,11 @@ import { parseIssueUrl } from "../helpers/github-url";
 
 export const KV_PREFIX = "cron";
 
+export interface IssueEntry {
+  issueNumber: number;
+  commentId: number;
+}
+
 export class KvDatabaseHandler {
   private _kv: Deno.Kv;
 
@@ -9,20 +14,28 @@ export class KvDatabaseHandler {
     this._kv = kv;
   }
 
-  async getIssueNumbers(owner: string, repo: string): Promise<number[]> {
+  private async _getIssueEntries(owner: string, repo: string): Promise<IssueEntry[]> {
     const key = [KV_PREFIX, owner, repo];
-    const result = await this._kv.get<number[]>(key);
-    return result.value || [];
+    const result = await this._kv.get<IssueEntry[] | number[]>(key);
+    if (!result.value) return [];
+    const value = result.value;
+    if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object" && value[0] !== null && "issueNumber" in value[0]) {
+      return value as IssueEntry[];
+    }
+    return (value as number[]).map((issueNumber) => ({ issueNumber, commentId: 0 }));
   }
 
-  async addIssue(url: string): Promise<void> {
+  async getIssueNumbers(owner: string, repo: string): Promise<number[]> {
+    return (await this._getIssueEntries(owner, repo)).map((e) => e.issueNumber);
+  }
+
+  async addIssue(url: string, commentId: number): Promise<void> {
     const { owner, repo, issue_number } = parseIssueUrl(url);
     const key = [KV_PREFIX, owner, repo];
-    const currentIds = await this.getIssueNumbers(owner, repo);
-
-    if (!currentIds.includes(issue_number)) {
-      currentIds.push(issue_number);
-      await this._kv.set(key, currentIds);
+    const entries = await this._getIssueEntries(owner, repo);
+    if (!entries.some((e) => e.issueNumber === issue_number)) {
+      entries.push({ issueNumber: issue_number, commentId });
+      await this._kv.set(key, entries);
     }
   }
 
@@ -33,31 +46,37 @@ export class KvDatabaseHandler {
 
   async removeIssueByNumber(owner: string, repo: string, issueNumber: number): Promise<void> {
     const key = [KV_PREFIX, owner, repo];
-    const currentNumbers = await this.getIssueNumbers(owner, repo);
-    const filteredNumbers = currentNumbers.filter((id) => id !== issueNumber);
-
-    if (filteredNumbers.length === 0) {
+    const entries = await this._getIssueEntries(owner, repo);
+    const filtered = entries.filter((e) => e.issueNumber !== issueNumber);
+    if (filtered.length === 0) {
       await this._kv.delete(key);
     } else {
-      await this._kv.set(key, filteredNumbers);
+      await this._kv.set(key, filtered);
     }
   }
 
-  async updateIssue(currentUrl: string, newUrl: string): Promise<void> {
+  async updateIssue(currentUrl: string, newUrl: string, newCommentId: number): Promise<void> {
     await this.removeIssue(currentUrl);
-    await this.addIssue(newUrl);
+    await this.addIssue(newUrl, newCommentId);
   }
 
-  async getAllRepositories(): Promise<Array<{ owner: string; repo: string; issueNumbers: number[] }>> {
-    const repositories: Array<{ owner: string; repo: string; issueNumbers: number[] }> = [];
+  async getAllRepositories(): Promise<Array<{ owner: string; repo: string; issues: IssueEntry[] }>> {
+    const repositories: Array<{ owner: string; repo: string; issues: IssueEntry[] }> = [];
     const iter = this._kv.list({ prefix: [KV_PREFIX] });
 
     for await (const entry of iter) {
       if (entry.key.length >= 3) {
         const owner = entry.key[1] as string;
         const repo = entry.key[2] as string;
-        const issueNumbers = entry.value as number[];
-        repositories.push({ owner, repo, issueNumbers });
+        let issues: IssueEntry[] = [];
+        if (Array.isArray(entry.value) && entry.value.length > 0) {
+          if (typeof entry.value[0] === "object" && entry.value[0] !== null && "issueNumber" in entry.value[0]) {
+            issues = entry.value as IssueEntry[];
+          } else {
+            issues = (entry.value as number[]).map((issueNumber) => ({ issueNumber, commentId: 0 }));
+          }
+        }
+        repositories.push({ owner, repo, issues });
       }
     }
 
@@ -66,7 +85,7 @@ export class KvDatabaseHandler {
 
   async hasData(): Promise<boolean> {
     const repositories = await this.getAllRepositories();
-    return repositories.length > 0 && repositories.some((repo) => repo.issueNumbers.length > 0);
+    return repositories.length > 0 && repositories.some((repo) => repo.issues.length > 0);
   }
 }
 
