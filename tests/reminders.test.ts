@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { FOLLOWUP_HEADER } from "../src/types/constants";
 import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { ContextPlugin } from "../src/types/plugin-input";
 
 mock.module("@ubiquity-os/plugin-sdk", () => ({
