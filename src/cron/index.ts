@@ -83,55 +83,66 @@ async function main() {
         },
       });
 
-      const { issueNumber, commentId } = issues[0];
-      if (!commentId) {
-        logger.info("Removing entry without commentId", { owner, repo, issueNumber });
-        await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
-        continue;
-      }
-      const issueResponse = await repoOctokit.rest.issues.get({ owner, repo, issue_number: issueNumber });
-      const hasAssignees = !!(issueResponse.data.assignee || issueResponse.data.assignees?.length);
-      if (issueResponse.data.state !== "open" || !hasAssignees) {
-        logger.info("Removing entry due to issue closed or no assignees", {
-          owner,
-          repo,
-          issueNumber,
-          state: issueResponse.data.state,
-          assignees: issueResponse.data.assignees?.map((a) => a?.login),
-        });
-        await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
-        continue;
-      }
-      const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}#issuecomment-${commentId}`;
-      try {
-        await enforceRateLimit();
-        const {
-          data: { body = "" },
-        } = await repoOctokit.rest.issues.getComment({
-          owner: owner,
-          repo: repo,
-          issue_number: issueNumber,
-          comment_id: commentId,
-        });
-        const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
-        logger.info(`Updated comment of ${url}`, { newBodyLength: newBody.length, totalIssues: issues.length, issueNumber, commentId });
-        await repoOctokit.rest.issues.updateComment({
-          owner: owner,
-          repo: repo,
-          comment_id: commentId,
-          body: newBody,
-        });
-      } catch (err) {
-        logger.error("Failed to update individual issue comment", {
-          organization: owner,
-          repository: repo,
-          issueNumber,
-          commentId,
-          url,
-          err,
-        });
-      } finally {
-        rateProcessed++;
+      for (const { issueNumber, commentId } of issues) {
+        if (!commentId) {
+          logger.info("Removing entry without commentId", { owner, repo, issueNumber });
+          await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
+          continue;
+        }
+        try {
+          const issueResponse = await repoOctokit.rest.issues.get({ owner, repo, issue_number: issueNumber });
+          const hasAssignees = !!(issueResponse.data.assignee || issueResponse.data.assignees?.length);
+          if (issueResponse.data.state !== "open" || !hasAssignees) {
+            logger.info("Removing entry due to issue closed or no assignees", {
+              owner,
+              repo,
+              issueNumber,
+              state: issueResponse.data.state,
+              assignees: issueResponse.data.assignees?.map((a) => a?.login),
+            });
+            await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
+            continue;
+          }
+          const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}#issuecomment-${commentId}`;
+          try {
+            await enforceRateLimit();
+            const {
+              data: { body = "" },
+            } = await repoOctokit.rest.issues.getComment({
+              owner: owner,
+              repo: repo,
+              issue_number: issueNumber,
+              comment_id: commentId,
+            });
+            const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
+            logger.info(`Updated comment of ${url} (stopping after first valid issue)`, {
+              newBodyLength: newBody.length,
+              totalIssues: issues.length,
+              issueNumber,
+              commentId,
+            });
+            await repoOctokit.rest.issues.updateComment({
+              owner: owner,
+              repo: repo,
+              comment_id: commentId,
+              body: newBody,
+            });
+            break;
+          } catch (err) {
+            logger.error("Failed to update individual issue comment", {
+              organization: owner,
+              repository: repo,
+              issueNumber,
+              commentId,
+              url,
+              err,
+            });
+          } finally {
+            rateProcessed++;
+          }
+        } catch (e) {
+          logger.error("Failed to process issue", { owner, repo, issueNumber, e });
+        }
       }
     } catch (e) {
       logger.error("Failed to process repository", {
