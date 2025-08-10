@@ -1,10 +1,13 @@
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
 import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
+import { Adapters } from "../adapters";
 
 export type SupportedEvents = "issues.assigned" | "issue_comment.edited";
 
-export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents>;
+export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents> & {
+  adapters: Adapters;
+};
 
 function thresholdType(options?: StringOptions) {
   return T.Transform(T.String(options))
