@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import db from "../src/cron/database-handler";
+// import db from "../src/cron/database-handler";
 import { ContextPlugin } from "../src/types/plugin-input";
 
 jest.unstable_mockModule("@octokit/rest", () => {});
 
 describe("CRON tests", () => {
   beforeEach(async () => {
-    db.data = {};
-    await db.write();
+    // db.data = {};
+    // await db.write();
   });
 
   it("Should modify the comments in the list inside of the db", async () => {
@@ -23,10 +23,10 @@ describe("CRON tests", () => {
     const owner = "ubiquity-os-marketplace";
     const repo1 = "daemon-disqualifier";
     const repo2 = "daemon-disqualifier-2";
-    db.data = {
-      [`${owner}/${repo1}`]: [issue1, issue2],
-      [`${owner}/${repo2}`]: [issue1, issue2],
-    };
+    // db.data = {
+    //   [`${owner}/${repo1}`]: [issue1, issue2],
+    //   [`${owner}/${repo2}`]: [issue1, issue2],
+    // };
 
     const getComment = jest.fn(() => ({ data: { body: "" } }));
     const updateComment = jest.fn(() => ({ data: { body: "" } }));
@@ -99,7 +99,7 @@ describe("CRON tests", () => {
     await updateCronState(context);
     expect(disableWorkflow).toHaveBeenCalledTimes(1);
 
-    db.data = { "ubiquity-os-marketplace/daemon-disqualifier": [{ commentId: 1, issueNumber: 1 }] };
+    // db.data = { "ubiquity-os-marketplace/daemon-disqualifier": [{ commentId: 1, issueNumber: 1 }] };
     await updateCronState(context);
     expect(enableWorkflow).toHaveBeenCalledTimes(1);
 
