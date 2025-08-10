@@ -59,18 +59,23 @@ describe("CRON tests", () => {
 
   it("Should enable and disable the CRON workflow depending on the DB state", async () => {
     const { updateCronState } = await import("../src/cron/workflow");
+    const hasData = mock(() => false);
+    mock.module("@ubiquity-os/plugin-sdk/octokit", () => ({
+      customOctokit: mock(() => ({})),
+    }));
     const enableWorkflow = mock(() => {});
     const disableWorkflow = mock(() => {});
     const context = {
       logger: new Logs("debug"),
       octokit: { rest: { actions: { enableWorkflow, disableWorkflow } } },
+      adapters: { kv: { hasData } },
     } as unknown as ContextPlugin;
 
     process.env.GITHUB_REPOSITORY = "ubiquity-os-marketplace/daemon-disqualifier";
     await updateCronState(context);
     expect(disableWorkflow).toHaveBeenCalledTimes(1);
 
-    // db.data = { "ubiquity-os-marketplace/daemon-disqualifier": [{ commentId: 1, issueNumber: 1 }] };
+    hasData.mockReturnValueOnce(true);
     await updateCronState(context);
     expect(enableWorkflow).toHaveBeenCalledTimes(1);
   });
