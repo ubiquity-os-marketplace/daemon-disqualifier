@@ -8,6 +8,7 @@ import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import dotenv from "dotenv";
 import ms from "ms";
 import { http, HttpResponse } from "msw";
+import { createAdapters } from "../src/adapters";
 import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
 import { run } from "../src/run";
 import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
@@ -111,13 +112,13 @@ describe("User start/stop", () => {
     });
   });
   it("Should run", async () => {
-    const context = createContext(1, 1);
+    const context = await createContext(1, 1);
     const result = await run(context);
     expect(result).toEqual({ message: "OK" });
   });
 
   it("Should process updates for all repos except optOut", async () => {
-    const context = createContext(1, 1);
+    const context = await createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
     const errorSpy = jest.spyOn(context.logger, "error");
 
@@ -135,7 +136,7 @@ describe("User start/stop", () => {
   });
 
   it("Should include the previously excluded repo", async () => {
-    const context = createContext(1, 1);
+    const context = await createContext(1, 1);
     const infoSpy = jest.spyOn(context.logger, "info");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
@@ -150,7 +151,7 @@ describe("User start/stop", () => {
   });
 
   it("Should eject the user after the disqualification period", async () => {
-    const context = createContext(4, 2);
+    const context = await createContext(4, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
@@ -167,7 +168,7 @@ describe("User start/stop", () => {
   });
 
   it("Should warn the user after the warning period", async () => {
-    const context = createContext(3, 2);
+    const context = await createContext(3, 2);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -187,7 +188,7 @@ describe("User start/stop", () => {
   });
 
   it("Should have nothing to do within the warning period", async () => {
-    const context = createContext(1, 2);
+    const context = await createContext(1, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
@@ -202,7 +203,7 @@ describe("User start/stop", () => {
   });
 
   it("Should remind the user when the pull-request is approved but deadlined is passed, without closing the PR", async () => {
-    const context = createContext(1, 2);
+    const context = await createContext(1, 2);
     const infoSpy = jest.spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
@@ -259,7 +260,7 @@ describe("User start/stop", () => {
   });
 
   it("Should handle collecting linked PRs", async () => {
-    const context = createContext(1, 1);
+    const context = await createContext(1, 1);
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     const result = await collectLinkedPullRequests(context, {
       issue_number: issue?.number as number,
@@ -324,7 +325,7 @@ function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
-function createContext(issueId: number, senderId: number): ContextPlugin {
+async function createContext(issueId: number, senderId: number): Promise<ContextPlugin> {
   return {
     payload: {
       issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["issue"],
@@ -361,5 +362,6 @@ function createContext(issueId: number, senderId: number): ContextPlugin {
     env: {},
     command: null,
     commentHandler: new CommentHandler(),
+    adapters: await createAdapters(),
   };
 }

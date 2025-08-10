@@ -21,4 +21,5 @@ module.exports = {
       },
     ],
   },
+  setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
 } as JestConfigWithTsJest;

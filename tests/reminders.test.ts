@@ -1,7 +1,7 @@
-import { beforeEach, describe, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { FOLLOWUP_HEADER } from "../src/types/constants";
-import { ListForOrg, ListIssueForRepo } from "../src/types/github-types";
+import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";
 
 describe("Reminder tests", () => {
