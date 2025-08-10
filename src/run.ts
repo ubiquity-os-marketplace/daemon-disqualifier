@@ -1,5 +1,5 @@
 import { Context } from "@ubiquity-os/plugin-sdk";
-import { createAdapters } from "./adapters";
+import { createAdapters } from "./adapters/index";
 import { watchUserActivity } from "./handlers/watch-user-activity";
 import { ContextPlugin } from "./types/plugin-input";
 

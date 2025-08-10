@@ -1,7 +1,7 @@
 import { StaticDecode, StringOptions, Type as T, TypeBoxError } from "@sinclair/typebox";
 import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
-import { Adapters } from "../adapters";
+import { Adapters } from "../adapters/index";
 
 export type SupportedEvents = "issues.assigned" | "issue_comment.edited";
 
