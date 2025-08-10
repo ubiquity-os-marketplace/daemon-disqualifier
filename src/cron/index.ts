@@ -84,31 +84,38 @@ async function main() {
       });
 
       const { issueNumber, commentId } = issues[0];
-      const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
+      if (!commentId) {
+        logger.info("Removing entry without commentId", { owner, repo, issueNumber });
+        await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
+        continue;
+      }
+      const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}#issuecomment-${commentId}`;
       try {
         await enforceRateLimit();
         const {
           data: { body = "" },
-        } = await repoOctokit.rest.issues.get({
+        } = await repoOctokit.rest.issues.getComment({
           owner: owner,
           repo: repo,
           issue_number: issueNumber,
+          comment_id: commentId,
         });
 
         const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
-        logger.info(`Updated body of ${url}`, { newBody, totalIssues: issues.length, issueNumber, commentId });
+        logger.info(`Updated comment of ${url}`, { newBodyLength: newBody.length, totalIssues: issues.length, issueNumber, commentId });
 
-        await repoOctokit.rest.issues.update({
+        await repoOctokit.rest.issues.updateComment({
           owner: owner,
           repo: repo,
-          issue_number: issueNumber,
+          comment_id: commentId,
           body: newBody,
         });
       } catch (err) {
-        logger.error("Failed to update individual issue", {
+        logger.error("Failed to update individual issue comment", {
           organization: owner,
           repository: repo,
           issueNumber,
+          commentId,
           url,
           err,
         });
