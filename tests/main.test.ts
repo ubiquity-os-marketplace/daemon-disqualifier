@@ -1,10 +1,10 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import dotenv from "dotenv";
 import ms from "ms";
 import { http, HttpResponse } from "msw";
@@ -119,8 +119,8 @@ describe("User start/stop", () => {
 
   it("Should process updates for all repos except optOut", async () => {
     const context = await createContext(1, 1);
-    const infoSpy = jest.spyOn(context.logger, "info");
-    const errorSpy = jest.spyOn(context.logger, "error");
+    const infoSpy = spyOn(context.logger, "info");
+    const errorSpy = spyOn(context.logger, "error");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
@@ -137,7 +137,7 @@ describe("User start/stop", () => {
 
   it("Should include the previously excluded repo", async () => {
     const context = await createContext(1, 1);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const infoSpy = spyOn(context.logger, "info");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
@@ -152,7 +152,7 @@ describe("User start/stop", () => {
 
   it("Should eject the user after the disqualification period", async () => {
     const context = await createContext(4, 2);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const infoSpy = spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -189,7 +189,7 @@ describe("User start/stop", () => {
 
   it("Should have nothing to do within the warning period", async () => {
     const context = await createContext(1, 2);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const infoSpy = spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
@@ -204,7 +204,7 @@ describe("User start/stop", () => {
 
   it("Should remind the user when the pull-request is approved but deadlined is passed, without closing the PR", async () => {
     const context = await createContext(1, 2);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const infoSpy = spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);

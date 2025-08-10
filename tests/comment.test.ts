@@ -1,20 +1,16 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";
 
-jest.unstable_mockModule("../src/helpers/collect-linked-pulls", () => []);
-jest.unstable_mockModule("../src/helpers/github-url", () => ({
-  parseIssueUrl: jest.fn(() => ({
-    repo: "repo",
-    owner: "owner",
-    issue_number: 1,
-  })),
+mock.module("../src/helpers/collect-linked-pulls", () => []);
+mock.module("../src/helpers/github-url", () => ({
+  parseIssueUrl: mock(() => ({ repo: "repo", owner: "owner", issue_number: 1 })),
 }));
-jest.unstable_mockModule("../src/helpers/structured-metadata", () => ({
-  createStructuredMetadata: jest.fn(() => ""),
-  getCommentsFromMetadata: jest.fn(() => ({})),
+mock.module("../src/helpers/structured-metadata", () => ({
+  createStructuredMetadata: mock(() => ""),
+  getCommentsFromMetadata: mock(() => ({})),
 }));
 
 describe("remindAssigneesForIssue", () => {
@@ -22,59 +18,44 @@ describe("remindAssigneesForIssue", () => {
   let issue: ListIssueForRepo;
 
   beforeEach(() => {
+    mock.restore();
     context = {
       logger: new Logs("debug"),
       octokit: {
         rest: {
           issues: {
-            createComment: jest.fn(),
-            removeAssignees: jest.fn(),
+            createComment: mock(() => {}),
+            removeAssignees: mock(() => {}),
           },
         },
       },
-      config: {
-        warning: 1,
-        disqualification: 0,
-        pullRequestRequired: false,
-      },
-      payload: {
-        issue: {},
-      },
-      commentHandler: {
-        postComment: jest.fn(),
-      },
+      config: { warning: 1, disqualification: 0, pullRequestRequired: false },
+      payload: { issue: {} },
+      commentHandler: { postComment: mock(() => {}) },
     } as unknown as ContextPlugin;
 
-    issue = {
-      html_url: "https://github.com/owner/repo/issues/1",
-      assignees: [{ login: "ubiquity-os", id: 1 }],
-    } as unknown as ListIssueForRepo;
+    issue = { html_url: "https://github.com/owner/repo/issues/1", assignees: [{ login: "ubiquity-os", id: 1 }] } as unknown as ListIssueForRepo;
   });
 
   it("should post a comment to the parent issue if posting to the pull request fails", async () => {
     context.config.pullRequestRequired = true;
-    jest.unstable_mockModule("../src/helpers/collect-linked-pulls", () => {
-      return {
-        collectLinkedPullRequests: jest.fn(() => [
-          {
-            url: "https://github.com/owner/repo/pull/1",
-            body: "",
-            id: "1",
-            login: "ubiquity-os",
-            number: 1,
-            state: "OPEN",
-            title: "title",
-            author: {
-              id: 1,
-            },
-          },
-        ]),
-      };
-    });
+    mock.module("../src/helpers/collect-linked-pulls", () => ({
+      collectLinkedPullRequests: mock(() => [
+        {
+          url: "https://github.com/owner/repo/pull/1",
+          body: "",
+          id: "1",
+          login: "ubiquity-os",
+          number: 1,
+          state: "OPEN",
+          title: "title",
+          author: { id: 1 },
+        },
+      ]),
+    }));
 
     const mockedError = new Error("Failed to post comment");
-
-    (context.octokit.rest.issues.createComment as jest.MockedFunction<typeof context.octokit.rest.issues.createComment>)
+    (context.octokit.rest.issues.createComment as any)
       .mockRejectedValueOnce(mockedError)
       .mockResolvedValueOnce({} as unknown as RestEndpointMethodTypes["issues"]["createComment"]["response"]);
 
