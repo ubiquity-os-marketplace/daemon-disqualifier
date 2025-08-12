@@ -63,7 +63,7 @@ export function botReminderComment() {
 {
 }
 -->
-<!-- daemon-disqualifier update date -->
+<!-- @ubiquity-os/daemon-disqualifier update date -->
 `;
 }
 
