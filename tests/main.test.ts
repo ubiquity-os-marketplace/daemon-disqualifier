@@ -4,7 +4,7 @@ import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, spyOn } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import dotenv from "dotenv";
 import ms from "ms";
 import { http, HttpResponse } from "msw";
@@ -31,6 +31,8 @@ afterAll(() => server.close());
 
 describe("User start/stop", () => {
   beforeEach(async () => {
+    mock.restore();
+    mock.clearAllMocks();
     drop(db);
     await setupTests();
   });
