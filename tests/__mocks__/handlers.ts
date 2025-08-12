@@ -42,9 +42,10 @@ export const handlers = [
     if (!comment) {
       return HttpResponse.json({ message: "No body" });
     }
+    const decodedComment = JSON.parse(comment) as { body: string };
     db.issueComments.create({
       issueId: Number(id),
-      body: comment,
+      body: decodedComment.body,
       created_at: new Date().toISOString(),
       id: db.issueComments.count() + 1,
       owner: { login: owner as string },
