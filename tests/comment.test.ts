@@ -1,24 +1,34 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";
-
-mock.module("../src/helpers/collect-linked-pulls", () => []);
-mock.module("../src/helpers/github-url", () => ({
-  parseIssueUrl: mock(() => ({ repo: "repo", owner: "owner", issue_number: 1 })),
-}));
-mock.module("../src/helpers/structured-metadata", () => ({
-  createStructuredMetadata: mock(() => ""),
-  getCommentsFromMetadata: mock(() => ({})),
-}));
+import { mockModule } from "./helpers";
 
 describe("remindAssigneesForIssue", () => {
   let context: ContextPlugin;
   let issue: ListIssueForRepo;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    mock.clearAllMocks();
     mock.restore();
+
+    await mockModule("../src/helpers/collect-linked-pulls", () => []);
+    spyOn(await import("../src/helpers/github-url"), "parseIssueUrl").mockReturnValue({ repo: "repo", owner: "owner", issue_number: 1 });
+    await mockModule("../src/helpers/task-metadata", () => ({
+      getTaskAssignmentDetails: mock(() => ({ taskAssignees: [1] })),
+      parsePriorityLabel: mock(() => {}),
+      parseTimeLabel: mock(() => {}),
+      getMostRecentUserAssignmentEvent: mock(() => ({ id: 1 })),
+    }));
+    await mockModule("../src/helpers/get-assignee-activity", () => ({
+      getAssigneesActivityForIssue: mock(() => []),
+    }));
+    await mockModule("../src/helpers/structured-metadata", () => ({
+      createStructuredMetadata: mock(() => ""),
+      getCommentsFromMetadata: mock(() => ({})),
+    }));
+
     context = {
       logger: new Logs("debug"),
       octokit: {
@@ -39,7 +49,7 @@ describe("remindAssigneesForIssue", () => {
 
   it("should post a comment to the parent issue if posting to the pull request fails", async () => {
     context.config.pullRequestRequired = true;
-    mock.module("../src/helpers/collect-linked-pulls", () => ({
+    await mockModule("../src/helpers/collect-linked-pulls", () => ({
       collectLinkedPullRequests: mock(() => [
         {
           url: "https://github.com/owner/repo/pull/1",

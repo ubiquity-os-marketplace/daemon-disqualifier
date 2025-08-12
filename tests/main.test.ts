@@ -180,7 +180,7 @@ describe("User start/stop", () => {
 
     const comments = db.issueComments.getAll();
     let latestComment = comments.filter((comment) => comment.issueId === 3).pop();
-    let partialComment = "@user2, this task has been idle for a while. Please provide an update on your progress.\\n<!-- Ubiquity - Followup -";
+    let partialComment = "@user2, this task has been idle for a while. Please provide an update on your progress.\n<!-- Ubiquity - Followup -";
     expect(latestComment?.body).toContain(partialComment);
     latestComment = comments.filter((comment) => comment.issueId === 4).pop();
     partialComment = "@user2 you have shown no activity and have been disqualified from this task.";

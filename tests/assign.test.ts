@@ -1,8 +1,9 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { ContextPlugin } from "../src/types/plugin-input";
+import { mockModule } from "./helpers";
 
-mock.module("@ubiquity-os/plugin-sdk", () => ({
+await mockModule("@ubiquity-os/plugin-sdk", () => ({
   postComment: mock(() => {}),
 }));
 
@@ -42,8 +43,8 @@ describe("watchUserActivity", () => {
   } as unknown as ContextPlugin;
 
   beforeEach(() => {
-    mock.clearAllMocks();
     mock.restore();
+    mock.clearAllMocks();
   });
 
   it("should post comment for matching repository issue", async () => {

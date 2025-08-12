@@ -1,26 +1,28 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { updateTaskReminder } from "../src/helpers/task-update";
 import { FOLLOWUP_HEADER } from "../src/types/constants";
 import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";
+import { mockModule } from "./helpers";
 
 describe("Reminder tests", () => {
   beforeEach(() => {
-    mock.restore();
     mock.clearAllMocks();
+    mock.restore();
   });
 
   it("Should post reminders only on opened linked pull-requests", async () => {
-    mock.module("../src/helpers/task-metadata", () => ({
+    await mockModule("../src/helpers/task-metadata", () => ({
       getTaskAssignmentDetails: mock(() => ({ taskAssignees: [1] })),
       parsePriorityLabel: mock(() => {}),
       parseTimeLabel: mock(() => {}),
       getMostRecentUserAssignmentEvent: mock(() => ({ id: 1 })),
     }));
-    mock.module("../src/helpers/get-assignee-activity", () => ({
+    await mockModule("../src/helpers/get-assignee-activity", () => ({
       getAssigneesActivityForIssue: mock(() => []),
     }));
-    mock.module("../src/helpers/collect-linked-pulls", () => ({
+    await mockModule("../src/helpers/collect-linked-pulls", () => ({
       collectLinkedPullRequests: mock(() => [
         { id: 2, state: "MERGED", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/2" },
         { id: 3, state: "CLOSE", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/3" },
@@ -28,12 +30,11 @@ describe("Reminder tests", () => {
       ]),
     }));
     const f = mock(() => []);
-    mock.module("../src/helpers/structured-metadata", () => ({
+    await mockModule("../src/helpers/structured-metadata", () => ({
       getCommentsFromMetadata: f,
       createStructuredMetadata: mock(() => ""),
       commentUpdateMetadataPattern: /stub/,
     }));
-    const { updateTaskReminder } = await import("../src/helpers/task-update");
     await updateTaskReminder(
       {
         logger: new Logs("debug"),

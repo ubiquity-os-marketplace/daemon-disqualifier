@@ -1,8 +1,9 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { ContextPlugin } from "../src/types/plugin-input";
+import { mockModule } from "./helpers";
 
-mock.module("@octokit/rest", () => {});
+await mockModule("@octokit/rest", () => ({}));
 
 describe("CRON tests", () => {
   beforeEach(async () => {
@@ -18,7 +19,7 @@ describe("CRON tests", () => {
     const getComment = mock(() => ({ data: { body: "" } }));
     const updateComment = mock(() => ({ data: { body: "" } }));
 
-    mock.module("@ubiquity-os/plugin-sdk/octokit", () => ({
+    await mockModule("@ubiquity-os/plugin-sdk/octokit", () => ({
       customOctokit: mock(() => ({
         rest: {
           apps: { getRepoInstallation: mock(() => ({ data: { id: 1 } })) },
@@ -31,7 +32,7 @@ describe("CRON tests", () => {
       })),
     }));
 
-    mock.module("../src/adapters/kv-database-handler", () => ({
+    await mockModule("../src/adapters/kv-database-handler", () => ({
       createKvDatabaseHandler: mock(() => ({
         getAllRepositories: mock(() => [
           {
@@ -60,7 +61,7 @@ describe("CRON tests", () => {
   it("Should enable and disable the CRON workflow depending on the DB state", async () => {
     const { updateCronState } = await import("../src/cron/workflow");
     const hasData = mock(() => false);
-    mock.module("@ubiquity-os/plugin-sdk/octokit", () => ({
+    await mockModule("@ubiquity-os/plugin-sdk/octokit", () => ({
       customOctokit: mock(() => ({})),
     }));
     const enableWorkflow = mock(() => {});
