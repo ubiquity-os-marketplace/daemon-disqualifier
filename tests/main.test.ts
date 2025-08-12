@@ -5,7 +5,6 @@ import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
-import dotenv from "dotenv";
 import ms from "ms";
 import { http, HttpResponse } from "msw";
 import { createAdapters } from "../src/adapters";
@@ -18,8 +17,6 @@ import mockUsers from "./__mocks__/mock-users";
 import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
 import { botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
-
-dotenv.config();
 
 beforeAll(() => {
   server.listen();

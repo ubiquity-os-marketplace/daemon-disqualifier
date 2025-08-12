@@ -7,8 +7,8 @@ import { ContextPlugin } from "../src/types/plugin-input";
 
 describe("Reminder tests", () => {
   beforeEach(() => {
-    mock.clearAllMocks();
     mock.restore();
+    mock.clearAllMocks();
   });
 
   it("Should post reminders only on opened linked pull-requests", async () => {
@@ -24,8 +24,8 @@ describe("Reminder tests", () => {
         { id: 4, state: "OPEN", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/4" },
       ])
     );
-    const f = mock(() => []);
-    spyOn(await import("../src/helpers/structured-metadata"), "getCommentsFromMetadata").mockReturnValue(f);
+    const f = mock(() => Promise.resolve([]));
+    spyOn(await import("../src/helpers/structured-metadata"), "getCommentsFromMetadata").mockImplementation(f);
     spyOn(await import("../src/helpers/structured-metadata"), "createStructuredMetadata").mockReturnValue("");
     spyOn(await import("../src/helpers/structured-metadata"), "commentUpdateMetadataPattern").mockReturnValue(/stub/);
     await updateTaskReminder(
