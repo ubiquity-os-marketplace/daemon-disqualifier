@@ -3,7 +3,6 @@ import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";
-import { mockModule } from "./helpers";
 
 describe("remindAssigneesForIssue", () => {
   let context: ContextPlugin;
