@@ -1,13 +1,11 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { ContextPlugin } from "../src/types/plugin-input";
-import { mockModule } from "./helpers";
-
-await mockModule("@octokit/rest", () => ({}));
 
 describe("CRON tests", () => {
   beforeEach(async () => {
     mock.restore();
+    mock.clearAllMocks();
   });
 
   it("Should modify the comments in the list inside of the db", async () => {
@@ -19,33 +17,33 @@ describe("CRON tests", () => {
     const getComment = mock(() => ({ data: { body: "" } }));
     const updateComment = mock(() => ({ data: { body: "" } }));
 
-    await mockModule("@ubiquity-os/plugin-sdk/octokit", () => ({
-      customOctokit: mock(() => ({
-        rest: {
-          apps: { getRepoInstallation: mock(() => ({ data: { id: 1 } })) },
-          issues: {
-            getComment,
-            updateComment,
-            get: mock(() => ({ data: { assignees: [{ id: "1" }], state: "open" } })),
-          },
+    spyOn(await import("@ubiquity-os/plugin-sdk/octokit"), "customOctokit").mockReturnValue({
+      rest: {
+        apps: { getRepoInstallation: mock(() => ({ data: { id: 1 } })) },
+        issues: {
+          getComment,
+          updateComment,
+          get: mock(() => ({ data: { assignees: [{ id: "1" }], state: "open" } })),
         },
-      })),
-    }));
+      },
+    } as never);
 
-    await mockModule("../src/adapters/kv-database-handler", () => ({
-      createKvDatabaseHandler: mock(() => ({
-        getAllRepositories: mock(() => [
-          {
-            owner,
-            repo: repo1,
-            issues: [
-              { commentId: issue2.commentId, issueNumber: issue2.issueNumber },
-              { commentId: issue1.commentId, issueNumber: issue1.issueNumber },
-            ],
-          },
-        ]),
-      })),
-    }));
+    spyOn(await import("../src/adapters/kv-database-handler"), "createKvDatabaseHandler").mockReturnValue(
+      Promise.resolve({
+        getAllRepositories: mock(() =>
+          Promise.resolve([
+            {
+              owner,
+              repo: repo1,
+              issues: [
+                { commentId: issue2.commentId, issueNumber: issue2.issueNumber },
+                { commentId: issue1.commentId, issueNumber: issue1.issueNumber },
+              ],
+            },
+          ])
+        ),
+      })
+    );
 
     const { runCronJob } = await import("../src/cron/runner");
     await runCronJob();
@@ -61,9 +59,7 @@ describe("CRON tests", () => {
   it("Should enable and disable the CRON workflow depending on the DB state", async () => {
     const { updateCronState } = await import("../src/cron/workflow");
     const hasData = mock(() => false);
-    await mockModule("@ubiquity-os/plugin-sdk/octokit", () => ({
-      customOctokit: mock(() => ({})),
-    }));
+    spyOn(await import("@ubiquity-os/plugin-sdk/octokit"), "customOctokit").mockReturnValue({} as never);
     const enableWorkflow = mock(() => {});
     const disableWorkflow = mock(() => {});
     const context = {

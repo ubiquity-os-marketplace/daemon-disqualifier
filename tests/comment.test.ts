@@ -10,24 +10,8 @@ describe("remindAssigneesForIssue", () => {
   let issue: ListIssueForRepo;
 
   beforeEach(async () => {
-    mock.clearAllMocks();
     mock.restore();
-
-    await mockModule("../src/helpers/collect-linked-pulls", () => []);
-    spyOn(await import("../src/helpers/github-url"), "parseIssueUrl").mockReturnValue({ repo: "repo", owner: "owner", issue_number: 1 });
-    await mockModule("../src/helpers/task-metadata", () => ({
-      getTaskAssignmentDetails: mock(() => ({ taskAssignees: [1] })),
-      parsePriorityLabel: mock(() => {}),
-      parseTimeLabel: mock(() => {}),
-      getMostRecentUserAssignmentEvent: mock(() => ({ id: 1 })),
-    }));
-    await mockModule("../src/helpers/get-assignee-activity", () => ({
-      getAssigneesActivityForIssue: mock(() => []),
-    }));
-    await mockModule("../src/helpers/structured-metadata", () => ({
-      createStructuredMetadata: mock(() => ""),
-      getCommentsFromMetadata: mock(() => ({})),
-    }));
+    mock.clearAllMocks();
 
     context = {
       logger: new Logs("debug"),
@@ -49,8 +33,8 @@ describe("remindAssigneesForIssue", () => {
 
   it("should post a comment to the parent issue if posting to the pull request fails", async () => {
     context.config.pullRequestRequired = true;
-    await mockModule("../src/helpers/collect-linked-pulls", () => ({
-      collectLinkedPullRequests: mock(() => [
+    spyOn(await import("../src/helpers/collect-linked-pulls"), "collectLinkedPullRequests").mockReturnValue(
+      Promise.resolve([
         {
           url: "https://github.com/owner/repo/pull/1",
           body: "",
@@ -59,10 +43,10 @@ describe("remindAssigneesForIssue", () => {
           number: 1,
           state: "OPEN",
           title: "title",
-          author: { id: 1 },
+          author: { id: 1, login: "ubiquity-os" },
         },
-      ]),
-    }));
+      ])
+    );
 
     const mockedError = new Error("Failed to post comment");
     (context.octokit.rest.issues.createComment as any)

@@ -1,10 +1,9 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { updateTaskReminder } from "../src/helpers/task-update";
 import { FOLLOWUP_HEADER } from "../src/types/constants";
 import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";
-import { mockModule } from "./helpers";
 
 describe("Reminder tests", () => {
   beforeEach(() => {
@@ -13,28 +12,22 @@ describe("Reminder tests", () => {
   });
 
   it("Should post reminders only on opened linked pull-requests", async () => {
-    await mockModule("../src/helpers/task-metadata", () => ({
-      getTaskAssignmentDetails: mock(() => ({ taskAssignees: [1] })),
-      parsePriorityLabel: mock(() => {}),
-      parseTimeLabel: mock(() => {}),
-      getMostRecentUserAssignmentEvent: mock(() => ({ id: 1 })),
-    }));
-    await mockModule("../src/helpers/get-assignee-activity", () => ({
-      getAssigneesActivityForIssue: mock(() => []),
-    }));
-    await mockModule("../src/helpers/collect-linked-pulls", () => ({
-      collectLinkedPullRequests: mock(() => [
+    spyOn(await import("../src/helpers/task-metadata"), "getTaskAssignmentDetails").mockReturnValue(Promise.resolve({ taskAssignees: [1] }));
+    spyOn(await import("../src/helpers/task-metadata"), "parsePriorityLabel").mockReturnValue(1);
+    spyOn(await import("../src/helpers/task-metadata"), "parseTimeLabel").mockReturnValue(1);
+    spyOn(await import("../src/helpers/task-metadata"), "getMostRecentUserAssignmentEvent").mockReturnValue(Promise.resolve({ id: 1 }));
+    spyOn(await import("../src/helpers/get-assignee-activity"), "getAssigneesActivityForIssue").mockReturnValue(Promise.resolve([]));
+    spyOn(await import("../src/helpers/collect-linked-pulls"), "collectLinkedPullRequests").mockReturnValue(
+      Promise.resolve([
         { id: 2, state: "MERGED", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/2" },
         { id: 3, state: "CLOSE", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/3" },
         { id: 4, state: "OPEN", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/4" },
-      ]),
-    }));
+      ])
+    );
     const f = mock(() => []);
-    await mockModule("../src/helpers/structured-metadata", () => ({
-      getCommentsFromMetadata: f,
-      createStructuredMetadata: mock(() => ""),
-      commentUpdateMetadataPattern: /stub/,
-    }));
+    spyOn(await import("../src/helpers/structured-metadata"), "getCommentsFromMetadata").mockReturnValue(f);
+    spyOn(await import("../src/helpers/structured-metadata"), "createStructuredMetadata").mockReturnValue("");
+    spyOn(await import("../src/helpers/structured-metadata"), "commentUpdateMetadataPattern").mockReturnValue(/stub/);
     await updateTaskReminder(
       {
         logger: new Logs("debug"),

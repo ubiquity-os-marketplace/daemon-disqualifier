@@ -1,13 +1,7 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { watchUserActivity } from "../src/handlers/watch-user-activity";
 import { ContextPlugin } from "../src/types/plugin-input";
-import { mockModule } from "./helpers";
-
-await mockModule("@ubiquity-os/plugin-sdk", () => ({
-  postComment: mock(() => {}),
-}));
-
-const { watchUserActivity } = await import("../src/handlers/watch-user-activity");
 
 describe("watchUserActivity", () => {
   const mockContextTemplate = {
