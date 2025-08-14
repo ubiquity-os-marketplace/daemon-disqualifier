@@ -7,16 +7,19 @@ import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import ms from "ms";
 import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 import { createAdapters } from "../src/adapters";
 import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
 import { run } from "../src/run";
 import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
 import { db } from "./__mocks__/db";
+import { handlers } from "./__mocks__/handlers";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
-import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
 import { botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
+
+const server = setupServer(...handlers);
 
 beforeAll(() => {
   server.listen();
