@@ -22,7 +22,7 @@ export class KvDatabaseHandler {
     if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object" && value[0] !== null && "issueNumber" in value[0]) {
       return value as IssueEntry[];
     }
-    return (value as number[]).map((issueNumber) => ({ issueNumber, commentId: 0 }));
+    return [];
   }
 
   async getIssueNumbers(owner: string, repo: string): Promise<number[]> {
