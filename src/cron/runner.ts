@@ -89,6 +89,7 @@ export async function runCronJob() {
           await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
           continue;
         }
+        const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}#issuecomment-${commentId}`;
         try {
           const issueResponse = await repoOctokit.rest.issues.get({ owner, repo, issue_number: issueNumber });
           const hasAssignees = !!(issueResponse.data.assignee || issueResponse.data.assignees?.length);
@@ -103,45 +104,40 @@ export async function runCronJob() {
             await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
             continue;
           }
-          const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}#issuecomment-${commentId}`;
-          try {
-            await enforceRateLimit();
-            const {
-              data: { body = "" },
-            } = await repoOctokit.rest.issues.getComment({
-              owner: owner,
-              repo: repo,
-              issue_number: issueNumber,
-              comment_id: commentId,
-            });
-            const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
-            logger.info(`Updated comment of ${url} (stopping after first valid issue)`, {
-              newBodyLength: newBody.length,
-              totalIssues: issues.length,
-              issueNumber,
-              commentId,
-            });
-            await repoOctokit.rest.issues.updateComment({
-              owner: owner,
-              repo: repo,
-              comment_id: commentId,
-              body: newBody,
-            });
-            break;
-          } catch (err) {
-            logger.error("Failed to update individual issue comment", {
-              organization: owner,
-              repository: repo,
-              issueNumber,
-              commentId,
-              url,
-              err,
-            });
-          } finally {
-            rateProcessed++;
-          }
-        } catch (e) {
-          logger.error("Failed to process issue", { owner, repo, issueNumber, e });
+          await enforceRateLimit();
+          const {
+            data: { body = "" },
+          } = await repoOctokit.rest.issues.getComment({
+            owner: owner,
+            repo: repo,
+            issue_number: issueNumber,
+            comment_id: commentId,
+          });
+          const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
+          logger.info(`Updated comment of ${url} (stopping after first valid issue)`, {
+            newBodyLength: newBody.length,
+            totalIssues: issues.length,
+            issueNumber,
+            commentId,
+          });
+          await repoOctokit.rest.issues.updateComment({
+            owner: owner,
+            repo: repo,
+            comment_id: commentId,
+            body: newBody,
+          });
+          break;
+        } catch (err) {
+          logger.error("Failed to process issue", {
+            organization: owner,
+            repository: repo,
+            issueNumber,
+            commentId,
+            url,
+            err,
+          });
+        } finally {
+          rateProcessed++;
         }
       }
     } catch (e) {
