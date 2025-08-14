@@ -284,7 +284,7 @@ describe("User start/stop", () => {
         number: 2,
         author: { login: "user2", id: 2 },
       },
-    ]);
+    ] as never);
   });
 });
 

@@ -42,7 +42,7 @@ describe("CRON tests", () => {
             },
           ])
         ),
-      })
+      } as never)
     );
 
     const { runCronJob } = await import("../src/cron/runner");

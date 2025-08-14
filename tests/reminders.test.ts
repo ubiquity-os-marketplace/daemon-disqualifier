@@ -15,19 +15,19 @@ describe("Reminder tests", () => {
     spyOn(await import("../src/helpers/task-metadata"), "getTaskAssignmentDetails").mockReturnValue(Promise.resolve({ taskAssignees: [1] }));
     spyOn(await import("../src/helpers/task-metadata"), "parsePriorityLabel").mockReturnValue(1);
     spyOn(await import("../src/helpers/task-metadata"), "parseTimeLabel").mockReturnValue(1);
-    spyOn(await import("../src/helpers/task-metadata"), "getMostRecentUserAssignmentEvent").mockReturnValue(Promise.resolve({ id: 1 }));
+    spyOn(await import("../src/helpers/task-metadata"), "getMostRecentUserAssignmentEvent").mockReturnValue(Promise.resolve({ id: 1 } as never));
     spyOn(await import("../src/helpers/get-assignee-activity"), "getAssigneesActivityForIssue").mockReturnValue(Promise.resolve([]));
     spyOn(await import("../src/helpers/collect-linked-pulls"), "collectLinkedPullRequests").mockReturnValue(
       Promise.resolve([
         { id: 2, state: "MERGED", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/2" },
         { id: 3, state: "CLOSE", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/3" },
         { id: 4, state: "OPEN", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/4" },
-      ])
+      ] as never)
     );
     const f = mock(() => Promise.resolve([]));
     spyOn(await import("../src/helpers/structured-metadata"), "getCommentsFromMetadata").mockImplementation(f);
     spyOn(await import("../src/helpers/structured-metadata"), "createStructuredMetadata").mockReturnValue("");
-    spyOn(await import("../src/helpers/structured-metadata"), "commentUpdateMetadataPattern").mockReturnValue(/stub/);
+    spyOn(await import("../src/helpers/structured-metadata"), "commentUpdateMetadataPattern").mockReturnValue(/stub/ as never);
     await updateTaskReminder(
       {
         logger: new Logs("debug"),
