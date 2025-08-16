@@ -1,5 +1,6 @@
 import * as github from "@actions/github";
 import { LogReturn } from "@ubiquity-os/ubiquity-os-logger";
+import pkg from "../../package.json" with { type: "json" };
 import { ContextPlugin } from "../types/plugin-input";
 
 const HEADER_NAME = "Ubiquity";
@@ -32,7 +33,7 @@ export function createStructuredMetadata(className: string, logReturn: LogReturn
   return metadataSerialized;
 }
 
-export const commentUpdateMetadataPattern = /<!-- daemon-disqualifier update [\s\S]*?-->/;
+export const commentUpdateMetadataPattern = new RegExp(`<!-- ${pkg.name} update [\\s\\S]*?-->`);
 
 export async function getCommentsFromMetadata(context: ContextPlugin, issueNumber: number, repoOwner: string, repoName: string, className: string) {
   const { octokit } = context;

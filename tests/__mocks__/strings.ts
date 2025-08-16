@@ -58,12 +58,12 @@ export function botAssignmentComment(assigneeId: number, deadlineStr: string) {
 -->`;
 }
 export function botReminderComment() {
-  return `@user2, this task has been idle for a while. Please provide an update.
+  return `@user2, this task has been idle for a while. Please provide an update on your progress.
 <!-- Ubiquity - ${FOLLOWUP_HEADER} - function - 4b6c279
 {
 }
 -->
-<!-- daemon-disqualifier update date -->
+<!-- @ubiquity-os/daemon-disqualifier update date -->
 `;
 }
 

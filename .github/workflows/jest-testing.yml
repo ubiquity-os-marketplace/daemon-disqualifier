@@ -11,10 +11,6 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20.10.0"
-
       - uses: actions/checkout@master
         with:
           fetch-depth: 0
@@ -23,11 +19,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Install toolchain
-        run: bun install --frozen-lockfile
+        run: bun install
 
-      - name: Jest With Coverage
-        run: bun run test
-
-      - name: Add Jest Report to Summary
-        if: always()
-        run: echo "$(cat test-dashboard.md)" >> $GITHUB_STEP_SUMMARY
+      - name: Bun With Coverage
+        run: bun run test --coverage

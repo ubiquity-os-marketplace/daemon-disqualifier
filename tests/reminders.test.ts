@@ -1,84 +1,47 @@
-import { beforeEach, describe, jest } from "@jest/globals";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { updateTaskReminder } from "../src/helpers/task-update";
 import { FOLLOWUP_HEADER } from "../src/types/constants";
-import { ListForOrg, ListIssueForRepo } from "../src/types/github-types";
+import { ListIssueForRepo } from "../src/types/github-types";
 import { ContextPlugin } from "../src/types/plugin-input";
 
 describe("Reminder tests", () => {
   beforeEach(() => {
-    jest.resetModules();
-    jest.resetAllMocks();
+    mock.restore();
+    mock.clearAllMocks();
   });
 
   it("Should post reminders only on opened linked pull-requests", async () => {
-    jest.unstable_mockModule("../src/helpers/task-metadata", () => {
-      return {
-        getTaskAssignmentDetails: jest.fn(() => ({ taskAssignees: [1] })),
-        parsePriorityLabel: jest.fn(),
-        parseTimeLabel: jest.fn(),
-        getMostRecentUserAssignmentEvent: jest.fn(() => ({ id: 1 })),
-      };
-    });
-    jest.unstable_mockModule("../src/helpers/get-assignee-activity", () => {
-      return {
-        getAssigneesActivityForIssue: jest.fn(() => []),
-      };
-    });
-    jest.unstable_mockModule("../src/helpers/collect-linked-pulls", () => {
-      return {
-        collectLinkedPullRequests: jest.fn(() => [
-          {
-            id: 2,
-            state: "MERGED",
-            url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/2",
-          },
-          {
-            id: 3,
-            state: "CLOSE",
-            url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/3",
-          },
-          {
-            id: 4,
-            state: "OPEN",
-            url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/4",
-          },
-        ]),
-      };
-    });
-    const f = jest.fn(() => []);
-    jest.unstable_mockModule("../src/helpers/structured-metadata", () => {
-      return {
-        getCommentsFromMetadata: f,
-        createStructuredMetadata: jest.fn(() => ""),
-      };
-    });
-    const { updateTaskReminder } = await import("../src/helpers/task-update");
+    spyOn(await import("../src/helpers/task-metadata"), "getTaskAssignmentDetails").mockReturnValue(Promise.resolve({ taskAssignees: [1] }));
+    spyOn(await import("../src/helpers/task-metadata"), "parsePriorityLabel").mockReturnValue(1);
+    spyOn(await import("../src/helpers/task-metadata"), "parseTimeLabel").mockReturnValue(1);
+    spyOn(await import("../src/helpers/task-metadata"), "getMostRecentUserAssignmentEvent").mockReturnValue(Promise.resolve({ id: 1 } as never));
+    spyOn(await import("../src/helpers/get-assignee-activity"), "getAssigneesActivityForIssue").mockReturnValue(Promise.resolve([]));
+    spyOn(await import("../src/helpers/collect-linked-pulls"), "collectLinkedPullRequests").mockReturnValue(
+      Promise.resolve([
+        { id: 2, state: "MERGED", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/2" },
+        { id: 3, state: "CLOSE", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/3" },
+        { id: 4, state: "OPEN", url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/4" },
+      ] as never)
+    );
+    const f = mock(() => Promise.resolve([]));
+    spyOn(await import("../src/helpers/structured-metadata"), "getCommentsFromMetadata").mockImplementation(f);
+    spyOn(await import("../src/helpers/structured-metadata"), "createStructuredMetadata").mockReturnValue("");
+    spyOn(await import("../src/helpers/structured-metadata"), "commentUpdateMetadataPattern").mockReturnValue(/stub/ as never);
     await updateTaskReminder(
       {
         logger: new Logs("debug"),
         octokit: {
           rest: {
             issues: {
-              listEvents: jest.fn(() => [
-                {
-                  event: "assigned",
-                  actor: {
-                    id: 1,
-                  },
-                },
-              ]),
+              listEvents: mock(() => [{ event: "assigned", actor: { id: 1 } }]),
             },
           },
-          paginate: jest.fn((func: Function, args: unknown) => func(args)),
+          paginate: mock((func: Function, args: unknown) => func(args)),
         },
         config: {},
       } as unknown as ContextPlugin,
-      {
-        owner: {
-          login: "ubiquity-os",
-        },
-        name: "daemon-disqualifier",
-      } as unknown as ContextPlugin["payload"]["repository"],
+      { owner: { login: "ubiquity-os" }, name: "daemon-disqualifier" } as unknown as ContextPlugin["payload"]["repository"],
       { number: 1, html_url: "https://github.com/ubiquity-os/daemon-disqualifier/issue/1" } as unknown as ListIssueForRepo
     );
     // We expect it to be called 2 times because one pull-request is merged and one is closed
