@@ -1,15 +1,9 @@
+import { createAppAuth } from "@octokit/auth-app";
+import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { ContextPlugin } from "../types/plugin-input";
-import db from "./database-handler";
 
 export async function updateCronState(context: ContextPlugin) {
-  await db.update((data) => {
-    for (const key of Object.keys(data)) {
-      if (!data[key].length) {
-        delete data[key];
-      }
-    }
-    return data;
-  });
+  context.logger.debug("Updating the cron.yml workflow state.");
 
   if (!process.env.GITHUB_REPOSITORY) {
     context.logger.error("Can't update the Action Workflow state as GITHUB_REPOSITORY is missing from the env.");
@@ -18,19 +12,51 @@ export async function updateCronState(context: ContextPlugin) {
 
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
 
-  if (Object.keys(db.data).length) {
-    context.logger.verbose("Enabling cron.yml workflow.");
-    await context.octokit.rest.actions.enableWorkflow({
-      owner,
-      repo,
-      workflow_id: "cron.yml",
+  try {
+    const appOctokit = new customOctokit({
+      authStrategy: createAppAuth,
+      auth: {
+        appId: process.env.APP_ID,
+        privateKey: process.env.APP_PRIVATE_KEY,
+      },
     });
-  } else {
-    context.logger.verbose("Disabling cron.yml workflow.");
-    await context.octokit.rest.actions.disableWorkflow({
-      owner,
-      repo,
-      workflow_id: "cron.yml",
+    let authOctokit;
+    if (!process.env.APP_ID || !process.env.APP_PRIVATE_KEY) {
+      context.logger.debug("APP_ID or APP_PRIVATE_KEY are missing from the env, will use the default Octokit instance.");
+      authOctokit = context.octokit;
+    } else {
+      const installation = await appOctokit.rest.apps.getRepoInstallation({
+        owner,
+        repo,
+      });
+      authOctokit = new customOctokit({
+        authStrategy: createAppAuth,
+        auth: {
+          appId: process.env.APP_ID,
+          privateKey: process.env.APP_PRIVATE_KEY,
+          installationId: installation.data.id,
+        },
+      });
+    }
+    const hasData = await context.adapters.kv.hasData();
+    if (hasData) {
+      context.logger.verbose("Enabling cron.yml workflow.", { owner, repo });
+      await authOctokit.rest.actions.enableWorkflow({
+        owner,
+        repo,
+        workflow_id: "cron.yml",
+      });
+    } else {
+      context.logger.verbose("Disabling cron.yml workflow.");
+      await authOctokit.rest.actions.disableWorkflow({
+        owner,
+        repo,
+        workflow_id: "cron.yml",
+      });
+    }
+  } catch (e) {
+    context.logger.error("Could not enable / disable the CRON workflow.", {
+      e,
     });
   }
 }

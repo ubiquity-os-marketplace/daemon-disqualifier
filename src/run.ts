@@ -1,3 +1,5 @@
+import { Context } from "@ubiquity-os/plugin-sdk";
+import { createAdapters } from "./adapters/index";
 import { watchUserActivity } from "./handlers/watch-user-activity";
 import { ContextPlugin } from "./types/plugin-input";
 
@@ -46,8 +48,10 @@ async function populateDeadlineExtensionsThresholds(context: ContextPlugin) {
   logger.debug("Populated available deadline extensions amounts", { availableDeadlineExtensions: config.availableDeadlineExtensions.amounts });
 }
 
-export async function run(context: ContextPlugin) {
+export async function run(context: Context) {
   context.logger.debug("Will run with the following configuration:", { configuration: context.config });
-  await populateDeadlineExtensionsThresholds(context);
-  return watchUserActivity(context);
+  const augmentedContext = { ...context, adapters: await createAdapters() } as ContextPlugin;
+
+  await populateDeadlineExtensionsThresholds(augmentedContext);
+  return watchUserActivity(augmentedContext);
 }
