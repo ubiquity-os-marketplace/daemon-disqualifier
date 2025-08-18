@@ -1,5 +1,4 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
-import db from "../cron/database-handler";
 import { updateCronState } from "../cron/workflow";
 import { removeEntryFromDatabase } from "../helpers/remind-and-remove";
 import { commentUpdateMetadataPattern } from "../helpers/structured-metadata";
@@ -33,19 +32,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     log.logMessage.diff = log.logMessage.raw;
     const commentData = await context.commentHandler.postComment(context, log);
     if (commentData) {
-      await db.update((data) => {
-        const dbKey = `${context.payload.repository.owner?.login}/${context.payload.repository.name}`;
-        if (!data[dbKey]) {
-          data[dbKey] = [];
-        }
-        if (!data[dbKey].some((o) => o.issueNumber === commentData.issueNumber)) {
-          data[dbKey].push({
-            commentId: commentData.id,
-            issueNumber: commentData.issueNumber,
-          });
-        }
-        return data;
-      });
+      await context.adapters.kv.addIssue(context.payload.issue.html_url, commentData.id);
     }
     // We return early not to run the reminders section, which is handled by the CRON (avoids multiple reminders)
     return { message: "OK" };
@@ -109,7 +96,7 @@ async function updateReminders(context: ContextPlugin, repo: ContextPlugin["payl
       await updateTaskReminder(context, repo, issue);
     } else {
       logger.info(`Skipping issue ${issue.html_url} because no user is assigned.`);
-      await removeEntryFromDatabase(issue);
+      await removeEntryFromDatabase(context, issue);
     }
   }
 }

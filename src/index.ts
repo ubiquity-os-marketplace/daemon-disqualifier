@@ -4,8 +4,9 @@ import { run } from "./run";
 import { Env, envSchema, PluginSettings, pluginSettingsSchema, SupportedEvents } from "./types/plugin-input";
 
 createActionsPlugin<PluginSettings, Env, null, SupportedEvents>(
-  (context) => {
-    return run(context);
+  async (context) => {
+    await run(context);
+    Deno.exit(0);
   },
   {
     envSchema: envSchema,

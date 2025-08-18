@@ -1,24 +1,25 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
 import { TypeBoxError } from "@sinclair/typebox";
 import { TransformDecodeError, Value } from "@sinclair/typebox/value";
 import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit as Octokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import dotenv from "dotenv";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import ms from "ms";
 import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { createAdapters } from "../src/adapters";
 import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
 import { run } from "../src/run";
 import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
 import { db } from "./__mocks__/db";
+import { handlers } from "./__mocks__/handlers";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
-import { server } from "./__mocks__/node";
 import cfg from "./__mocks__/results/valid-configuration.json";
 import { botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 
-dotenv.config();
+const server = setupServer(...handlers);
 
 beforeAll(() => {
   server.listen();
@@ -30,6 +31,8 @@ afterAll(() => server.close());
 
 describe("User start/stop", () => {
   beforeEach(async () => {
+    mock.restore();
+    mock.clearAllMocks();
     drop(db);
     await setupTests();
   });
@@ -111,15 +114,15 @@ describe("User start/stop", () => {
     });
   });
   it("Should run", async () => {
-    const context = createContext(1, 1);
+    const context = await createContext(1, 1);
     const result = await run(context);
     expect(result).toEqual({ message: "OK" });
   });
 
   it("Should process updates for all repos except optOut", async () => {
-    const context = createContext(1, 1);
-    const infoSpy = jest.spyOn(context.logger, "info");
-    const errorSpy = jest.spyOn(context.logger, "error");
+    const context = await createContext(1, 1);
+    const infoSpy = spyOn(context.logger, "info");
+    const errorSpy = spyOn(context.logger, "error");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
@@ -135,8 +138,8 @@ describe("User start/stop", () => {
   });
 
   it("Should include the previously excluded repo", async () => {
-    const context = createContext(1, 1);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const context = await createContext(1, 1);
+    const infoSpy = spyOn(context.logger, "info");
 
     await expect(run(context)).resolves.toEqual({ message: "OK" });
 
@@ -150,8 +153,8 @@ describe("User start/stop", () => {
   });
 
   it("Should eject the user after the disqualification period", async () => {
-    const context = createContext(4, 2);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const context = await createContext(4, 2);
+    const infoSpy = spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -167,7 +170,7 @@ describe("User start/stop", () => {
   });
 
   it("Should warn the user after the warning period", async () => {
-    const context = createContext(3, 2);
+    const context = await createContext(3, 2);
 
     const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -179,7 +182,7 @@ describe("User start/stop", () => {
 
     const comments = db.issueComments.getAll();
     let latestComment = comments.filter((comment) => comment.issueId === 3).pop();
-    let partialComment = "@user2, this task has been idle for a while. Please provide an update on your progress.\\n<!-- Ubiquity - Followup -";
+    let partialComment = "@user2, this task has been idle for a while. Please provide an update on your progress.\n<!-- Ubiquity - Followup -";
     expect(latestComment?.body).toContain(partialComment);
     latestComment = comments.filter((comment) => comment.issueId === 4).pop();
     partialComment = "@user2 you have shown no activity and have been disqualified from this task.";
@@ -187,8 +190,8 @@ describe("User start/stop", () => {
   });
 
   it("Should have nothing to do within the warning period", async () => {
-    const context = createContext(1, 2);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const context = await createContext(1, 2);
+    const infoSpy = spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
@@ -202,8 +205,8 @@ describe("User start/stop", () => {
   });
 
   it("Should remind the user when the pull-request is approved but deadlined is passed, without closing the PR", async () => {
-    const context = createContext(1, 2);
-    const infoSpy = jest.spyOn(context.logger, "info");
+    const context = await createContext(1, 2);
+    const infoSpy = spyOn(context.logger, "info");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
@@ -259,7 +262,7 @@ describe("User start/stop", () => {
   });
 
   it("Should handle collecting linked PRs", async () => {
-    const context = createContext(1, 1);
+    const context = await createContext(1, 1);
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     const result = await collectLinkedPullRequests(context, {
       issue_number: issue?.number as number,
@@ -284,7 +287,7 @@ describe("User start/stop", () => {
         number: 2,
         author: { login: "user2", id: 2 },
       },
-    ]);
+    ] as never);
   });
 });
 
@@ -324,7 +327,7 @@ function daysPriorToNow(days: number) {
   return new Date(Date.now() - ONE_DAY * days).toISOString();
 }
 
-function createContext(issueId: number, senderId: number): ContextPlugin {
+async function createContext(issueId: number, senderId: number): Promise<ContextPlugin> {
   return {
     payload: {
       issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["issue"],
@@ -361,5 +364,6 @@ function createContext(issueId: number, senderId: number): ContextPlugin {
     env: {},
     command: null,
     commentHandler: new CommentHandler(),
+    adapters: await createAdapters(),
   };
 }

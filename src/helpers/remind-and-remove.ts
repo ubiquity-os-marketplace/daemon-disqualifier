@@ -1,5 +1,4 @@
 import { Context } from "@ubiquity-os/plugin-sdk";
-import db from "../cron/database-handler";
 import { FOLLOWUP_HEADER } from "../types/constants";
 import { ListIssueForRepo } from "../types/github-types";
 import { ContextPlugin } from "../types/plugin-input";
@@ -255,15 +254,8 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
   return true;
 }
 
-export async function removeEntryFromDatabase(issue: ListIssueForRepo) {
-  const { owner, repo, issue_number } = parseIssueUrl(issue.html_url);
-  await db.update((data) => {
-    const key = `${owner}/${repo}`;
-    if (data[key]) {
-      data[key] = data[key].filter((o) => o.issueNumber !== issue_number);
-    }
-    return data;
-  });
+export async function removeEntryFromDatabase(context: ContextPlugin, issue: ListIssueForRepo) {
+  await context.adapters.kv.removeIssue(issue.html_url);
 }
 
 async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRepo) {
@@ -306,7 +298,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     issue_number,
     assignees: logins,
   });
-  await removeEntryFromDatabase(issue);
+  await removeEntryFromDatabase(context, issue);
   return true;
 }
 
