@@ -21,7 +21,8 @@
     "prepare": "husky install",
     "test": "bun test --preload=./tests/setup.ts --coverage",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
-    "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\""
+    "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\"",
+    "seed:kv": "deno run --allow-read=db.json --allow-env --allow-net --unstable-kv src/scripts/seed-kv.ts"
   },
   "keywords": [
     "typescript",
@@ -36,7 +37,7 @@
     "@octokit/graphql-schema": "^15.25.0",
     "@octokit/rest": "^21.0.2",
     "@sinclair/typebox": "0.34.3",
-    "@ubiquity-os/plugin-sdk": "^3.2.1",
+    "@ubiquity-os/plugin-sdk": "3.2.2",
     "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
     "dotenv": "16.4.5",
     "luxon": "3.4.4",
