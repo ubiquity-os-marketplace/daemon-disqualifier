@@ -21,8 +21,7 @@
     "prepare": "husky install",
     "test": "bun test --preload=./tests/setup.ts --coverage",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
-    "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\"",
-    "seed:kv": "deno run --allow-read=db.json --allow-env --allow-net --unstable-kv src/scripts/seed-kv.ts"
+    "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\""
   },
   "keywords": [
     "typescript",
