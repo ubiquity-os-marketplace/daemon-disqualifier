@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0 (2025-09-06)
+
+
+### Bug Fixes
+
+* bumped SDK ([367d477](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/367d4770cb69254137b27292d1012170b73c55ac))
+* bumped SDK ([8eb00cc](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/8eb00cc25913fb77dc3172efb7f8472aec8d41da))
+
 ## [1.0.2](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/compare/v1.0.1...v1.0.2) (2025-07-25)
 
 
