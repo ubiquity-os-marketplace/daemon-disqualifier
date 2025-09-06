@@ -1,0 +1,244 @@
+{
+  "ubiquity-os-marketplace/text-conversation-rewards": [
+    {
+      "commentId": 2614081629,
+      "issueNumber": 247
+    },
+    {
+      "commentId": 2616074973,
+      "issueNumber": 249
+    },
+    {
+      "commentId": 2622938760,
+      "issueNumber": 230
+    },
+    {
+      "commentId": 2623816001,
+      "issueNumber": 187
+    },
+    {
+      "commentId": 2629099280,
+      "issueNumber": 236
+    },
+    {
+      "commentId": 2636121533,
+      "issueNumber": 256
+    },
+    {
+      "commentId": 2637629071,
+      "issueNumber": 183
+    },
+    {
+      "commentId": 2647227886,
+      "issueNumber": 262
+    },
+    {
+      "commentId": 2661110862,
+      "issueNumber": 275
+    },
+    {
+      "commentId": 2662012407,
+      "issueNumber": 208
+    },
+    {
+      "commentId": 2676698115,
+      "issueNumber": 270
+    },
+    {
+      "commentId": 2709853038,
+      "issueNumber": 292
+    },
+    {
+      "commentId": 2719473303,
+      "issueNumber": 300
+    },
+    {
+      "commentId": 2727216221,
+      "issueNumber": 276
+    },
+    {
+      "commentId": 2733616694,
+      "issueNumber": 298
+    },
+    {
+      "commentId": 2737455394,
+      "issueNumber": 279
+    },
+    {
+      "commentId": 2746910500,
+      "issueNumber": 321
+    },
+    {
+      "commentId": 2752173654,
+      "issueNumber": 246
+    },
+    {
+      "commentId": 2758377018,
+      "issueNumber": 226
+    },
+    {
+      "commentId": 2775481624,
+      "issueNumber": 315
+    },
+    {
+      "commentId": 2776555728,
+      "issueNumber": 331
+    },
+    {
+      "commentId": 2780720886,
+      "issueNumber": 219
+    }
+  ],
+  "ubiquity-os-marketplace/command-ask": [
+    {
+      "commentId": 2620364131,
+      "issueNumber": 52
+    },
+    {
+      "commentId": 2658173532,
+      "issueNumber": 66
+    },
+    {
+      "commentId": 2679663008,
+      "issueNumber": 69
+    },
+    {
+      "commentId": 2723125632,
+      "issueNumber": 51
+    },
+    {
+      "commentId": 3060854164,
+      "issueNumber": 87
+    }
+  ],
+  "ubiquity-os-marketplace/command-start-stop": [
+    {
+      "commentId": 2621028305,
+      "issueNumber": 131
+    },
+    {
+      "commentId": 2621150674,
+      "issueNumber": 129
+    },
+    {
+      "commentId": 2716871135,
+      "issueNumber": 148
+    },
+    {
+      "commentId": 2738967709,
+      "issueNumber": 150
+    },
+    {
+      "commentId": 2760214173,
+      "issueNumber": 149
+    }
+  ],
+  "ubiquity-os-marketplace/command-wallet": [
+    {
+      "commentId": 2621902755,
+      "issueNumber": 38
+    },
+    {
+      "commentId": 2661539258,
+      "issueNumber": 47
+    }
+  ],
+  "ubiquity-os-marketplace/daemon-pull-review": [
+    {
+      "commentId": 2629092790,
+      "issueNumber": 5
+    },
+    {
+      "commentId": 2644724615,
+      "issueNumber": 4
+    },
+    {
+      "commentId": 2674012304,
+      "issueNumber": 11
+    },
+    {
+      "commentId": 2676719089,
+      "issueNumber": 7
+    },
+    {
+      "commentId": 2715381749,
+      "issueNumber": 18
+    },
+    {
+      "commentId": 2731003280,
+      "issueNumber": 22
+    },
+    {
+      "commentId": 2743677480,
+      "issueNumber": 23
+    }
+  ],
+  "ubiquity-os-marketplace/daemon-disqualifier": [
+    {
+      "commentId": 2630191908,
+      "issueNumber": 57
+    },
+    {
+      "commentId": 2639881445,
+      "issueNumber": 51
+    },
+    {
+      "commentId": 2705316057,
+      "issueNumber": 84
+    }
+  ],
+  "ubiquity-os-marketplace/.github": [
+    {
+      "commentId": 2637923474,
+      "issueNumber": 4
+    }
+  ],
+  "ubiquity-os-marketplace/text-vector-embeddings": [
+    {
+      "commentId": 2641809192,
+      "issueNumber": 79
+    },
+    {
+      "commentId": 2646636635,
+      "issueNumber": 27
+    },
+    {
+      "commentId": 2677164326,
+      "issueNumber": 15
+    }
+  ],
+  "ubiquity-os-marketplace/plugin-demo": [
+    {
+      "commentId": 2656623774,
+      "issueNumber": 3
+    }
+  ],
+  "ubiquity-os-marketplace/.ubiquity-os": [
+    {
+      "commentId": 2658033284,
+      "issueNumber": 14
+    }
+  ],
+  "ubiquity-os-marketplace/daemon-pricing": [
+    {
+      "commentId": 2707862960,
+      "issueNumber": 64
+    },
+    {
+      "commentId": 2736544744,
+      "issueNumber": 91
+    },
+    {
+      "commentId": 2749675956,
+      "issueNumber": 96
+    },
+    {
+      "commentId": 2751752219,
+      "issueNumber": 40
+    },
+    {
+      "commentId": 2780350858,
+      "issueNumber": 100
+    }
+  ]
+}
