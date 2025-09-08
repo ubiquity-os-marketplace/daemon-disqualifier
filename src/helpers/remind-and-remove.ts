@@ -292,12 +292,26 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     logMessage,
     { raw: true, updateComment: false }
   );
-  await octokit.rest.issues.removeAssignees({
-    owner,
-    repo,
-    issue_number,
-    assignees: logins,
-  });
+  try {
+    await octokit.rest.issues.removeAssignees({
+      owner,
+      repo,
+      issue_number,
+      assignees: logins,
+    });
+    logger.info(`Successfully removed assignees: ${logins.join(", ")} from ${issue.html_url}`);
+  } catch (error) {
+    logger.error(`Failed to remove assignees: ${logins.join(", ")} from ${issue.html_url}`, { 
+      error: error instanceof Error ? error : new Error(String(error)),
+      assignees: logins,
+      issue: issue.html_url 
+    });
+    
+    // For bot accounts, the removeAssignees API call might fail
+    // In this case, we still want to remove from database and log the disqualification
+    // The comment has already been posted, so the user knows they've been disqualified
+    logger.warn(`Proceeding with database cleanup despite assignee removal failure for ${issue.html_url}`);
+  }
   await removeEntryFromDatabase(context, issue);
   return true;
 }
