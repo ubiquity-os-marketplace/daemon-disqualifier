@@ -272,6 +272,7 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     `${logins.map((o) => `@${o}`).join(", ")} you have ${remainingExtensions <= 0 ? "used all available deadline extensions" : "shown no activity"} and have been disqualified from this task.`,
     {
       issue: issue.html_url,
+      logins,
     }
   );
   await commentHandler.postComment(
@@ -292,11 +293,13 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
     logMessage,
     { raw: true, updateComment: false }
   );
-  await octokit.rest.issues.removeAssignees({
+  // issues.removeAssignees does not work for special users like Copilot, which actually is not a user,
+  // so instead we just clear assignees from the issue.
+  await octokit.rest.issues.update({
     owner,
     repo,
     issue_number,
-    assignees: logins,
+    assignees: [],
   });
   await removeEntryFromDatabase(context, issue);
   return true;
