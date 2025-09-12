@@ -16,7 +16,11 @@ function isIssueComment(context: ContextPlugin): context is ContextPlugin<"issue
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
-  if (context.eventName === "issues.assigned" && "issue" in context.payload && !shouldIgnoreIssue(context.payload.issue as IssueType)) {
+  if (
+    ["issues.assigned", "issues.reopened"].includes(context.eventName) &&
+    "issue" in context.payload &&
+    !shouldIgnoreIssue(context.payload.issue as IssueType)
+  ) {
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {

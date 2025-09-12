@@ -3,7 +3,8 @@
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "ubiquity:listeners": [
     "issues.assigned",
-    "issue_comment.edited"
+    "issue_comment.edited",
+    "issues.reopened"
   ],
   "skipBotEvents": false,
   "configuration": {
