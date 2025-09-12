@@ -3,7 +3,7 @@ import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
 import { Adapters } from "../adapters/index";
 
-export type SupportedEvents = "issues.assigned" | "issue_comment.edited";
+export type SupportedEvents = "issues.assigned" | "issue_comment.edited" | "issues.reopened";
 
 export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents> & {
   adapters: Adapters;

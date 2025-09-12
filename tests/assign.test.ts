@@ -56,6 +56,11 @@ describe("watchUserActivity", () => {
 
     await watchUserActivity(mockContext);
     expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockReset();
+    mockContext.eventName = "issues.reopened";
+    await watchUserActivity(mockContext);
+    expect(warnSpy).toHaveBeenCalled();
   });
 
   it("should ignore an un-priced task", async () => {
