@@ -138,7 +138,7 @@ export function getPriorityValue(context: ContextPlugin) {
   if (!("issue" in context.payload)) {
     return 0;
   }
-  return Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels) : 1);
+  return Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels.filter((label) => !!label) as IssueLabel[]) : 1);
 }
 
 export function parsePriceLabel(labels: (IssueLabel | string)[]): number | null {
