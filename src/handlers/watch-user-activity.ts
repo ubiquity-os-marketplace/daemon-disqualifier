@@ -38,6 +38,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     if (commentData) {
       await context.adapters.kv.addIssue(context.payload.issue.html_url, commentData.id);
     }
+    await updateCronState(context);
     // We return early not to run the reminders section, which is handled by the CRON (avoids multiple reminders)
     return { message: "OK" };
   }
