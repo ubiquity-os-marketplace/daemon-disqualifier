@@ -16,7 +16,11 @@ function isIssueComment(context: ContextPlugin): context is ContextPlugin<"issue
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
-  if (context.eventName === "issues.assigned" && "issue" in context.payload && !shouldIgnoreIssue(context.payload.issue as IssueType)) {
+  if (
+    ["issues.assigned", "issues.reopened"].includes(context.eventName) &&
+    "issue" in context.payload &&
+    !shouldIgnoreIssue(context.payload.issue as IssueType)
+  ) {
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {
@@ -34,6 +38,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     if (commentData) {
       await context.adapters.kv.addIssue(context.payload.issue.html_url, commentData.id);
     }
+    await updateCronState(context);
     // We return early not to run the reminders section, which is handled by the CRON (avoids multiple reminders)
     return { message: "OK" };
   }

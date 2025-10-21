@@ -7,6 +7,19 @@ import issueTimeline from "./routes/get-timeline.json";
  * Intercepts the routes and returns a custom payload
  */
 export const handlers = [
+  http.patch("https://api.github.com/repos/:owner/:repo/issues/:issue_id", async ({ params: { owner, repo, issue_id }, request }) => {
+    const raw = await request.body
+      ?.getReader()
+      .read()
+      .then((r) => (r.value ? new TextDecoder().decode(r.value) : undefined));
+    if (!raw) return HttpResponse.json({ message: "No body" }, { status: 400 });
+    const data = JSON.parse(raw);
+    const updated = db.issue.update({
+      where: { owner: { login: { equals: owner as string } }, repo: { equals: repo as string }, id: { equals: Number(issue_id) } },
+      data,
+    });
+    return HttpResponse.json(updated);
+  }),
   http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_id/events", ({ params: { issue_id } }) => {
     return HttpResponse.json(db.event.findMany({ where: { issue_number: { equals: Number(issue_id) } } }));
   }),
