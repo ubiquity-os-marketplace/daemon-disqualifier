@@ -1,11 +1,7 @@
 {
   "name": "Daemon Disqualifier",
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
-  "ubiquity:listeners": [
-    "issues.assigned",
-    "issue_comment.edited",
-    "issues.reopened"
-  ],
+  "ubiquity:listeners": ["issues.assigned", "issue_comment.edited", "issues.reopened"],
   "skipBotEvents": false,
   "configuration": {
     "default": {},
@@ -24,19 +20,13 @@
       "negligenceThreshold": {
         "default": "7 days",
         "description": "Delay to unassign users. 0 means disabled and any other value is counted in days, e.g. 7 days",
-        "examples": [
-          "7 days",
-          "1 day"
-        ],
+        "examples": ["7 days", "1 day"],
         "type": "string"
       },
       "pullRequestRequired": {
         "default": true,
         "description": "Whether a pull request is required for the given issue on disqualify",
-        "examples": [
-          "true",
-          "false"
-        ],
+        "examples": ["true", "false"],
         "type": "boolean"
       },
       "availableDeadlineExtensions": {
@@ -69,19 +59,9 @@
         }
       },
       "eventWhitelist": {
-        "default": [
-          "pull_request.review_requested",
-          "pull_request.ready_for_review",
-          "pull_request_review_comment.created",
-          "issue_comment.created",
-          "push"
-        ],
+        "default": ["pull_request.review_requested", "pull_request.ready_for_review", "pull_request_review_comment.created", "issue_comment.created", "push"],
         "description": "List of webhook event names to consider as valid activity on a task",
-        "examples": [
-          "pull_request.review_requested",
-          "issue_comment.created",
-          "push"
-        ],
+        "examples": ["pull_request.review_requested", "issue_comment.created", "push"],
         "type": "array",
         "items": {
           "type": "string"
@@ -89,5 +69,6 @@
       }
     }
   },
-  "homepage_url": "https://daemon-disqualifier-develo.deno.dev"
+  "homepage_url": "https://daemon-disqualifier-develo.deno.dev",
+  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@development"
 }
