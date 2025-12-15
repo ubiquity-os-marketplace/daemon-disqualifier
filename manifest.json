@@ -89,5 +89,6 @@
       }
     }
   },
-  "homepage_url": "https://daemon-disqualifier-main.deno.dev"
+  "homepage_url": "https://daemon-disqualifier-fix-ac.deno.dev",
+  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@development"
 }
