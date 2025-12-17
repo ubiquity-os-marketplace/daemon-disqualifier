@@ -13,6 +13,8 @@ on:
         description: "Settings"
       authToken:
         description: "Auth Token"
+      ubiquityKernelToken:
+        description: "Kernel attestation token (optional)"
       ref:
         description: "Ref"
       signature:
