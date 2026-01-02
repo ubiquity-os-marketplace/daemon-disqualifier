@@ -26,7 +26,7 @@ export async function unassignUserFromIssue(context: ContextPlugin, issue: ListI
   const { logger, config } = context;
 
   if (config.negligenceThreshold <= 0) {
-    logger.info("The unassign threshold is <= 0, won't unassign users.");
+    logger.debug("The unassign threshold is <= 0, won't unassign users.");
   } else {
     await removeAllAssignees(context, issue);
   }
@@ -39,7 +39,7 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
   const { remainingExtensions } = await getRemainingAvailableExtensions(context, issue);
   if (config.followUpInterval <= 0) {
-    logger.info("The reminder threshold is <= 0, won't send any reminder.");
+    logger.debug("The reminder threshold is <= 0, won't send any reminder.");
   } else if ((config.pullRequestRequired && !hasLinkedPr) || remainingExtensions <= 0) {
     logger.debug("No linked pull-request or no more remaining extensions, will attempt to un-assign the user.", {
       issue: issue.html_url,
@@ -62,7 +62,7 @@ async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, 
   const repo = issueAndPrTargets.pr?.prRepo ?? context.payload.repository.name;
 
   if (!owner) {
-    logger.error("No owner was found in the payload, won't display remaining extensions value", { issueAndPrTargets });
+    logger.warn("No owner was found in the payload, won't display remaining extensions value", { issueAndPrTargets });
     return false;
   }
 
@@ -78,7 +78,7 @@ async function shouldDisplayRemainingExtensionsReminder(context: ContextPlugin, 
   }
 
   if (!userAssignmentEvent) {
-    logger.warn("No user assignment event was found, won't display remaining extensions value");
+    logger.debug("No user assignment event was found, won't display remaining extensions value");
     return false;
   }
 
@@ -161,7 +161,7 @@ async function constructBodyWithMetadata(
 ) {
   const { logger } = context;
 
-  const logMessage = logger.info(reminderContent, {
+  const logMessage = logger.ok(reminderContent, {
     taskAssignees: issue.assignees?.map((o) => o?.id),
     url: issue.html_url,
     ...extensions,
@@ -176,7 +176,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
-    logger.error(`Missing Assignees from ${issue.html_url}`);
+    logger.warn(`Missing Assignees from ${issue.html_url}`);
     return false;
   }
 
@@ -230,7 +230,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
           });
         }
       } catch (e) {
-        logger.error(`Could not post to ${pullRequest.url} will post to the issue instead.`, { e });
+        logger.warn(`Could not post to ${pullRequest.url} will post to the issue instead.`, { e });
         shouldPostToMainIssue = true;
       }
     }
@@ -263,12 +263,12 @@ async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRep
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
 
   if (!issue?.assignees?.length) {
-    logger.error(`Missing Assignees from ${issue.html_url}`);
+    logger.warn(`Missing Assignees from ${issue.html_url}`);
     return false;
   }
   const logins = issue.assignees.map((o) => o?.login).filter((o) => !!o) as string[];
   const { remainingExtensions } = await getRemainingAvailableExtensions(context, issue);
-  const logMessage = logger.info(
+  const logMessage = logger.ok(
     `${logins.map((o) => `@${o}`).join(", ")} you have ${remainingExtensions <= 0 ? "used all available deadline extensions" : "shown no activity"} and have been disqualified from this task.`,
     {
       issue: issue.html_url,
