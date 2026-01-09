@@ -329,6 +329,7 @@ function daysPriorToNow(days: number) {
 
 async function createContext(issueId: number, senderId: number): Promise<ContextPlugin> {
   return {
+    authToken: "",
     payload: {
       issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["issue"],
       sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["sender"],
