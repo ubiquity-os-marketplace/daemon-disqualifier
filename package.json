@@ -7,7 +7,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=20.10.0"
+    "node": ">=24.11.1"
   },
   "scripts": {
     "start": "bun --watch --no-clear-screen src/worker.ts",
@@ -31,12 +31,12 @@
     "open-source"
   ],
   "dependencies": {
-    "@actions/github": "^6.0.0",
-    "@octokit/auth-app": "^7.1.4",
-    "@octokit/graphql-schema": "^15.25.0",
-    "@octokit/rest": "^22.0.0",
-    "@sinclair/typebox": "0.34.3",
-    "@ubiquity-os/plugin-sdk": "3.3.4",
+    "@actions/github": "^7.0.0",
+    "@octokit/auth-app": "^8.1.2",
+    "@octokit/graphql-schema": "^15.26.1",
+    "@octokit/rest": "^22.0.1",
+    "@sinclair/typebox": "0.34.41",
+    "@ubiquity-os/plugin-sdk": "^3.8.4",
     "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
     "dotenv": "16.4.5",
     "luxon": "3.4.4",
