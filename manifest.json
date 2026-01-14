@@ -70,5 +70,5 @@
     }
   },
   "homepage_url": "https://daemon-disqualifier-main.deno.dev",
-  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@main"
+  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@development"
 }
