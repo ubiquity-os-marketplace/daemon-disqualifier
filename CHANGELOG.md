@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.0.3 (2026-01-02)
+
+
+### Bug Fixes
+
+* accept kernelPublicKey input ([80e5556](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/80e55562fe695801046215fea6a8d5daa3b924d9))
+* add project_name to Deno Deploy action configuration ([2bb3b7a](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/2bb3b7a5b228859721266d6896c3abefc6cc0de0))
+* bump @ubiquity-os/plugin-sdk to 3.3.4 ([1639d41](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/1639d418e4721f3681fad1686f25837d81bad1de))
+* bumped SDK ([367d477](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/367d4770cb69254137b27292d1012170b73c55ac))
+* bumped SDK ([8eb00cc](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/8eb00cc25913fb77dc3172efb7f8472aec8d41da))
+* clear assignees instead of removing them ([9954cb2](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/9954cb2a4639381a55eb5daa3307841f4b4d9dae))
+* filter null or undefined labels in priority parsing ([8737727](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/87377271dc64b6f0edb2bdb89e1970f88b25c181))
+* support `issues.reopened` event in activity watcher ([513bf5a](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/513bf5a45d88ce888a42c92dd1f52661f8f5ff06))
+* support `issues.reopened` event in activity watcher ([0f4cfe6](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/0f4cfe6ec56a87d0c36a065a76d68b4429a02a5f))
+* update cron state in activity watcher ([0220267](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/02202673333e16f374c2de43d11d72b345ddacde))
+
+
+### Miscellaneous Chores
+
+* release 1.0.3 ([091b2a1](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/commit/091b2a1b8cc2ac05fc4de976ad920729447b9b07))
+
 ## [1.0.2](https://github.com/ubiquity-os-marketplace/daemon-disqualifier/compare/v1.0.1...v1.0.2) (2025-07-25)
 
 
