@@ -145,6 +145,8 @@ export const pluginSettingsSchema = T.Object(
 
 export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;
 
-export const envSchema = T.Object({});
+export const envSchema = T.Object({
+  UOS_AI_TOKEN: T.Optional(T.String()),
+});
 
 export type Env = StaticDecode<typeof envSchema>;

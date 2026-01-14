@@ -51,7 +51,7 @@ export async function getRemainingAvailableExtensions(
   const daysAssigned = parseFloat((diffTime / DAY_IN_MS).toFixed(2));
   const remainingExtensions = Math.ceil(extensionsLimit - extensionsLimit * (diffTime / (extensionsLimit * extensionTimeLapse)));
 
-  logger.debug("Remaining extensions", {
+  logger.info("Remaining extensions", {
     extensionsLimit,
     extensionTimeLapse: formatMillisecondsToHumanReadable(extensionTimeLapse),
     diffTime: formatMillisecondsToHumanReadable(diffTime),

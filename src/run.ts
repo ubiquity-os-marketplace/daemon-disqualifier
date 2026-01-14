@@ -45,11 +45,11 @@ async function populateDeadlineExtensionsThresholds(context: ContextPlugin) {
   config.availableDeadlineExtensions.amounts = priorityLabels.reduce((acc, curr) => {
     return { ...acc, [curr.name]: Math.max(1, highestPriority - curr.value) };
   }, {});
-  logger.debug("Populated available deadline extensions amounts", { availableDeadlineExtensions: config.availableDeadlineExtensions.amounts });
+  logger.ok("Populated available deadline extensions amounts", { availableDeadlineExtensions: config.availableDeadlineExtensions.amounts });
 }
 
 export async function run(context: Context) {
-  context.logger.debug("Will run with the following configuration:", { configuration: context.config });
+  context.logger.info("Will run with the following configuration:", { configuration: context.config });
   const augmentedContext = { ...context, adapters: await createAdapters() } as ContextPlugin;
 
   await populateDeadlineExtensionsThresholds(augmentedContext);

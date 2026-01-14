@@ -29,7 +29,7 @@ async function enforceRateLimit(): Promise<void> {
 
   if (rateProcessed >= RATE_LIMIT_MAX_ITEMS_PER_WINDOW) {
     const waitMs = RATE_LIMIT_WINDOW_MS - elapsed;
-    logger.info("Rate limit reached, waiting for reset.", {
+    logger.warn("Rate limit reached, waiting for reset.", {
       processedInWindow: rateProcessed,
       windowMs: RATE_LIMIT_WINDOW_MS,
       waitMs,
@@ -53,7 +53,7 @@ export async function runCronJob() {
   const kvAdapter = await createKvDatabaseHandler();
   const repositories = await kvAdapter.getAllRepositories();
 
-  logger.info(`Loaded KV data.`, {
+  logger.ok(`Loaded KV data.`, {
     repositories: repositories.length,
   });
 
@@ -85,7 +85,7 @@ export async function runCronJob() {
 
       for (const { issueNumber, commentId } of issues) {
         if (!commentId) {
-          logger.info("Removing entry without commentId", { owner, repo, issueNumber });
+          logger.warn("Removing entry without commentId", { owner, repo, issueNumber });
           await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
           continue;
         }
@@ -94,7 +94,7 @@ export async function runCronJob() {
           const issueResponse = await repoOctokit.rest.issues.get({ owner, repo, issue_number: issueNumber });
           const hasAssignees = !!(issueResponse.data.assignee || issueResponse.data.assignees?.length);
           if (issueResponse.data.state !== "open" || !hasAssignees) {
-            logger.info("Removing entry due to issue closed or no assignees", {
+            logger.debug("Removing entry due to issue closed or no assignees", {
               owner,
               repo,
               issueNumber,
@@ -114,7 +114,7 @@ export async function runCronJob() {
             comment_id: commentId,
           });
           const newBody = body + `\n<!-- ${pkg.name} update ${new Date().toISOString()} -->`;
-          logger.info(`Updated comment of ${url} (stopping after first valid issue)`, {
+          logger.ok(`Updated comment of ${url} (stopping after first valid issue)`, {
             newBodyLength: newBody.length,
             totalIssues: issues.length,
             issueNumber,
