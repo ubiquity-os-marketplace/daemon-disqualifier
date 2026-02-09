@@ -4,7 +4,6 @@ export const KV_PREFIX = "cron";
 
 export interface IssueEntry {
   issueNumber: number;
-  commentId: number;
 }
 
 export class KvDatabaseHandler {
@@ -14,27 +13,46 @@ export class KvDatabaseHandler {
     this._kv = kv;
   }
 
+  private _normalizeIssueEntries(value: unknown): IssueEntry[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const issueNumbers = new Set<number>();
+    for (const entry of value) {
+      if (typeof entry === "number") {
+        issueNumbers.add(entry);
+        continue;
+      }
+
+      if (typeof entry === "object" && entry !== null && "issueNumber" in entry) {
+        const issueNumber = entry.issueNumber;
+        if (typeof issueNumber === "number") {
+          issueNumbers.add(issueNumber);
+        }
+      }
+    }
+
+    return Array.from(issueNumbers).map((issueNumber) => ({ issueNumber }));
+  }
+
   private async _getIssueEntries(owner: string, repo: string): Promise<IssueEntry[]> {
     const key = [KV_PREFIX, owner, repo];
-    const result = await this._kv.get<IssueEntry[] | number[]>(key);
+    const result = await this._kv.get<unknown>(key);
     if (!result.value) return [];
-    const value = result.value;
-    if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object" && value[0] !== null && "issueNumber" in value[0]) {
-      return value as IssueEntry[];
-    }
-    return [];
+    return this._normalizeIssueEntries(result.value);
   }
 
   async getIssueNumbers(owner: string, repo: string): Promise<number[]> {
     return (await this._getIssueEntries(owner, repo)).map((e) => e.issueNumber);
   }
 
-  async addIssue(url: string, commentId: number): Promise<void> {
+  async addIssue(url: string): Promise<void> {
     const { owner, repo, issue_number } = parseIssueUrl(url);
     const key = [KV_PREFIX, owner, repo];
     const entries = await this._getIssueEntries(owner, repo);
     if (!entries.some((e) => e.issueNumber === issue_number)) {
-      entries.push({ issueNumber: issue_number, commentId });
+      entries.push({ issueNumber: issue_number });
       await this._kv.set(key, entries);
     }
   }
@@ -55,9 +73,9 @@ export class KvDatabaseHandler {
     }
   }
 
-  async updateIssue(currentUrl: string, newUrl: string, newCommentId: number): Promise<void> {
+  async updateIssue(currentUrl: string, newUrl: string): Promise<void> {
     await this.removeIssue(currentUrl);
-    await this.addIssue(newUrl, newCommentId);
+    await this.addIssue(newUrl);
   }
 
   async getAllRepositories(): Promise<Array<{ owner: string; repo: string; issues: IssueEntry[] }>> {
@@ -68,14 +86,7 @@ export class KvDatabaseHandler {
       if (entry.key.length >= 3) {
         const owner = entry.key[1] as string;
         const repo = entry.key[2] as string;
-        let issues: IssueEntry[] = [];
-        if (Array.isArray(entry.value) && entry.value.length > 0) {
-          if (typeof entry.value[0] === "object" && entry.value[0] !== null && "issueNumber" in entry.value[0]) {
-            issues = entry.value as IssueEntry[];
-          } else {
-            issues = (entry.value as number[]).map((issueNumber) => ({ issueNumber, commentId: 0 }));
-          }
-        }
+        const issues = this._normalizeIssueEntries(entry.value);
         repositories.push({ owner, repo, issues });
       }
     }

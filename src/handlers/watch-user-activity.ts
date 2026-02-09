@@ -36,7 +36,7 @@ export async function watchUserActivity(context: ContextPlugin) {
     log.logMessage.diff = log.logMessage.raw;
     const commentData = await context.commentHandler.postComment(context, log);
     if (commentData) {
-      await context.adapters.kv.addIssue(context.payload.issue.html_url, commentData.id);
+      await context.adapters.kv.addIssue(context.payload.issue.html_url);
     }
     await updateCronState(context);
     // We return early not to run the reminders section, which is handled by the CRON (avoids multiple reminders)

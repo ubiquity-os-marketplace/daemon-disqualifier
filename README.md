@@ -1,9 +1,8 @@
 # @ubiquity-os/daemon-disqualifier
 
-Watches user activity on issues, sends reminders on disqualification threshold, and eventually unassigns inactive user to ensure that
-tasks don't stall, and subtracts XP.
+Watches user activity on issues, sends reminders on disqualification threshold, and eventually unassigns inactive user to ensure that tasks don't stall, and subtracts XP.
 
-The system utilizes a dedicated CRON workflow (cron.yml) that runs periodically to manage and update reminders. This CRON system maintains state in a database and automatically enables/disables itself based on pending updates. It tracks user activity by updating comment timestamps and handles the reminder notifications and automatic unassign of inactive users according to the configured time frames.
+The system utilizes a dedicated CRON workflow (`cron.yml`) that runs periodically to manage and update reminders. This CRON system maintains state in a database and automatically enables/disables itself based on pending updates. During CRON runs it creates installation-scoped Octokit instances per repository and directly executes the reminder/disqualification flow without editing comments.
 
 ## Technical Architecture
 
@@ -41,6 +40,20 @@ Afterward, you can generate types for full auto-completion with
 
 ```shell
 bun run supabase:generate:local
+```
+
+### KV format and migration
+
+CRON-tracked issues are stored in KV under `["cron", owner, repo]` with object entries shaped like:
+
+```json
+[{ "issueNumber": 123 }]
+```
+
+Legacy entries that still include `commentId` can be migrated with:
+
+```shell
+deno run --allow-env --allow-net --unstable-kv src/scripts/migrate-kv-strip-comment-id.ts
 ```
 
 ### Test
