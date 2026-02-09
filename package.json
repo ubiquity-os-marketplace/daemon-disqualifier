@@ -57,6 +57,7 @@
     "@types/node": "^22.7.7",
     "cross-env": "7.0.3",
     "cspell": "8.8.3",
+    "dotenv-cli": "^11.0.0",
     "eslint": "9.15.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-check-file": "^2.8.0",
