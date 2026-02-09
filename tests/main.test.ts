@@ -10,7 +10,8 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createAdapters } from "../src/adapters";
 import { collectLinkedPullRequests } from "../src/helpers/collect-linked-pulls";
-import { run } from "../src/run";
+import { runRemindersForRepository } from "../src/handlers/watch-user-activity";
+import { populateDeadlineExtensionsThresholds } from "../src/run";
 import { ContextPlugin, pluginSettingsSchema } from "../src/types/plugin-input";
 import { db } from "./__mocks__/db";
 import { handlers } from "./__mocks__/handlers";
@@ -115,22 +116,24 @@ describe("User start/stop", () => {
   });
   it("Should run", async () => {
     const context = await createContext(1, 1);
-    const result = await run(context);
+    const result = await runReminderSweep(context);
     expect(result).toEqual({ message: "OK" });
   });
 
   it("Should process updates for all repos except optOut", async () => {
     const context = await createContext(1, 1);
     const infoSpy = spyOn(context.logger, "info");
-    const errorSpy = spyOn(context.logger, "error");
+    const debugSpy = spyOn(context.logger, "debug");
+    const okSpy = spyOn(context.logger, "ok");
+    const warnSpy = spyOn(context.logger, "warn");
 
-    await expect(run(context)).resolves.toEqual({ message: "OK" });
+    await expect(runReminderSweep(context)).resolves.toEqual({ message: "OK" });
 
-    expect(errorSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`), expect.anything());
+    expect(warnSpy).toHaveBeenCalledWith(`Failed to update activity for ${getIssueHtmlUrl(1)}, there is no assigned event.`);
+    expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`), expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
-    expect(infoSpy).toHaveBeenCalledWith(
+    expect(okSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
+    expect(okSpy).toHaveBeenCalledWith(
       expect.stringContaining("@user2 you have shown no activity and have been disqualified from this task."),
       expect.anything()
     );
@@ -140,13 +143,15 @@ describe("User start/stop", () => {
   it("Should include the previously excluded repo", async () => {
     const context = await createContext(1, 1);
     const infoSpy = spyOn(context.logger, "info");
+    const debugSpy = spyOn(context.logger, "debug");
+    const okSpy = spyOn(context.logger, "ok");
 
-    await expect(run(context)).resolves.toEqual({ message: "OK" });
+    await expect(runReminderSweep(context)).resolves.toEqual({ message: "OK" });
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
+    expect(debugSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
-    expect(infoSpy).toHaveBeenCalledWith(
+    expect(okSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
+    expect(okSpy).toHaveBeenCalledWith(
       expect.stringContaining("@user2 you have shown no activity and have been disqualified from this task."),
       expect.anything()
     );
@@ -155,16 +160,18 @@ describe("User start/stop", () => {
   it("Should eject the user after the disqualification period", async () => {
     const context = await createContext(4, 2);
     const infoSpy = spyOn(context.logger, "info");
+    const debugSpy = spyOn(context.logger, "debug");
+    const okSpy = spyOn(context.logger, "ok");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
-    await run(context);
+    await runReminderSweep(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
+    expect(debugSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
     expect(infoSpy).toHaveBeenCalledWith(`Passed the reminder threshold on ${getIssueHtmlUrl(3)} sending a reminder.`);
-    expect(infoSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
-    expect(infoSpy).toHaveBeenCalledWith("@user2 you have shown no activity and have been disqualified from this task.", expect.anything());
+    expect(okSpy).toHaveBeenCalledWith(`@user2, this task has been idle for a while. Please provide an update on your progress.`, expect.anything());
+    expect(okSpy).toHaveBeenCalledWith("@user2 you have shown no activity and have been disqualified from this task.", expect.anything());
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([]);
   });
@@ -175,7 +182,7 @@ describe("User start/stop", () => {
     const issue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
 
-    await run(context);
+    await runReminderSweep(context);
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 3 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -191,14 +198,14 @@ describe("User start/stop", () => {
 
   it("Should have nothing to do within the warning period", async () => {
     const context = await createContext(1, 2);
-    const infoSpy = spyOn(context.logger, "info");
+    const debugSpy = spyOn(context.logger, "debug");
 
     const issue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(issue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
 
-    await run(context);
+    await runReminderSweep(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
+    expect(debugSpy).toHaveBeenCalledWith(`Nothing to do for ${getIssueHtmlUrl(2)} still within due-time.`, expect.anything());
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 1 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.UBIQUITY, id: 1 }]);
@@ -250,12 +257,9 @@ describe("User start/stop", () => {
         });
       })
     );
-    await run(context);
+    await runReminderSweep(context);
 
-    expect(infoSpy).toHaveBeenCalledWith(
-      `@${STRINGS.USER}, this task has been idle for a while. Please provide an update on your progress.`,
-      expect.anything()
-    );
+    expect(infoSpy).toHaveBeenCalledWith("Will remind assignees because linked pull-requests are approved but not merged.", expect.anything());
 
     const updatedIssue = db.issue.findFirst({ where: { id: { equals: 4 } } });
     expect(updatedIssue?.assignees).toEqual([{ login: STRINGS.USER, id: 2 }]);
@@ -331,16 +335,12 @@ async function createContext(issueId: number, senderId: number): Promise<Context
   return {
     authToken: "",
     payload: {
-      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["issue"],
-      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["sender"],
-      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["repository"],
-      action: "edited",
+      issue: db.issue.findFirst({ where: { id: { equals: issueId } } }) as unknown as ContextPlugin["payload"]["issue"],
+      sender: db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as ContextPlugin["payload"]["sender"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as ContextPlugin["payload"]["repository"],
+      action: "reopened",
       installation: { id: 1 } as unknown as ContextPlugin["payload"]["installation"],
       organization: { login: STRINGS.UBIQUITY } as unknown as ContextPlugin["payload"]["organization"],
-      changes: {},
-      comment: db.issueComments.findFirst({
-        where: { issueId: { equals: issueId } },
-      }) as unknown as ContextPlugin<"issue_comment.edited">["payload"]["comment"],
     },
     logger: new Logs("debug"),
     config: {
@@ -361,10 +361,15 @@ async function createContext(issueId: number, senderId: number): Promise<Context
       },
     },
     octokit: new Octokit({ throttle: { enabled: false } }),
-    eventName: "issue_comment.edited",
+    eventName: "issues.reopened",
     env: {},
     command: null,
     commentHandler: new CommentHandler(),
     adapters: await createAdapters(),
   };
+}
+
+async function runReminderSweep(context: ContextPlugin) {
+  await populateDeadlineExtensionsThresholds(context);
+  return runRemindersForRepository(context, context.payload.repository);
 }
