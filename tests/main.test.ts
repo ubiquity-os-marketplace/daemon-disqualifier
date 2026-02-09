@@ -341,7 +341,7 @@ async function createContext(issueId: number, senderId: number): Promise<Context
       action: "reopened",
       installation: { id: 1 } as unknown as ContextPlugin["payload"]["installation"],
       organization: { login: STRINGS.UBIQUITY } as unknown as ContextPlugin["payload"]["organization"],
-    },
+    } as unknown as ContextPlugin["payload"],
     logger: new Logs("debug"),
     config: {
       negligenceThreshold: ONE_DAY * 7,

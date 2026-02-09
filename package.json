@@ -10,6 +10,7 @@
     "node": ">=24.11.1"
   },
   "scripts": {
+    "build": "tsc --noEmit",
     "start": "bun --watch --no-clear-screen src/worker.ts",
     "start:deno": "deno serve --unstable-sloppy-imports --allow-all --unstable-kv --watch --no-clear-screen --port 4000 src/worker.ts",
     "prebuild": "dotenv -- cross-env bun run supabase:generate:remote",
@@ -57,7 +58,6 @@
     "cross-env": "7.0.3",
     "cspell": "8.8.3",
     "dotenv": "^17.2.3",
-    "dotenv-cli": "7.4.2",
     "eslint": "9.15.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-check-file": "^2.8.0",
