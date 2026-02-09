@@ -69,5 +69,5 @@
       }
     }
   },
-  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@development"
+  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@feat/new-cron"
 }
