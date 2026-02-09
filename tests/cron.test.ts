@@ -1,11 +1,42 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { ContextPlugin } from "../src/types/plugin-input";
 
 describe("CRON tests", () => {
+  const originalEnv = {
+    APP_ID: process.env.APP_ID,
+    APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+  };
+
+  function restoreEnv() {
+    if (originalEnv.APP_ID === undefined) {
+      delete process.env.APP_ID;
+    } else {
+      process.env.APP_ID = originalEnv.APP_ID;
+    }
+
+    if (originalEnv.APP_PRIVATE_KEY === undefined) {
+      delete process.env.APP_PRIVATE_KEY;
+    } else {
+      process.env.APP_PRIVATE_KEY = originalEnv.APP_PRIVATE_KEY;
+    }
+
+    if (originalEnv.GITHUB_REPOSITORY === undefined) {
+      delete process.env.GITHUB_REPOSITORY;
+    } else {
+      process.env.GITHUB_REPOSITORY = originalEnv.GITHUB_REPOSITORY;
+    }
+  }
+
   beforeEach(async () => {
     mock.restore();
     mock.clearAllMocks();
+    restoreEnv();
+  });
+
+  afterEach(() => {
+    restoreEnv();
   });
 
   it("Should run reminder sweep directly and clean stale issues", async () => {
@@ -108,8 +139,6 @@ describe("CRON tests", () => {
       adapters: { kv: { hasData } },
     } as unknown as ContextPlugin;
 
-    delete process.env.APP_ID;
-    delete process.env.APP_PRIVATE_KEY;
     process.env.GITHUB_REPOSITORY = "ubiquity-os-marketplace/daemon-disqualifier";
     await updateCronState(context);
     expect(disableWorkflow).toHaveBeenCalledTimes(1);
