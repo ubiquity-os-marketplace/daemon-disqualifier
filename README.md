@@ -42,18 +42,12 @@ Afterward, you can generate types for full auto-completion with
 bun run supabase:generate:local
 ```
 
-### KV format and migration
+### KV format
 
 CRON-tracked issues are stored in KV under `["cron", owner, repo]` with object entries shaped like:
 
 ```json
 [{ "issueNumber": 123 }]
-```
-
-Legacy entries that still include `commentId` can be migrated with:
-
-```shell
-deno run --allow-env --allow-net --unstable-kv src/scripts/migrate-kv-strip-comment-id.ts
 ```
 
 ### Test

@@ -38,7 +38,7 @@ export class KvDatabaseHandler {
 
   private async _getIssueEntries(owner: string, repo: string): Promise<IssueEntry[]> {
     const key = [KV_PREFIX, owner, repo];
-    const result = await this._kv.get<unknown>(key);
+    const result = await this._kv.get<IssueEntry[]>(key);
     if (!result.value) return [];
     return this._normalizeIssueEntries(result.value);
   }
