@@ -1,8 +1,9 @@
 {
-  "name": "Daemon Disqualifier",
+  "name": "@ubiquity-os/daemon-disqualifier",
+  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@feat/new-cron",
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "ubiquity:listeners": ["issues.assigned", "issues.reopened"],
-  "skipBotEvents": false,
+  "skipBotEvents": true,
   "configuration": {
     "default": {},
     "type": "object",
@@ -68,6 +69,5 @@
         }
       }
     }
-  },
-  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@feat/new-cron"
+  }
 }
