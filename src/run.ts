@@ -3,7 +3,7 @@ import { createAdapters } from "./adapters/index";
 import { watchUserActivity } from "./handlers/watch-user-activity";
 import { ContextPlugin } from "./types/plugin-input";
 
-async function populateDeadlineExtensionsThresholds(context: ContextPlugin) {
+export async function populateDeadlineExtensionsThresholds(context: ContextPlugin) {
   const { config, octokit, logger } = context;
 
   if (!config.availableDeadlineExtensions.enabled || Object.keys(config.availableDeadlineExtensions.amounts).length) {
