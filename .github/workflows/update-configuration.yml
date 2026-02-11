@@ -17,3 +17,4 @@ jobs:
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
         with:
           treatAsEsm: "true"
+          skipBotEvents: false

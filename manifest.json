@@ -1,9 +1,9 @@
 {
   "name": "@ubiquity-os/daemon-disqualifier",
-  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@development",
+  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@codex/fix/manifest-build-daemon-disqualifier-daemon-disqualifier-u2",
   "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
   "ubiquity:listeners": ["issues.assigned", "issues.reopened"],
-  "skipBotEvents": true,
+  "skipBotEvents": false,
   "configuration": {
     "default": {},
     "type": "object",
