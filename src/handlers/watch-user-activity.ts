@@ -1,17 +1,12 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { updateCronState } from "../cron/workflow";
 import { removeEntryFromDatabase } from "../helpers/remind-and-remove";
-import { commentUpdateMetadataPattern } from "../helpers/structured-metadata";
 import { getPriorityValue, parsePriceLabel } from "../helpers/task-metadata";
 import { updateTaskReminder } from "../helpers/task-update";
 import { ContextPlugin } from "../types/plugin-input";
 import { formatMillisecondsToHumanReadable } from "./time-format";
 
 type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"]["0"];
-
-function isIssueComment(context: ContextPlugin): context is ContextPlugin<"issue_comment.edited"> {
-  return "comment" in context.payload;
-}
 
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
@@ -36,25 +31,20 @@ export async function watchUserActivity(context: ContextPlugin) {
     log.logMessage.diff = log.logMessage.raw;
     const commentData = await context.commentHandler.postComment(context, log);
     if (commentData) {
-      await context.adapters.kv.addIssue(context.payload.issue.html_url, commentData.id);
+      await context.adapters.kv.addIssue(context.payload.issue.html_url);
     }
     await updateCronState(context);
     // We return early not to run the reminders section, which is handled by the CRON (avoids multiple reminders)
     return { message: "OK" };
   }
-
-  if (isIssueComment(context)) {
-    if (commentUpdateMetadataPattern.test(context.payload.comment.body)) {
-      const repo = context.payload.repository;
-      logger.info(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
-      await updateReminders(context, repo);
-      await updateCronState(context);
-      return { message: "OK" };
-    } else {
-      return { message: logger.debug("The comment is not related to any daemon-disqualifier comment edit.").logMessage.raw };
-    }
-  }
   return { message: logger.warn(`Unsupported event ${context.eventName}`).logMessage.raw };
+}
+
+export async function runRemindersForRepository(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"]) {
+  context.logger.info(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
+  await updateReminders(context, repo);
+  await updateCronState(context);
+  return { message: "OK" };
 }
 
 /*
