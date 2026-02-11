@@ -111,7 +111,7 @@ describe("CRON tests", () => {
     expect(runRemindersForRepository).toHaveBeenCalledTimes(1);
     expect(runRemindersForRepository).toHaveBeenCalledWith(
       expect.objectContaining({
-        eventName: "issues.reopened",
+        eventName: "issue_comment.edited",
         payload: expect.objectContaining({
           issue: expect.objectContaining({ number: issue1.issueNumber }),
           repository: expect.objectContaining({ name: repo1 }),

@@ -117,11 +117,11 @@ function buildCronContext(args: {
     commentHandler: new CommentHandler(),
     config: args.config,
     env: {},
-    eventName: "issues.reopened",
+    eventName: "issue_comment.edited",
     logger,
     octokit: args.octokit,
     payload: {
-      action: "reopened",
+      action: "edited",
       installation: { id: 0 },
       issue: args.issue,
       organization: { login: args.owner },
