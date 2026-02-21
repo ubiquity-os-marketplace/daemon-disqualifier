@@ -12,7 +12,7 @@ jobs:
     permissions: write-all
 
     steps:
-      - uses: Meniole/action-deploy-plugin@feat/320-dist-artifact-branches
+      - uses: ubiquity-os/action-deploy-plugin@feat/320-dist-artifact-branches
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
