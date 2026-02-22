@@ -12,7 +12,7 @@ jobs:
     permissions: write-all
 
     steps:
-      - uses: ubiquity-os/action-deploy-plugin@v1.2.0
+      - uses: ubiquity-os/action-deploy-plugin
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
