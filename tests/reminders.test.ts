@@ -27,7 +27,6 @@ describe("Reminder tests", () => {
     const f = mock(() => Promise.resolve([]));
     spyOn(await import("../src/helpers/structured-metadata"), "getCommentsFromMetadata").mockImplementation(f);
     spyOn(await import("../src/helpers/structured-metadata"), "createStructuredMetadata").mockReturnValue("");
-    spyOn(await import("../src/helpers/structured-metadata"), "commentUpdateMetadataPattern").mockReturnValue(/stub/ as never);
     await updateTaskReminder(
       {
         logger: new Logs("debug"),

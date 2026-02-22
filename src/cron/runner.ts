@@ -5,9 +5,9 @@ import { ConfigurationHandler } from "@ubiquity-os/plugin-sdk/configuration";
 import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import manifest from "../../manifest.json" with { type: "json" };
-import pkg from "../../package.json" with { type: "json" };
-import { createKvDatabaseHandler, IssueEntry } from "../adapters/kv-database-handler";
-import { run } from "../run";
+import { createKvDatabaseHandler, IssueEntry, KvDatabaseHandler } from "../adapters/kv-database-handler";
+import { runRemindersForRepository } from "../handlers/watch-user-activity";
+import { populateDeadlineExtensionsThresholds } from "../run";
 import { ContextPlugin, PluginSettings, pluginSettingsSchema } from "../types/plugin-input";
 
 const RATE_LIMIT_MAX_ITEMS_PER_WINDOW = 500;
@@ -103,13 +103,14 @@ async function resolveRepoConfig(octokit: ContextPlugin["octokit"], owner: strin
   }
 }
 
-function buildSyntheticCronContext(args: {
+function buildCronContext(args: {
   owner: string;
   repo: string;
   issue: RepoIssue;
   config: PluginSettings;
   octokit: ContextPlugin["octokit"];
-}): Parameters<typeof run>[0] {
+  kvAdapter: KvDatabaseHandler;
+}): ContextPlugin {
   return {
     authToken: "",
     command: null,
@@ -121,10 +122,6 @@ function buildSyntheticCronContext(args: {
     octokit: args.octokit,
     payload: {
       action: "edited",
-      changes: {},
-      comment: {
-        body: `<!-- ${pkg.name} update ${new Date().toISOString()} -->`,
-      },
       installation: { id: 0 },
       issue: args.issue,
       organization: { login: args.owner },
@@ -137,11 +134,14 @@ function buildSyntheticCronContext(args: {
       },
       sender: {
         id: 0,
-        login: pkg.name,
+        login: "daemon-disqualifier-cron",
         type: "Bot",
       },
     },
-  } as unknown as Parameters<typeof run>[0];
+    adapters: {
+      kv: args.kvAdapter,
+    },
+  } as unknown as ContextPlugin;
 }
 
 export async function runCronJob() {
@@ -202,7 +202,7 @@ export async function runCronJob() {
           }
 
           issueToTrigger = issueResponse.data;
-          logger.ok(`Selected issue for synthetic CRON trigger (stopping after first valid issue).`, {
+          logger.ok(`Selected issue for CRON reminder sweep (stopping after first valid issue).`, {
             totalIssues: issues.length,
             issueNumber,
             url,
@@ -222,7 +222,7 @@ export async function runCronJob() {
       }
 
       if (!issueToTrigger) {
-        logger.debug("No valid issue found to trigger synthetic CRON run.", {
+        logger.debug("No valid issue found to trigger CRON reminder sweep.", {
           owner,
           repo,
         });
@@ -231,20 +231,22 @@ export async function runCronJob() {
 
       const config = await resolveRepoConfig(repoOctokit, owner, repo);
       if (!config) {
-        logger.warn("No plugin configuration found for repository; skipping synthetic CRON run.", { owner, repo });
+        logger.warn("No plugin configuration found for repository; skipping CRON reminder sweep.", { owner, repo });
         continue;
       }
 
-      const context = buildSyntheticCronContext({
+      const context = buildCronContext({
         owner,
         repo,
         issue: issueToTrigger,
         config,
         octokit: repoOctokit,
+        kvAdapter,
       });
 
-      await run(context);
-      logger.ok("Processed repository updates directly through synthetic context.", {
+      await populateDeadlineExtensionsThresholds(context);
+      await runRemindersForRepository(context, context.payload.repository);
+      logger.ok("Processed repository updates directly through CRON reminder sweep.", {
         owner,
         repo,
         issueNumber: issueToTrigger.number,

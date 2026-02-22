@@ -1,22 +1,59 @@
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { ContextPlugin } from "../src/types/plugin-input";
 
 describe("CRON tests", () => {
+  const originalEnv = {
+    APP_ID: process.env.APP_ID,
+    APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+  };
+
+  function restoreEnv() {
+    if (originalEnv.APP_ID === undefined) {
+      delete process.env.APP_ID;
+    } else {
+      process.env.APP_ID = originalEnv.APP_ID;
+    }
+
+    if (originalEnv.APP_PRIVATE_KEY === undefined) {
+      delete process.env.APP_PRIVATE_KEY;
+    } else {
+      process.env.APP_PRIVATE_KEY = originalEnv.APP_PRIVATE_KEY;
+    }
+
+    if (originalEnv.GITHUB_REPOSITORY === undefined) {
+      delete process.env.GITHUB_REPOSITORY;
+    } else {
+      process.env.GITHUB_REPOSITORY = originalEnv.GITHUB_REPOSITORY;
+    }
+  }
+
   beforeEach(async () => {
     mock.restore();
     mock.clearAllMocks();
+    restoreEnv();
   });
 
-  it("Should trigger direct synthetic runs and clean stale issues", async () => {
+  afterEach(() => {
+    restoreEnv();
+  });
+
+  it("Should run reminder sweep directly and clean stale issues", async () => {
     const issue1 = { issueNumber: 1 };
     const issue2 = { issueNumber: 2 };
     const owner = "ubiquity-os-marketplace";
     const repo1 = "daemon-disqualifier";
-    const run = mock(() => Promise.resolve({ message: "OK" }));
+    const sequence: string[] = [];
+    const runRemindersForRepository = mock(() => {
+      sequence.push("reminders");
+      return Promise.resolve({ message: "OK" });
+    });
+    const populateDeadlineExtensionsThresholds = mock(() => {
+      sequence.push("populate");
+      return Promise.resolve();
+    });
     const removeIssueByNumber = mock(() => Promise.resolve());
-    const getComment = mock(() => Promise.resolve({ data: { body: "" } }));
-    const updateComment = mock(() => Promise.resolve({ data: { body: "" } }));
     const getIssue = mock(({ issue_number }: { issue_number: number }) => {
       if (issue_number === issue2.issueNumber) {
         return { data: { number: issue2.issueNumber, assignees: [], state: "closed" } };
@@ -40,8 +77,6 @@ describe("CRON tests", () => {
         apps: { getRepoInstallation: mock(() => ({ data: { id: 1 } })) },
         issues: {
           get: getIssue,
-          getComment,
-          updateComment,
         },
       },
     } as never);
@@ -50,7 +85,8 @@ describe("CRON tests", () => {
       Promise.resolve({} as never)
     );
 
-    spyOn(await import("../src/run"), "run").mockImplementation(run as never);
+    spyOn(await import("../src/run"), "populateDeadlineExtensionsThresholds").mockImplementation(populateDeadlineExtensionsThresholds as never);
+    spyOn(await import("../src/handlers/watch-user-activity"), "runRemindersForRepository").mockImplementation(runRemindersForRepository as never);
 
     spyOn(await import("../src/adapters/kv-database-handler"), "createKvDatabaseHandler").mockReturnValue(
       Promise.resolve({
@@ -71,20 +107,19 @@ describe("CRON tests", () => {
     await runCronJob();
 
     expect(removeIssueByNumber).toHaveBeenCalledWith(owner, repo1, issue2.issueNumber);
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledWith(
+    expect(populateDeadlineExtensionsThresholds).toHaveBeenCalledTimes(1);
+    expect(runRemindersForRepository).toHaveBeenCalledTimes(1);
+    expect(runRemindersForRepository).toHaveBeenCalledWith(
       expect.objectContaining({
         eventName: "issue_comment.edited",
         payload: expect.objectContaining({
           issue: expect.objectContaining({ number: issue1.issueNumber }),
-          comment: expect.objectContaining({
-            body: expect.stringContaining("daemon-disqualifier update"),
-          }),
+          repository: expect.objectContaining({ name: repo1 }),
         }),
-      })
+      }),
+      expect.objectContaining({ name: repo1 })
     );
-    expect(getComment).not.toHaveBeenCalled();
-    expect(updateComment).not.toHaveBeenCalled();
+    expect(sequence).toEqual(["populate", "reminders"]);
     expect(getIssue).toHaveBeenCalledWith({
       issue_number: issue2.issueNumber,
       owner,
@@ -104,8 +139,6 @@ describe("CRON tests", () => {
       adapters: { kv: { hasData } },
     } as unknown as ContextPlugin;
 
-    delete process.env.APP_ID;
-    delete process.env.APP_PRIVATE_KEY;
     process.env.GITHUB_REPOSITORY = "ubiquity-os-marketplace/daemon-disqualifier";
     await updateCronState(context);
     expect(disableWorkflow).toHaveBeenCalledTimes(1);
