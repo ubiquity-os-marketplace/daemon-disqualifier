@@ -13,7 +13,7 @@
     "build": "tsc --noEmit",
     "start": "bun --watch --no-clear-screen src/worker.ts",
     "start:deno": "deno serve --unstable-sloppy-imports --allow-all --unstable-kv --watch --no-clear-screen --port 4000 src/worker.ts",
-    "prebuild": "dotenv -- cross-env bun run supabase:generate:remote",
+    "prebuild": "bun run prepare:manifest && dotenv -- cross-env bun run supabase:generate:remote",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
@@ -23,7 +23,7 @@
     "test": "bun test --preload=./tests/setup.ts --coverage",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
     "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\"",
-    "prepare:manifest": "node ./scripts/prepare-manifest.mjs"
+    "prepare:manifest": "curl -fsSL https://raw.githubusercontent.com/ubiquity-os/action-deploy-plugin/main/.github/scripts/update-manifest.js | node - ."
   },
   "keywords": [
     "typescript",
