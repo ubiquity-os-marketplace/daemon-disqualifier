@@ -23,7 +23,7 @@
     "test": "bun test --preload=./tests/setup.ts --coverage",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
     "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\"",
-    "prepare:manifest": "curl -fsSL https://raw.githubusercontent.com/ubiquity-os/action-deploy-plugin/main/.github/scripts/update-manifest.js | node - ."
+    "prepare:manifest": "bun x @ubiquity-os/plugin-manifest-tool ."
   },
   "keywords": [
     "typescript",
