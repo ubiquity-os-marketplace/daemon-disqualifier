@@ -23,7 +23,7 @@
     "test": "bun test --preload=./tests/setup.ts --coverage",
     "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
     "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\"",
-    "prepare:manifest": "bunx @ubiquity-os/plugin-manifest-tool@latest ."
+    "prepare:manifest": "MANIFEST_PATH=${MANIFEST_PATH:-manifest.json} GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-.} GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-local/${npm_package_name:-plugin}} GITHUB_REF_NAME=${GITHUB_REF_NAME:-local} bunx @ubiquity-os/plugin-manifest-tool@latest"
   },
   "keywords": [
     "typescript",
