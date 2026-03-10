@@ -3,6 +3,7 @@ name: "Update Configuration and Build"
 on:
   workflow_dispatch:
   push:
+  delete:
 
 jobs:
   update:
@@ -16,5 +17,6 @@ jobs:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
         with:
+          action: ${{ github.event_name == 'delete' && 'delete' || 'publish' }}
           treatAsEsm: "true"
           skipBotEvents: false

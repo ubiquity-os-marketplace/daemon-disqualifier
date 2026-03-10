@@ -16,3 +16,5 @@ cypress/screenshots
 .wrangler
 test-dashboard.md
 db.json
+manifest.json
+dist/
