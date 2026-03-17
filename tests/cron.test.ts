@@ -39,16 +39,23 @@ describe("CRON tests", () => {
     restoreEnv();
   });
 
+  function createMockManifest(shortName: string) {
+    return {
+      name: "mock-plugin",
+      short_name: shortName,
+    };
+  }
+
   it("Should resolve action manifests from dist refs before the source ref", async () => {
     const { CronConfigurationHandler } = await import("../src/cron/configuration");
     const getManifest = spyOn((await import("@ubiquity-os/plugin-sdk/configuration")).ConfigurationHandler.prototype, "getManifest");
 
     getManifest.mockImplementation(async (plugin) => {
       if (typeof plugin === "string") {
-        return { short_name: plugin } as never;
+        return createMockManifest(plugin) as never;
       }
 
-      return plugin.ref === "dist/development" ? ({ short_name: `${plugin.owner}/${plugin.repo}@${plugin.ref}` } as never) : null;
+      return plugin.ref === "dist/development" ? (createMockManifest(`${plugin.owner}/${plugin.repo}@${plugin.ref}`) as never) : null;
     });
 
     const handler = new CronConfigurationHandler(new Logs("debug"), {} as never);
@@ -59,9 +66,7 @@ describe("CRON tests", () => {
       ref: "development",
     });
 
-    expect(manifest).toEqual({
-      short_name: "ubiquity-os-marketplace/daemon-disqualifier@dist/development",
-    });
+    expect(manifest).toEqual(createMockManifest("ubiquity-os-marketplace/daemon-disqualifier@dist/development"));
     expect(getManifest.mock.calls).toEqual([
       [
         {
@@ -80,10 +85,10 @@ describe("CRON tests", () => {
 
     getManifest.mockImplementation(async (plugin) => {
       if (typeof plugin === "string") {
-        return { short_name: plugin } as never;
+        return createMockManifest(plugin) as never;
       }
 
-      return plugin.ref === "development" ? ({ short_name: `${plugin.owner}/${plugin.repo}@${plugin.ref}` } as never) : null;
+      return plugin.ref === "development" ? (createMockManifest(`${plugin.owner}/${plugin.repo}@${plugin.ref}`) as never) : null;
     });
 
     const handler = new CronConfigurationHandler(new Logs("debug"), {} as never);
@@ -94,9 +99,7 @@ describe("CRON tests", () => {
       ref: "development",
     });
 
-    expect(manifest).toEqual({
-      short_name: "ubiquity-os-marketplace/daemon-disqualifier@development",
-    });
+    expect(manifest).toEqual(createMockManifest("ubiquity-os-marketplace/daemon-disqualifier@development"));
     expect(getManifest.mock.calls).toEqual([
       [
         {
