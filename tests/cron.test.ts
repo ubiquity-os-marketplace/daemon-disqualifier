@@ -39,6 +39,124 @@ describe("CRON tests", () => {
     restoreEnv();
   });
 
+  it("Should resolve action manifests from dist refs before the source ref", async () => {
+    const { CronConfigurationHandler } = await import("../src/cron/configuration");
+    const getManifest = spyOn((await import("@ubiquity-os/plugin-sdk/configuration")).ConfigurationHandler.prototype, "getManifest");
+
+    getManifest.mockImplementation(async (plugin) => {
+      if (typeof plugin === "string") {
+        return { short_name: plugin } as never;
+      }
+
+      return plugin.ref === "dist/development" ? ({ short_name: `${plugin.owner}/${plugin.repo}@${plugin.ref}` } as never) : null;
+    });
+
+    const handler = new CronConfigurationHandler(new Logs("debug"), {} as never);
+    const manifest = await handler.getManifest({
+      owner: "ubiquity-os-marketplace",
+      repo: "daemon-disqualifier",
+      workflowId: "compute.yml",
+      ref: "development",
+    });
+
+    expect(manifest).toEqual({
+      short_name: "ubiquity-os-marketplace/daemon-disqualifier@dist/development",
+    });
+    expect(getManifest.mock.calls).toEqual([
+      [
+        {
+          owner: "ubiquity-os-marketplace",
+          repo: "daemon-disqualifier",
+          workflowId: "compute.yml",
+          ref: "dist/development",
+        },
+      ],
+    ]);
+  });
+
+  it("Should fall back to the source ref when the dist manifest is missing", async () => {
+    const { CronConfigurationHandler } = await import("../src/cron/configuration");
+    const getManifest = spyOn((await import("@ubiquity-os/plugin-sdk/configuration")).ConfigurationHandler.prototype, "getManifest");
+
+    getManifest.mockImplementation(async (plugin) => {
+      if (typeof plugin === "string") {
+        return { short_name: plugin } as never;
+      }
+
+      return plugin.ref === "development" ? ({ short_name: `${plugin.owner}/${plugin.repo}@${plugin.ref}` } as never) : null;
+    });
+
+    const handler = new CronConfigurationHandler(new Logs("debug"), {} as never);
+    const manifest = await handler.getManifest({
+      owner: "ubiquity-os-marketplace",
+      repo: "daemon-disqualifier",
+      workflowId: "compute.yml",
+      ref: "development",
+    });
+
+    expect(manifest).toEqual({
+      short_name: "ubiquity-os-marketplace/daemon-disqualifier@development",
+    });
+    expect(getManifest.mock.calls).toEqual([
+      [
+        {
+          owner: "ubiquity-os-marketplace",
+          repo: "daemon-disqualifier",
+          workflowId: "compute.yml",
+          ref: "dist/development",
+        },
+      ],
+      [
+        {
+          owner: "ubiquity-os-marketplace",
+          repo: "daemon-disqualifier",
+          workflowId: "compute.yml",
+          ref: "development",
+        },
+      ],
+    ]);
+  });
+
+  it("Should leave url, worker, dist, and ref-less manifest lookups unchanged", async () => {
+    const { CronConfigurationHandler } = await import("../src/cron/configuration");
+    const getManifest = spyOn((await import("@ubiquity-os/plugin-sdk/configuration")).ConfigurationHandler.prototype, "getManifest").mockResolvedValue(
+      null as never
+    );
+    const handler = new CronConfigurationHandler(new Logs("debug"), {} as never);
+
+    await handler.getManifest("https://example.com/worker");
+    await handler.getManifest({
+      owner: "ubiquity-os-marketplace",
+      repo: "daemon-disqualifier",
+      workflowId: "compute.yml",
+    });
+    await handler.getManifest({
+      owner: "ubiquity-os-marketplace",
+      repo: "daemon-disqualifier",
+      workflowId: "compute.yml",
+      ref: "dist/development",
+    });
+
+    expect(getManifest.mock.calls).toEqual([
+      ["https://example.com/worker"],
+      [
+        {
+          owner: "ubiquity-os-marketplace",
+          repo: "daemon-disqualifier",
+          workflowId: "compute.yml",
+        },
+      ],
+      [
+        {
+          owner: "ubiquity-os-marketplace",
+          repo: "daemon-disqualifier",
+          workflowId: "compute.yml",
+          ref: "dist/development",
+        },
+      ],
+    ]);
+  });
+
   it("Should run reminder sweep directly and clean stale issues", async () => {
     const issue1 = { issueNumber: 1 };
     const issue2 = { issueNumber: 2 };

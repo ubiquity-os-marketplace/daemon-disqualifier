@@ -1,14 +1,12 @@
 import { createAppAuth } from "@octokit/auth-app";
-import { Value } from "@sinclair/typebox/value";
 import { CommentHandler } from "@ubiquity-os/plugin-sdk";
-import { ConfigurationHandler } from "@ubiquity-os/plugin-sdk/configuration";
 import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import manifest from "../../manifest.json" with { type: "json" };
 import { createKvDatabaseHandler, IssueEntry, KvDatabaseHandler } from "../adapters/kv-database-handler";
+import { resolveCronRepoConfig } from "./configuration";
 import { runRemindersForRepository } from "../handlers/watch-user-activity";
 import { populateDeadlineExtensionsThresholds } from "../run";
-import { ContextPlugin, PluginSettings, pluginSettingsSchema } from "../types/plugin-input";
+import { ContextPlugin, PluginSettings } from "../types/plugin-input";
 
 const RATE_LIMIT_MAX_ITEMS_PER_WINDOW = 500;
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -89,18 +87,7 @@ async function getInstallationOctokit(appOctokit: ContextPlugin["octokit"], owne
 }
 
 async function resolveRepoConfig(octokit: ContextPlugin["octokit"], owner: string, repo: string): Promise<PluginSettings | null> {
-  try {
-    const handler = new ConfigurationHandler(logger, octokit);
-    const parsedConfig = await handler.getSelfConfiguration(manifest, { owner, repo });
-    if (!parsedConfig) {
-      return null;
-    }
-    const withDefaults = Value.Default(pluginSettingsSchema, parsedConfig);
-    return Value.Decode(pluginSettingsSchema, withDefaults);
-  } catch (err) {
-    logger.error("Failed to resolve repository configuration.", { owner, repo, err });
-    return null;
-  }
+  return resolveCronRepoConfig(octokit, logger, owner, repo);
 }
 
 function buildCronContext(args: {
