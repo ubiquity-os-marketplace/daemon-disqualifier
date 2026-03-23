@@ -14,7 +14,7 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
   const { logger, octokit, payload } = context;
 
   if (!repo.owner) {
-    throw logger.error("No owner was found in the payload", { payload });
+    throw logger.warn("No owner was found in the payload", { payload });
   }
 
   if (typeof issue !== "number") {
@@ -26,7 +26,7 @@ export async function getMostRecentUserAssignmentEvent(context: ContextPlugin, r
   }
 
   const issueNumber = typeof issue === "number" ? issue : issue.number;
-  logger.debug(`Trying to find assignment event for the issue ${repo.owner.login}/${repo.name}/${issueNumber}`, {
+  logger.info(`Trying to find assignment event for the issue ${repo.owner.login}/${repo.name}/${issueNumber}`, {
     issueUrl: `https://github.com/${repo.owner.login}/${repo.name}/issues/${issueNumber}`,
   });
   const events = await octokit.paginate(octokit.rest.issues.listEvents, {
@@ -67,7 +67,7 @@ export async function getTaskAssignmentDetails(context: ContextPlugin, issue: Li
   };
 
   if (!metadata.taskAssignees?.length) {
-    logger.error(`Missing Assignees from ${issue.html_url}`);
+    logger.warn(`Missing Assignees from ${issue.html_url}`);
     return false;
   }
 
@@ -76,7 +76,7 @@ export async function getTaskAssignmentDetails(context: ContextPlugin, issue: Li
   if (durationInMs === 0) {
     // it could mean there was no time label set on the issue, but it could still be workable and priced
   } else if (durationInMs < 0 || !durationInMs) {
-    logger.error(`Invalid disqualification threshold found on ${issue.html_url}`);
+    logger.warn(`Invalid disqualification threshold found on ${issue.html_url}`);
     return false;
   }
 

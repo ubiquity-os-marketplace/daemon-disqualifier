@@ -3,7 +3,7 @@ import { Context } from "@ubiquity-os/plugin-sdk";
 import ms from "ms";
 import { Adapters } from "../adapters/index";
 
-export type SupportedEvents = "issues.assigned" | "issue_comment.edited" | "issues.reopened";
+export type SupportedEvents = "issues.assigned" | "issues.reopened";
 
 export type ContextPlugin<TEvents extends SupportedEvents = SupportedEvents> = Context<PluginSettings, Env, null, TEvents> & {
   adapters: Adapters;
@@ -145,6 +145,8 @@ export const pluginSettingsSchema = T.Object(
 
 export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;
 
-export const envSchema = T.Object({});
+export const envSchema = T.Object({
+  UOS_AI_TOKEN: T.Optional(T.String()),
+});
 
 export type Env = StaticDecode<typeof envSchema>;

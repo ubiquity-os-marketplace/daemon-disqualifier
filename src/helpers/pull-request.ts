@@ -25,7 +25,7 @@ export async function areLinkedPullRequestsApproved(context: ContextPlugin, issu
         name: prRepo,
         number: prNumber,
       });
-      logger.debug(`Pull request ${pullRequest.url} review decision: ${data.repository.pullRequest?.reviewDecision}`);
+      logger.info(`Pull request ${pullRequest.url} review decision: ${data.repository.pullRequest?.reviewDecision}`);
       if (data.repository.pullRequest?.reviewDecision === "APPROVED") {
         return true;
       }
