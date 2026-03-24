@@ -1,0 +1,92 @@
+{
+  "name": "@ubiquity-os/daemon-disqualifier",
+  "short_name": "ubiquity-os-marketplace/daemon-disqualifier@demo",
+  "description": "Watches user activity on issues, sends reminders on disqualification threshold, and unassign inactive users.",
+  "ubiquity:listeners": [
+    "issues.assigned",
+    "issues.reopened"
+  ],
+  "skipBotEvents": false,
+  "configuration": {
+    "default": {},
+    "type": "object",
+    "properties": {
+      "followUpInterval": {
+        "default": "3.5 days",
+        "description": "Delay to send reminders. 0 means disabled. Any other value is counted in days, e.g. 1,5 days",
+        "type": "string"
+      },
+      "prioritySpeed": {
+        "default": true,
+        "description": "Whether to rush the follow ups by the priority level",
+        "type": "boolean"
+      },
+      "negligenceThreshold": {
+        "default": "7 days",
+        "description": "Delay to unassign users. 0 means disabled and any other value is counted in days, e.g. 7 days",
+        "examples": [
+          "7 days",
+          "1 day"
+        ],
+        "type": "string"
+      },
+      "pullRequestRequired": {
+        "default": true,
+        "description": "Whether a pull request is required for the given issue on disqualify",
+        "examples": [
+          "true",
+          "false"
+        ],
+        "type": "boolean"
+      },
+      "availableDeadlineExtensions": {
+        "default": {},
+        "description": "The amount of deadline extensions available for a given priority label (how many reminders can be sent before disqualifying the user).",
+        "examples": [
+          {
+            "amounts": {
+              "Priority: 1 (Normal)": 5,
+              "Priority: 2 (Medium)": 4
+            }
+          }
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "default": true,
+            "type": "boolean"
+          },
+          "amounts": {
+            "default": {},
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "minimum": 1,
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "eventWhitelist": {
+        "default": [
+          "pull_request.review_requested",
+          "pull_request.ready_for_review",
+          "pull_request_review_comment.created",
+          "issue_comment.created",
+          "push"
+        ],
+        "description": "List of webhook event names to consider as valid activity on a task",
+        "examples": [
+          "pull_request.review_requested",
+          "issue_comment.created",
+          "push"
+        ],
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
