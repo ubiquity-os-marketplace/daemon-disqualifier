@@ -39,18 +39,14 @@ on:
 
 
 jobs:
-  publish-action-artifact:
-    name: "Publish Action Artifact"
+  prepare:
+    name: "Prepare Deployment Context"
     if: ${{ github.event_name != 'repository_dispatch' }}
     runs-on: ubuntu-latest
-    permissions: write-all
-    env:
-      BUILD_ACTION_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.build_action_enabled || vars.BUILD_ACTION_ENABLED || 'true' }}
-      DEPLOY_DENO_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_deno_enabled || vars.DEPLOY_DENO_ENABLED || 'false' }}
-      SKIP_BOT_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_bot_events || vars.SKIP_BOT_EVENTS || 'false' }}
-      EXCLUDE_SUPPORTED_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.exclude_supported_events || vars.EXCLUDE_SUPPORTED_EVENTS || '' }}
-
-
+    outputs:
+      source_ref: ${{ steps.refs.outputs.source_ref }}
+      is_tag_ref: ${{ steps.refs.outputs.is_tag_ref }}
+      is_artifact_ref: ${{ steps.refs.outputs.is_artifact_ref }}
     steps:
       - name: Resolve source ref
         id: refs
@@ -71,17 +67,22 @@ jobs:
             is_artifact_ref="true"
           fi
 
-          if [[ "$BUILD_ACTION_ENABLED" == "true" ]]; then
-            action_ref_branch="dist/${source_ref}"
-          else
-            action_ref_branch="${source_ref}"
-          fi
-
           echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
           echo "is_tag_ref=$is_tag_ref" >> "$GITHUB_OUTPUT"
           echo "is_artifact_ref=$is_artifact_ref" >> "$GITHUB_OUTPUT"
-          echo "ACTION_REF=${GITHUB_REPOSITORY}@${action_ref_branch}" >> "$GITHUB_ENV"
 
+  publish-action-artifact:
+    name: "Publish Action Artifact"
+    needs: prepare
+    if: ${{ github.event_name != 'repository_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions: write-all
+    env:
+      BUILD_ACTION_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.build_action_enabled || vars.BUILD_ACTION_ENABLED || 'true' }}
+      DEPLOY_DENO_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_deno_enabled || vars.DEPLOY_DENO_ENABLED || 'false' }}
+      SKIP_BOT_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_bot_events || vars.SKIP_BOT_EVENTS || 'false' }}
+      EXCLUDE_SUPPORTED_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.exclude_supported_events || vars.EXCLUDE_SUPPORTED_EVENTS || '' }}
+    steps:
       - name: Print deployment mode
         shell: bash
         run: |
@@ -89,10 +90,9 @@ jobs:
           echo "DEPLOY_DENO_ENABLED=${DEPLOY_DENO_ENABLED}"
           echo "SKIP_BOT_EVENTS=${SKIP_BOT_EVENTS}"
           echo "EXCLUDE_SUPPORTED_EVENTS=${EXCLUDE_SUPPORTED_EVENTS}"
-          echo "SOURCE_REF=${{ steps.refs.outputs.source_ref }}"
-          echo "IS_ARTIFACT_REF=${{ steps.refs.outputs.is_artifact_ref }}"
-          echo "IS_TAG_REF=${{ steps.refs.outputs.is_tag_ref }}"
-          echo "ACTION_REF=${ACTION_REF}"
+          echo "SOURCE_REF=${{ needs.prepare.outputs.source_ref }}"
+          echo "IS_ARTIFACT_REF=${{ needs.prepare.outputs.is_artifact_ref }}"
+          echo "IS_TAG_REF=${{ needs.prepare.outputs.is_tag_ref }}"
 
       - name: Publish action artifact branch
         if: ${{ env.BUILD_ACTION_ENABLED == 'true' }}
@@ -108,9 +108,9 @@ jobs:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
-
   deploy-deno:
     name: "Provision Deno App"
+    needs: prepare
     if: ${{ github.event_name != 'repository_dispatch' }}
     runs-on: ubuntu-latest
     permissions: write-all
@@ -120,39 +120,7 @@ jobs:
       DEPLOY_DENO_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_deno_enabled || vars.DEPLOY_DENO_ENABLED || 'false' }}
       SKIP_BOT_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_bot_events || vars.SKIP_BOT_EVENTS || 'false' }}
       EXCLUDE_SUPPORTED_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.exclude_supported_events || vars.EXCLUDE_SUPPORTED_EVENTS || '' }}
-
-
     steps:
-      - name: Resolve source ref
-        id: refs
-        shell: bash
-        run: |
-          source_ref="$(echo '${{ github.event.ref || github.event.workflow_run.head_branch || github.ref }}' | sed 's#refs/heads/##' | sed 's#refs/tags/##')"
-          if [[ -z "$source_ref" ]]; then
-            source_ref="${GITHUB_REF_NAME}"
-          fi
-
-          is_tag_ref="false"
-          if [[ "${{ github.event.ref_type || '' }}" == "tag" ]] || [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
-            is_tag_ref="true"
-          fi
-
-          is_artifact_ref="false"
-          if [[ "$source_ref" == dist/* ]]; then
-            is_artifact_ref="true"
-          fi
-
-          if [[ "$BUILD_ACTION_ENABLED" == "true" ]]; then
-            action_ref_branch="dist/${source_ref}"
-          else
-            action_ref_branch="${source_ref}"
-          fi
-
-          echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
-          echo "is_tag_ref=$is_tag_ref" >> "$GITHUB_OUTPUT"
-          echo "is_artifact_ref=$is_artifact_ref" >> "$GITHUB_OUTPUT"
-          echo "ACTION_REF=${GITHUB_REPOSITORY}@${action_ref_branch}" >> "$GITHUB_ENV"
-
       - name: Print deployment mode
         shell: bash
         run: |
@@ -160,23 +128,21 @@ jobs:
           echo "DEPLOY_DENO_ENABLED=${DEPLOY_DENO_ENABLED}"
           echo "SKIP_BOT_EVENTS=${SKIP_BOT_EVENTS}"
           echo "EXCLUDE_SUPPORTED_EVENTS=${EXCLUDE_SUPPORTED_EVENTS}"
-          echo "SOURCE_REF=${{ steps.refs.outputs.source_ref }}"
-          echo "IS_ARTIFACT_REF=${{ steps.refs.outputs.is_artifact_ref }}"
-          echo "IS_TAG_REF=${{ steps.refs.outputs.is_tag_ref }}"
-          echo "ACTION_REF=${ACTION_REF}"
+          echo "SOURCE_REF=${{ needs.prepare.outputs.source_ref }}"
+          echo "IS_ARTIFACT_REF=${{ needs.prepare.outputs.is_artifact_ref }}"
+          echo "IS_TAG_REF=${{ needs.prepare.outputs.is_tag_ref }}"
 
       - uses: actions/checkout@v4
-        if: ${{ github.event_name != 'delete' && env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' }}
+        if: ${{ github.event_name != 'delete' && env.DEPLOY_DENO_ENABLED == 'true' && needs.prepare.outputs.is_tag_ref != 'true' && needs.prepare.outputs.is_artifact_ref != 'true' }}
 
       - uses: ubiquity-os/deno-deploy@issue-17-deno-deploy-app-migration
-        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' }}
+        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && needs.prepare.outputs.is_tag_ref != 'true' && needs.prepare.outputs.is_artifact_ref != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
           APP_INSTALLATION_ID: ${{ secrets.APP_INSTALLATION_ID }}
-          ACTION_REF: ${{ env.ACTION_REF }}
           LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
         with:
           token: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
