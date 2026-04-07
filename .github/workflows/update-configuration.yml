@@ -37,7 +37,6 @@ on:
       - deno_deploy.build.routed
   delete:
 
-
 jobs:
   prepare:
     name: "Prepare Deployment Context"
