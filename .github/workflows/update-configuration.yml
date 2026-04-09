@@ -160,7 +160,8 @@ jobs:
       - uses: actions/checkout@v6
         if: ${{ needs.resolve-context.outputs.deno_action != 'delete' }}
 
-      - uses: ubiquity-os/deno-deploy@main
+      - id: deno_deploy
+        uses: ubiquity-os/deno-deploy@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
@@ -173,3 +174,62 @@ jobs:
           action: ${{ needs.resolve-context.outputs.deno_action }}
           app: ${{ secrets.DENO_PROJECT_NAME }}
           entrypoint: src/worker.ts
+
+      - name: Ensure Deno KV database
+        if: ${{ needs.resolve-context.outputs.deno_action == 'provision' }}
+        shell: bash
+        env:
+          NO_COLOR: "1"
+          DENO_API_TOKEN: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
+          KV_NAME: ${{ github.event.repository.name }}
+          APP_SLUG: ${{ steps.deno_deploy.outputs.app_slug }}
+          ORGANIZATION_SLUG: ${{ steps.deno_deploy.outputs.organization_slug }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$KV_NAME" ]]; then
+            echo "::error::KV_NAME is required."
+            exit 1
+          fi
+
+          if [[ -z "$APP_SLUG" ]]; then
+            echo "::error::App slug output is missing from the Deno deploy step."
+            exit 1
+          fi
+
+          if [[ -z "$ORGANIZATION_SLUG" ]]; then
+            echo "::error::Organization slug output is missing from the Deno deploy step."
+            exit 1
+          fi
+
+          set +e
+          database_list_output="$(deno deploy database list "$KV_NAME" --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN" 2>&1)"
+          database_list_status=$?
+          set -e
+
+          if [[ $database_list_status -ne 0 ]]; then
+            printf '%s\n' "$database_list_output"
+            exit $database_list_status
+          fi
+
+          if printf '%s\n' "$database_list_output" | awk -v name="$KV_NAME" '$1 == name { found=1 } END { exit found ? 0 : 1 }'; then
+            echo "::notice::Deno KV database '$KV_NAME' already exists."
+          else
+            deno deploy database provision "$KV_NAME" --kind denokv --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN"
+          fi
+
+          set +e
+          assign_output="$(deno deploy database assign "$KV_NAME" --app "$APP_SLUG" --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN" 2>&1)"
+          assign_status=$?
+          set -e
+
+          if [[ $assign_status -ne 0 ]]; then
+            if printf '%s\n' "$assign_output" | tr '[:upper:]' '[:lower:]' | grep -Eq 'already (assigned|attached|linked)|already has .*deno kv database assigned'; then
+              echo "::notice::Deno KV database '$KV_NAME' is already assigned to '$APP_SLUG'."
+            else
+              printf '%s\n' "$assign_output"
+              exit $assign_status
+            fi
+          else
+            printf '%s\n' "$assign_output"
+          fi
