@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { db } from "./db";
-import issuesLabelsGet from "./routes/get-labels.json";
-import issueTimeline from "./routes/get-timeline.json";
+import issuesLabelsGet from "./routes/get-labels.json" with { type: "json" };
+import issueTimeline from "./routes/get-timeline.json" with { type: "json" };
 
 /**
  * Intercepts the routes and returns a custom payload
