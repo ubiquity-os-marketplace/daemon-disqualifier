@@ -35,16 +35,29 @@ on:
   delete:
 
 jobs:
-  deploy:
-    name: "Deploy (Action / Deno)"
+  resolve-context:
+    name: "Resolve Context"
     runs-on: ubuntu-latest
-    permissions: write-all
-    environment: ${{ (github.event.ref == 'refs/heads/main' || github.ref == 'refs/heads/main' || github.event.workflow_run.head_branch == 'main' || github.event.ref == 'refs/heads/demo' || github.ref == 'refs/heads/demo' || github.event.workflow_run.head_branch == 'demo') && 'main' || 'development' }}
+    permissions: read-all
     env:
       BUILD_ACTION_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.build_action_enabled || vars.BUILD_ACTION_ENABLED || 'true' }}
       DEPLOY_DENO_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_deno_enabled || vars.DEPLOY_DENO_ENABLED || 'false' }}
       SKIP_BOT_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_bot_events || vars.SKIP_BOT_EVENTS || 'false' }}
       EXCLUDE_SUPPORTED_EVENTS: ${{ github.event_name == 'workflow_dispatch' && inputs.exclude_supported_events || vars.EXCLUDE_SUPPORTED_EVENTS || '' }}
+    outputs:
+      source_ref: ${{ steps.refs.outputs.source_ref }}
+      is_tag_ref: ${{ steps.refs.outputs.is_tag_ref }}
+      is_dist_ref: ${{ steps.refs.outputs.is_dist_ref }}
+      build_action_enabled: ${{ steps.config.outputs.build_action_enabled }}
+      deploy_deno_enabled: ${{ steps.config.outputs.deploy_deno_enabled }}
+      skip_bot_events: ${{ steps.config.outputs.skip_bot_events }}
+      exclude_supported_events: ${{ steps.config.outputs.exclude_supported_events }}
+      should_publish_action_artifact: ${{ steps.config.outputs.should_publish_action_artifact }}
+      should_run_deno: ${{ steps.config.outputs.should_run_deno }}
+      artifact_environment: ${{ steps.config.outputs.artifact_environment }}
+      deno_environment: ${{ steps.config.outputs.deno_environment }}
+      artifact_action: ${{ steps.config.outputs.artifact_action }}
+      deno_action: ${{ steps.config.outputs.deno_action }}
 
     steps:
       - name: Resolve source ref
@@ -61,91 +74,326 @@ jobs:
             is_tag_ref="true"
           fi
 
-          is_artifact_ref="false"
+          is_dist_ref="false"
           if [[ "$source_ref" == dist/* ]]; then
-            is_artifact_ref="true"
-          fi
-
-          if [[ "$BUILD_ACTION_ENABLED" == "true" ]]; then
-            action_ref_branch="dist/${source_ref}"
-          else
-            action_ref_branch="${source_ref}"
+            is_dist_ref="true"
           fi
 
           echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
           echo "is_tag_ref=$is_tag_ref" >> "$GITHUB_OUTPUT"
-          echo "is_artifact_ref=$is_artifact_ref" >> "$GITHUB_OUTPUT"
-          echo "ACTION_REF=${GITHUB_REPOSITORY}@${action_ref_branch}" >> "$GITHUB_ENV"
+          echo "is_dist_ref=$is_dist_ref" >> "$GITHUB_OUTPUT"
 
-      - name: Print deployment mode
+      - name: Resolve deployment settings
+        id: config
         shell: bash
+        env:
+          SOURCE_REF: ${{ steps.refs.outputs.source_ref }}
+          IS_TAG_REF: ${{ steps.refs.outputs.is_tag_ref }}
+          IS_DIST_REF: ${{ steps.refs.outputs.is_dist_ref }}
         run: |
-          echo "BUILD_ACTION_ENABLED=${BUILD_ACTION_ENABLED}"
-          echo "DEPLOY_DENO_ENABLED=${DEPLOY_DENO_ENABLED}"
-          echo "SKIP_BOT_EVENTS=${SKIP_BOT_EVENTS}"
-          echo "EXCLUDE_SUPPORTED_EVENTS=${EXCLUDE_SUPPORTED_EVENTS}"
-          echo "SOURCE_REF=${{ steps.refs.outputs.source_ref }}"
-          echo "IS_ARTIFACT_REF=${{ steps.refs.outputs.is_artifact_ref }}"
-          echo "IS_TAG_REF=${{ steps.refs.outputs.is_tag_ref }}"
-          echo "ACTION_REF=${ACTION_REF}"
+          artifact_environment="development"
+          deno_environment="development"
+          if [[ "$SOURCE_REF" == "main" || "$SOURCE_REF" == "demo" ]]; then
+            artifact_environment="main"
+            deno_environment="main"
+          fi
 
+          artifact_action="publish"
+          deno_action="provision"
+          if [[ "${{ github.event_name }}" == "delete" ]]; then
+            artifact_action="delete"
+            deno_action="delete"
+          fi
+
+          should_publish_action_artifact="false"
+          if [[ "$BUILD_ACTION_ENABLED" == "true" && "$IS_TAG_REF" != "true" && "$IS_DIST_REF" != "true" ]]; then
+            should_publish_action_artifact="true"
+          fi
+
+          should_run_deno="false"
+          if [[ "$DEPLOY_DENO_ENABLED" == "true" && "$IS_TAG_REF" != "true" && "$IS_DIST_REF" != "true" ]]; then
+            should_run_deno="true"
+          fi
+
+          echo "build_action_enabled=$BUILD_ACTION_ENABLED" >> "$GITHUB_OUTPUT"
+          echo "deploy_deno_enabled=$DEPLOY_DENO_ENABLED" >> "$GITHUB_OUTPUT"
+          echo "skip_bot_events=$SKIP_BOT_EVENTS" >> "$GITHUB_OUTPUT"
+          echo "exclude_supported_events=$EXCLUDE_SUPPORTED_EVENTS" >> "$GITHUB_OUTPUT"
+          echo "artifact_environment=$artifact_environment" >> "$GITHUB_OUTPUT"
+          echo "deno_environment=$deno_environment" >> "$GITHUB_OUTPUT"
+          echo "artifact_action=$artifact_action" >> "$GITHUB_OUTPUT"
+          echo "deno_action=$deno_action" >> "$GITHUB_OUTPUT"
+          echo "should_publish_action_artifact=$should_publish_action_artifact" >> "$GITHUB_OUTPUT"
+          echo "should_run_deno=$should_run_deno" >> "$GITHUB_OUTPUT"
+
+  publish-action-artifact:
+    name: "Publish Action Artifact"
+    needs: resolve-context
+    if: ${{ needs.resolve-context.outputs.should_publish_action_artifact == 'true' }}
+    runs-on: ubuntu-latest
+    permissions: write-all
+    environment: ${{ needs.resolve-context.outputs.artifact_environment }}
+
+    steps:
       - name: Publish action artifact branch
-        if: ${{ env.BUILD_ACTION_ENABLED == 'true' }}
         uses: ubiquity-os/action-deploy-plugin@main
         with:
-          action: ${{ github.event_name == 'delete' && 'delete' || 'publish' }}
+          action: ${{ needs.resolve-context.outputs.artifact_action }}
           treatAsEsm: true
           sourcemap: true
           pluginEntry: "${{ github.workspace }}/src/index.ts"
-          excludeSupportedEvents: ${{ env.EXCLUDE_SUPPORTED_EVENTS }}
-          skipBotEvents: ${{ env.SKIP_BOT_EVENTS }}
+          excludeSupportedEvents: ${{ needs.resolve-context.outputs.exclude_supported_events }}
+          skipBotEvents: ${{ needs.resolve-context.outputs.skip_bot_events }}
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Check out the repository
-        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' }}
-        uses: actions/checkout@v6
+  ensure-deno-resources:
+    name: "Ensure Deno App And KV"
+    needs: resolve-context
+    if: ${{ needs.resolve-context.outputs.deno_action == 'provision' && needs.resolve-context.outputs.is_tag_ref != 'true' && needs.resolve-context.outputs.is_dist_ref != 'true' }}
+    runs-on: ubuntu-latest
+    permissions: read-all
+    environment: ${{ needs.resolve-context.outputs.deno_environment }}
 
-      - name: Set up Deno
-        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' }}
-        uses: denoland/setup-deno@v2
+    steps:
+      - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
-      - name: Install dependencies
-        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' && github.event_name != 'delete' }}
-        run: deno install --node-modules-dir=auto --no-lock
-
-      - name: Generate manifest for deploy
-        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' && github.event_name != 'delete' }}
-        run: deno x -A -y --no-lock npm:@ubiquity-os/plugin-manifest-tool@latest
+      - name: Resolve Deno app context
+        id: deno_context
+        shell: bash
         env:
-          SKIP_BOT_EVENTS: ${{ env.SKIP_BOT_EVENTS }}
-          EXCLUDE_SUPPORTED_EVENTS: ${{ env.EXCLUDE_SUPPORTED_EVENTS }}
-          GITHUB_REF_NAME: ${{ steps.refs.outputs.source_ref }}
+          SOURCE_REF: ${{ needs.resolve-context.outputs.source_ref }}
+          BASE_APP: ${{ secrets.DENO_PROJECT_NAME }}
+          ORGANIZATION_SLUG: ${{ vars.DENO_ORG_NAME || 'ubiquity-os' }}
+        run: |
+          set -euo pipefail
 
-      - uses: ubiquity-os/deno-plugin-adapter@main
-        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' && github.event_name != 'delete' }}
-        id: adapter
-        with:
-          pluginEntry: "./worker"
+          slugify() {
+            local value="$1"
+            value="$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-{2,}/-/g')"
+            printf '%s' "$value"
+          }
 
-      - uses: ubiquity-os/deno-deploy@main
-        if: ${{ env.DEPLOY_DENO_ENABLED == 'true' && steps.refs.outputs.is_tag_ref != 'true' && steps.refs.outputs.is_artifact_ref != 'true' }}
+          trim_slug() {
+            local value="$1"
+            local limit="$2"
+            if [ "${#value}" -gt "$limit" ]; then
+              value="${value:0:$limit}"
+            fi
+            value="$(printf '%s' "$value" | sed -E 's/-+$//')"
+            printf '%s' "$value"
+          }
+
+          raw_app="$BASE_APP"
+          if [ -z "$raw_app" ]; then
+            raw_app="${GITHUB_REPOSITORY##*/}"
+          fi
+
+          max_total_length=32
+          base_app_slug="$(slugify "$raw_app")"
+          if [ -z "$base_app_slug" ]; then
+            base_app_slug="app"
+          fi
+          while [ "${#base_app_slug}" -lt 3 ]; do
+            base_app_slug="${base_app_slug}app"
+          done
+          base_app_slug="$(trim_slug "$base_app_slug" "$max_total_length")"
+
+          app_slug="$base_app_slug"
+          if [ "$SOURCE_REF" != "main" ] && [ -n "$SOURCE_REF" ]; then
+            branch_suffix="$(slugify "$SOURCE_REF")"
+            if [ -z "$branch_suffix" ]; then
+              branch_suffix="branch"
+            fi
+
+            max_branch_suffix_length=25
+            available_suffix_budget=$((max_total_length - ${#base_app_slug} - 1))
+            if [ "$available_suffix_budget" -lt 1 ]; then
+              base_app_slug="$(trim_slug "$base_app_slug" $((max_total_length - 2)))"
+              available_suffix_budget=$((max_total_length - ${#base_app_slug} - 1))
+            fi
+
+            suffix_budget="$max_branch_suffix_length"
+            if [ "$available_suffix_budget" -lt "$suffix_budget" ]; then
+              suffix_budget="$available_suffix_budget"
+            fi
+            if [ "$suffix_budget" -lt 1 ]; then
+              suffix_budget=1
+            fi
+
+            branch_suffix="$(trim_slug "$branch_suffix" "$suffix_budget")"
+            if [ -z "$branch_suffix" ]; then
+              branch_suffix="b"
+            fi
+
+            app_slug="${base_app_slug}-${branch_suffix}"
+          fi
+
+          echo "app_slug=$app_slug" >> "$GITHUB_OUTPUT"
+          echo "organization_slug=$ORGANIZATION_SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure Deno app exists
+        shell: bash
+        env:
+          DENO_API_TOKEN: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
+          DENO_API_BASE_URL: "https://api.deno.com"
+          APP_SLUG: ${{ steps.deno_context.outputs.app_slug }}
+          ENTRYPOINT: "src/worker.ts"
+          REF_NAME: ${{ needs.resolve-context.outputs.source_ref }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          deno eval --ext js '
+          const token = Deno.env.get("DENO_API_TOKEN")?.trim();
+          const baseUrl = Deno.env.get("DENO_API_BASE_URL")?.trim() || "https://api.deno.com";
+          const appSlug = Deno.env.get("APP_SLUG")?.trim();
+          const entrypoint = Deno.env.get("ENTRYPOINT")?.trim() || "src/worker.ts";
+          const refName = Deno.env.get("REF_NAME")?.trim();
+          const repository = Deno.env.get("REPOSITORY")?.trim();
+
+          if (!token) throw new Error("DENO_API_TOKEN is required.");
+          if (!appSlug) throw new Error("APP_SLUG is required.");
+          if (!refName) throw new Error("REF_NAME is required.");
+          if (!repository) throw new Error("REPOSITORY is required.");
+
+          const headers = {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          };
+
+          const existingResponse = await fetch(`${baseUrl}/v2/apps/${encodeURIComponent(appSlug)}`, {
+            headers,
+          });
+
+          if (existingResponse.status === 404) {
+            const payload = {
+              slug: appSlug,
+              config: {
+                install: "deno install",
+                build: `deno x -y @ubiquity-os/plugin-manifest-tool@latest --repository ${repository} --production-branch main`,
+                predeploy: "deno install",
+                unstable: ["kv"],
+                runtime: {
+                  type: "dynamic",
+                  entrypoint,
+                },
+              },
+              env_vars: [
+                { key: "REF_NAME", value: refName, secret: false, contexts: ["production"] },
+                { key: "PLUGIN_MANIFEST_PRODUCTION_BRANCH", value: "main", secret: false, contexts: ["build"] },
+                { key: "PLUGIN_MANIFEST_REPOSITORY", value: repository, secret: false, contexts: ["build"] },
+                { key: "REF_NAME", value: refName, secret: false, contexts: ["build"] },
+              ],
+            };
+
+            const createResponse = await fetch(`${baseUrl}/v2/apps`, {
+              method: "POST",
+              headers: {
+                ...headers,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            });
+
+            if (!createResponse.ok) {
+              const body = await createResponse.text();
+              throw new Error(`Deno API POST /v2/apps failed (${createResponse.status}): ${body || "<empty response>"}`);
+            }
+
+            console.log(`Created Deno app "${appSlug}".`);
+          } else if (!existingResponse.ok) {
+            const body = await existingResponse.text();
+            throw new Error(`Deno API GET /v2/apps/${appSlug} failed (${existingResponse.status}): ${body || "<empty response>"}`);
+          } else {
+            console.log(`Deno app "${appSlug}" already exists.`);
+          }
+          '
+
+      - name: Ensure Deno KV database
+        shell: bash
+        env:
+          NO_COLOR: "1"
+          DENO_API_TOKEN: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
+          KV_NAME: ${{ github.event.repository.name }}
+          APP_SLUG: ${{ steps.deno_context.outputs.app_slug }}
+          ORGANIZATION_SLUG: ${{ steps.deno_context.outputs.organization_slug }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$KV_NAME" ]]; then
+            echo "::error::KV_NAME is required."
+            exit 1
+          fi
+
+          if [[ -z "$APP_SLUG" ]]; then
+            echo "::error::App slug output is missing from the Deno context step."
+            exit 1
+          fi
+
+          if [[ -z "$ORGANIZATION_SLUG" ]]; then
+            echo "::error::Organization slug is required."
+            exit 1
+          fi
+
+          set +e
+          database_list_output="$(deno deploy database list "$KV_NAME" --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN" 2>&1)"
+          database_list_status=$?
+          set -e
+
+          if [[ $database_list_status -ne 0 ]]; then
+            printf '%s\n' "$database_list_output"
+            exit $database_list_status
+          fi
+
+          if printf '%s\n' "$database_list_output" | awk -v name="$KV_NAME" '$1 == name { found=1 } END { exit found ? 0 : 1 }'; then
+            echo "::notice::Deno KV database '$KV_NAME' already exists."
+          else
+            deno deploy database provision "$KV_NAME" --kind denokv --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN"
+          fi
+
+          set +e
+          assign_output="$(deno deploy database assign "$KV_NAME" --app "$APP_SLUG" --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN" 2>&1)"
+          assign_status=$?
+          set -e
+
+          if [[ $assign_status -ne 0 ]]; then
+            if printf '%s\n' "$assign_output" | tr '[:upper:]' '[:lower:]' | grep -Eq 'already (assigned|attached|linked)|already has .*deno kv database assigned'; then
+              echo "::notice::Deno KV database '$KV_NAME' is already assigned to '$APP_SLUG'."
+            else
+              printf '%s\n' "$assign_output"
+              exit $assign_status
+            fi
+          else
+            printf '%s\n' "$assign_output"
+          fi
+
+  deploy-deno:
+    name: "Provision Deno App"
+    needs: resolve-context
+    if: ${{ needs.resolve-context.outputs.should_run_deno == 'true' }}
+    runs-on: ubuntu-latest
+    permissions: write-all
+    environment: ${{ needs.resolve-context.outputs.deno_environment }}
+
+    steps:
+      - uses: actions/checkout@v6
+        if: ${{ needs.resolve-context.outputs.deno_action != 'delete' }}
+
+      - id: deno_deploy
+        uses: ubiquity-os/deno-deploy@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
           APP_INSTALLATION_ID: ${{ secrets.APP_INSTALLATION_ID }}
-          ACTION_REF: ${{ env.ACTION_REF }}
           LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
         with:
-          token: ${{ secrets.DENO_DEPLOY_TOKEN }}
-          action: ${{ github.event_name == 'delete' && 'delete' || 'deploy' }}
-          organization: ${{ secrets.DENO_ORG_NAME }}
-          entrypoint: ${{ github.event_name == 'delete' && 'src/deno.ts' || steps.adapter.outputs.entrypoint }}
-          project_name: ${{ secrets.DENO_PROJECT_NAME }}
-          sourceRef: ${{ steps.refs.outputs.source_ref }}
-          artifactPrefix: dist/
+          token: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
+          action: ${{ needs.resolve-context.outputs.deno_action }}
+          app: ${{ secrets.DENO_PROJECT_NAME }}
+          entrypoint: src/worker.ts
