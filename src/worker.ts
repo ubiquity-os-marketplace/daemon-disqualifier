@@ -1,6 +1,6 @@
 import { createPlugin } from "@ubiquity-os/plugin-sdk";
 import { Manifest, resolveRuntimeManifest } from "@ubiquity-os/plugin-sdk/manifest";
-import { LOG_LEVEL } from "@ubiquity-os/ubiquity-os-logger";
+import { LOG_LEVEL, LogLevel } from "@ubiquity-os/ubiquity-os-logger";
 import { ExecutionContext } from "hono";
 import { env } from "hono/adapter";
 import manifest from "../manifest.json" with { type: "json" };
@@ -35,7 +35,7 @@ export default {
       {
         envSchema: envSchema,
         settingsSchema: pluginSettingsSchema,
-        logLevel: environment.LOG_LEVEL || LOG_LEVEL.INFO,
+        logLevel: (environment.LOG_LEVEL as LogLevel) || LOG_LEVEL.INFO,
         postCommentOnError: false,
         kernelPublicKey: environment.KERNEL_PUBLIC_KEY,
         bypassSignatureVerification: (environment as Env & { NODE_ENV?: string }).NODE_ENV === "local",
