@@ -22,7 +22,11 @@ export default {
       return Response.json(runtimeManifest);
     }
 
-    const environment = env<Env>(request as never);
+    const environment = env<Env>(request as never) as Env & {
+      KERNEL_PUBLIC_KEY?: string;
+      LOG_LEVEL?: string;
+      NODE_ENV?: string;
+    };
     const app = createPlugin<PluginSettings, Env, null, SupportedEvents>(
       (context) => {
         return run(context);
