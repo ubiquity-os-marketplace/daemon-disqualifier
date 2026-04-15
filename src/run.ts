@@ -50,8 +50,13 @@ export async function populateDeadlineExtensionsThresholds(context: ContextPlugi
 
 export async function run(context: Context) {
   context.logger.info("Will run with the following configuration:", { configuration: context.config });
-  const augmentedContext = { ...context, adapters: await createAdapters() } as ContextPlugin;
+  const adapters = await createAdapters();
+  const augmentedContext = { ...context, adapters } as ContextPlugin;
 
-  await populateDeadlineExtensionsThresholds(augmentedContext);
-  return watchUserActivity(augmentedContext);
+  try {
+    await populateDeadlineExtensionsThresholds(augmentedContext);
+    return watchUserActivity(augmentedContext);
+  } finally {
+    await adapters.close();
+  }
 }

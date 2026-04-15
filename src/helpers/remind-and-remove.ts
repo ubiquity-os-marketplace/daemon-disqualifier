@@ -255,7 +255,7 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
 }
 
 export async function removeEntryFromDatabase(context: ContextPlugin, issue: ListIssueForRepo) {
-  await context.adapters.kv.removeIssue(issue.html_url);
+  await context.adapters.issueStore.removeIssue(issue.html_url);
 }
 
 async function removeAllAssignees(context: ContextPlugin, issue: ListIssueForRepo) {

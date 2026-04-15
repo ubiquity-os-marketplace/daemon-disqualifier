@@ -148,8 +148,8 @@ jobs:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
-  ensure-deno-resources:
-    name: "Ensure Deno App And KV"
+  ensure-deno-database:
+    name: "Ensure Deno Prisma Database"
     needs: resolve-context
     if: ${{ needs.resolve-context.outputs.deno_action == 'provision' && needs.resolve-context.outputs.is_tag_ref != 'true' && needs.resolve-context.outputs.is_dist_ref != 'true' }}
     runs-on: ubuntu-latest
@@ -161,176 +161,18 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Resolve Deno app context
-        id: deno_context
-        shell: bash
-        env:
-          SOURCE_REF: ${{ needs.resolve-context.outputs.source_ref }}
-          BASE_APP: ${{ secrets.DENO_PROJECT_NAME }}
-          ORGANIZATION_SLUG: ${{ vars.DENO_ORG_NAME || 'ubiquity-os' }}
-        run: |
-          set -euo pipefail
-
-          slugify() {
-            local value="$1"
-            value="$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-{2,}/-/g')"
-            printf '%s' "$value"
-          }
-
-          trim_slug() {
-            local value="$1"
-            local limit="$2"
-            if [ "${#value}" -gt "$limit" ]; then
-              value="${value:0:$limit}"
-            fi
-            value="$(printf '%s' "$value" | sed -E 's/-+$//')"
-            printf '%s' "$value"
-          }
-
-          raw_app="$BASE_APP"
-          if [ -z "$raw_app" ]; then
-            raw_app="${GITHUB_REPOSITORY##*/}"
-          fi
-
-          max_total_length=32
-          base_app_slug="$(slugify "$raw_app")"
-          if [ -z "$base_app_slug" ]; then
-            base_app_slug="app"
-          fi
-          while [ "${#base_app_slug}" -lt 3 ]; do
-            base_app_slug="${base_app_slug}app"
-          done
-          base_app_slug="$(trim_slug "$base_app_slug" "$max_total_length")"
-
-          app_slug="$base_app_slug"
-          if [ "$SOURCE_REF" != "main" ] && [ -n "$SOURCE_REF" ]; then
-            branch_suffix="$(slugify "$SOURCE_REF")"
-            if [ -z "$branch_suffix" ]; then
-              branch_suffix="branch"
-            fi
-
-            max_branch_suffix_length=25
-            available_suffix_budget=$((max_total_length - ${#base_app_slug} - 1))
-            if [ "$available_suffix_budget" -lt 1 ]; then
-              base_app_slug="$(trim_slug "$base_app_slug" $((max_total_length - 2)))"
-              available_suffix_budget=$((max_total_length - ${#base_app_slug} - 1))
-            fi
-
-            suffix_budget="$max_branch_suffix_length"
-            if [ "$available_suffix_budget" -lt "$suffix_budget" ]; then
-              suffix_budget="$available_suffix_budget"
-            fi
-            if [ "$suffix_budget" -lt 1 ]; then
-              suffix_budget=1
-            fi
-
-            branch_suffix="$(trim_slug "$branch_suffix" "$suffix_budget")"
-            if [ -z "$branch_suffix" ]; then
-              branch_suffix="b"
-            fi
-
-            app_slug="${base_app_slug}-${branch_suffix}"
-          fi
-
-          echo "app_slug=$app_slug" >> "$GITHUB_OUTPUT"
-          echo "organization_slug=$ORGANIZATION_SLUG" >> "$GITHUB_OUTPUT"
-
-      - name: Ensure Deno app exists
-        shell: bash
-        env:
-          DENO_API_TOKEN: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
-          DENO_API_BASE_URL: "https://api.deno.com"
-          APP_SLUG: ${{ steps.deno_context.outputs.app_slug }}
-          ENTRYPOINT: "src/worker.ts"
-          REF_NAME: ${{ needs.resolve-context.outputs.source_ref }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-
-          deno eval --ext js '
-          const token = Deno.env.get("DENO_API_TOKEN")?.trim();
-          const baseUrl = Deno.env.get("DENO_API_BASE_URL")?.trim() || "https://api.deno.com";
-          const appSlug = Deno.env.get("APP_SLUG")?.trim();
-          const entrypoint = Deno.env.get("ENTRYPOINT")?.trim() || "src/worker.ts";
-          const refName = Deno.env.get("REF_NAME")?.trim();
-          const repository = Deno.env.get("REPOSITORY")?.trim();
-
-          if (!token) throw new Error("DENO_API_TOKEN is required.");
-          if (!appSlug) throw new Error("APP_SLUG is required.");
-          if (!refName) throw new Error("REF_NAME is required.");
-          if (!repository) throw new Error("REPOSITORY is required.");
-
-          const headers = {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          };
-
-          const existingResponse = await fetch(`${baseUrl}/v2/apps/${encodeURIComponent(appSlug)}`, {
-            headers,
-          });
-
-          if (existingResponse.status === 404) {
-            const payload = {
-              slug: appSlug,
-              config: {
-                install: "deno install",
-                build: `deno x -y @ubiquity-os/plugin-manifest-tool@latest --repository ${repository} --production-branch main`,
-                predeploy: "deno install",
-                unstable: ["kv"],
-                runtime: {
-                  type: "dynamic",
-                  entrypoint,
-                },
-              },
-              env_vars: [
-                { key: "REF_NAME", value: refName, secret: false, contexts: ["production"] },
-                { key: "PLUGIN_MANIFEST_PRODUCTION_BRANCH", value: "main", secret: false, contexts: ["build"] },
-                { key: "PLUGIN_MANIFEST_REPOSITORY", value: repository, secret: false, contexts: ["build"] },
-                { key: "REF_NAME", value: refName, secret: false, contexts: ["build"] },
-              ],
-            };
-
-            const createResponse = await fetch(`${baseUrl}/v2/apps`, {
-              method: "POST",
-              headers: {
-                ...headers,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(payload),
-            });
-
-            if (!createResponse.ok) {
-              const body = await createResponse.text();
-              throw new Error(`Deno API POST /v2/apps failed (${createResponse.status}): ${body || "<empty response>"}`);
-            }
-
-            console.log(`Created Deno app "${appSlug}".`);
-          } else if (!existingResponse.ok) {
-            const body = await existingResponse.text();
-            throw new Error(`Deno API GET /v2/apps/${appSlug} failed (${existingResponse.status}): ${body || "<empty response>"}`);
-          } else {
-            console.log(`Deno app "${appSlug}" already exists.`);
-          }
-          '
-
-      - name: Ensure Deno KV database
+      - name: Ensure Deno Prisma database
         shell: bash
         env:
           NO_COLOR: "1"
           DENO_API_TOKEN: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
-          KV_NAME: ${{ github.event.repository.name }}
-          APP_SLUG: ${{ steps.deno_context.outputs.app_slug }}
-          ORGANIZATION_SLUG: ${{ steps.deno_context.outputs.organization_slug }}
+          DB_NAME: ${{ format('{0}-postgres', github.event.repository.name) }}
+          ORGANIZATION_SLUG: ${{ vars.DENO_ORG_NAME || 'ubiquity-os' }}
         run: |
           set -euo pipefail
 
-          if [[ -z "$KV_NAME" ]]; then
-            echo "::error::KV_NAME is required."
-            exit 1
-          fi
-
-          if [[ -z "$APP_SLUG" ]]; then
-            echo "::error::App slug output is missing from the Deno context step."
+          if [[ -z "$DB_NAME" ]]; then
+            echo "::error::DB_NAME is required."
             exit 1
           fi
 
@@ -340,7 +182,7 @@ jobs:
           fi
 
           set +e
-          database_list_output="$(deno deploy database list "$KV_NAME" --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN" 2>&1)"
+          database_list_output="$(deno deploy database list "$DB_NAME" --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN" 2>&1)"
           database_list_status=$?
           set -e
 
@@ -349,26 +191,10 @@ jobs:
             exit $database_list_status
           fi
 
-          if printf '%s\n' "$database_list_output" | awk -v name="$KV_NAME" '$1 == name { found=1 } END { exit found ? 0 : 1 }'; then
-            echo "::notice::Deno KV database '$KV_NAME' already exists."
+          if printf '%s\n' "$database_list_output" | awk -v name="$DB_NAME" '$1 == name { found=1 } END { exit found ? 0 : 1 }'; then
+            echo "::notice::Deno Prisma database '$DB_NAME' already exists."
           else
-            deno deploy database provision "$KV_NAME" --kind denokv --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN"
-          fi
-
-          set +e
-          assign_output="$(deno deploy database assign "$KV_NAME" --app "$APP_SLUG" --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN" 2>&1)"
-          assign_status=$?
-          set -e
-
-          if [[ $assign_status -ne 0 ]]; then
-            if printf '%s\n' "$assign_output" | tr '[:upper:]' '[:lower:]' | grep -Eq 'already (assigned|attached|linked)|already has .*deno kv database assigned'; then
-              echo "::notice::Deno KV database '$KV_NAME' is already assigned to '$APP_SLUG'."
-            else
-              printf '%s\n' "$assign_output"
-              exit $assign_status
-            fi
-          else
-            printf '%s\n' "$assign_output"
+            deno deploy database provision "$DB_NAME" --kind prisma --region us-east-1 --org "$ORGANIZATION_SLUG" --token "$DENO_API_TOKEN"
           fi
 
   deploy-deno:
@@ -383,9 +209,25 @@ jobs:
       - uses: actions/checkout@v6
         if: ${{ needs.resolve-context.outputs.deno_action != 'delete' }}
 
+      - name: Validate runtime database configuration
+        if: ${{ needs.resolve-context.outputs.deno_action != 'delete' }}
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$DATABASE_URL" ]]; then
+            echo "::error::DATABASE_URL is required in the selected GitHub environment for cron and Deno worker runtime access."
+            exit 1
+          fi
+
       - id: deno_deploy
         uses: ubiquity-os/deno-deploy@main
         env:
+          # Deno app lifecycle is managed by ubiquity-os/deno-deploy@main.
+          # DATABASE_URL remains a GitHub environment secret consumed by both cron and the Deno worker.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
           APP_ID: ${{ secrets.APP_ID }}

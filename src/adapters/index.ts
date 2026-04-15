@@ -1,11 +1,17 @@
-import { KvDatabaseHandler, createKvDatabaseHandler } from "./kv-database-handler";
+import { createPostgresIssueStore, IssueStore } from "./postgres-issue-store";
 
 export interface Adapters {
-  kv: KvDatabaseHandler;
+  issueStore: IssueStore;
+  close(): Promise<void>;
 }
 
 export async function createAdapters(): Promise<Adapters> {
+  const issueStore = await createPostgresIssueStore();
+
   return {
-    kv: await createKvDatabaseHandler(),
+    issueStore,
+    async close() {
+      await issueStore.close();
+    },
   };
 }
