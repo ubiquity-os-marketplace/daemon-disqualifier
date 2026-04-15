@@ -27,6 +27,7 @@ export class PostgresIssueStore implements IssueStore {
 
   async initialize(): Promise<void> {
     await this._withClient(async (client) => {
+      // cspell:disable
       await client.queryObject`
         CREATE TABLE IF NOT EXISTS tracked_issues (
           owner TEXT NOT NULL,
@@ -36,6 +37,7 @@ export class PostgresIssueStore implements IssueStore {
           PRIMARY KEY (owner, repo, issue_number)
         )
       `;
+      // cspell:enable
 
       await client.queryObject`
         CREATE INDEX IF NOT EXISTS tracked_issues_owner_repo_idx
