@@ -55,7 +55,7 @@ export async function run(context: Context) {
 
   try {
     await populateDeadlineExtensionsThresholds(augmentedContext);
-    return watchUserActivity(augmentedContext);
+    return await watchUserActivity(augmentedContext);
   } finally {
     await adapters.close();
   }
