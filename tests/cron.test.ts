@@ -175,6 +175,7 @@ describe("CRON tests", () => {
       return Promise.resolve();
     });
     const removeIssueByNumber = mock(() => Promise.resolve());
+    const close = mock(() => Promise.resolve());
     const getIssue = mock(({ issue_number }: { issue_number: number }) => {
       if (issue_number === issue2.issueNumber) {
         return { data: { number: issue2.issueNumber, assignees: [], state: "closed" } };
@@ -209,15 +210,16 @@ describe("CRON tests", () => {
     spyOn(await import("../src/run"), "populateDeadlineExtensionsThresholds").mockImplementation(populateDeadlineExtensionsThresholds as never);
     spyOn(await import("../src/handlers/watch-user-activity"), "runRemindersForRepository").mockImplementation(runRemindersForRepository as never);
 
-    spyOn(await import("../src/adapters/kv-database-handler"), "createKvDatabaseHandler").mockReturnValue(
+    spyOn(await import("../src/adapters/postgres-issue-store"), "createPostgresIssueStore").mockReturnValue(
       Promise.resolve({
         removeIssueByNumber,
+        close,
         getAllRepositories: mock(() =>
           Promise.resolve([
             {
               owner,
               repo: repo1,
-              issues: [{ issueNumber: issue2.issueNumber }, { issueNumber: issue1.issueNumber }],
+              issueNumbers: [issue2.issueNumber, issue1.issueNumber],
             },
           ])
         ),
@@ -246,6 +248,7 @@ describe("CRON tests", () => {
       owner,
       repo: repo1,
     });
+    expect(close).toHaveBeenCalledTimes(1);
   });
 
   it("Should enable and disable the CRON workflow depending on the DB state", async () => {
@@ -257,7 +260,7 @@ describe("CRON tests", () => {
     const context = {
       logger: new Logs("debug"),
       octokit: { rest: { actions: { enableWorkflow, disableWorkflow } } },
-      adapters: { kv: { hasData } },
+      adapters: { issueStore: { hasData } },
     } as unknown as ContextPlugin;
 
     process.env.GITHUB_REPOSITORY = "ubiquity-os-marketplace/daemon-disqualifier";

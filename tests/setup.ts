@@ -1,36 +1,14 @@
-const mockKv = {
-  _data: new Map<string, unknown>(),
+import { beforeEach, mock } from "bun:test";
+import { createMockPostgresPool, mockDatabaseUrl, resetMockPostgres } from "./helpers/mock-postgres";
 
-  async get(key: string[]) {
-    const keyStr = JSON.stringify(key);
-    return { value: this._data.get(keyStr) || null };
-  },
+process.env.DATABASE_URL = process.env.DATABASE_URL ?? mockDatabaseUrl;
 
-  async set(key: string[], value: unknown) {
-    const keyStr = JSON.stringify(key);
-    this._data.set(keyStr, value);
-  },
+const mockPostgresPool = createMockPostgresPool();
 
-  async delete(key: string[]) {
-    const keyStr = JSON.stringify(key);
-    this._data.delete(keyStr);
-  },
+mock.module("../src/adapters/postgres-driver", () => ({
+  createPostgresPool: () => Promise.resolve(mockPostgresPool),
+}));
 
-  async *list(options: { prefix: string[] }) {
-    const prefixStr = JSON.stringify(options.prefix);
-    for (const [keyStr, value] of this._data.entries()) {
-      const key = JSON.parse(keyStr);
-      if (JSON.stringify(key.slice(0, options.prefix.length)) === prefixStr) {
-        yield { key, value };
-      }
-    }
-  },
-
-  close() {
-    this._data.clear();
-  },
-};
-
-global.Deno = {
-  openKv: () => Promise.resolve(mockKv),
-} as unknown as typeof Deno;
+beforeEach(() => {
+  resetMockPostgres();
+});

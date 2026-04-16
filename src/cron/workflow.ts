@@ -38,7 +38,7 @@ export async function updateCronState(context: ContextPlugin) {
         },
       });
     }
-    const hasData = await context.adapters.kv.hasData();
+    const hasData = await context.adapters.issueStore.hasData();
     if (hasData) {
       context.logger.verbose("Enabling cron.yml workflow.", { owner, repo });
       await authOctokit.rest.actions.enableWorkflow({

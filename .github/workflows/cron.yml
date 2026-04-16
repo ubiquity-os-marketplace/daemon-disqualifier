@@ -9,8 +9,7 @@ env:
   APP_ID: ${{ secrets.APP_ID }}
   APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
   APP_INSTALLATION_ID: ${{ secrets.APP_INSTALLATION_ID }}
-  DENO_KV_ACCESS_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
-  DENO_KV_URL: ${{ secrets.DENO_KV_URL }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 jobs:
   run-cron:
@@ -43,6 +42,6 @@ jobs:
 
       - name: Run CRON job
         run: |
-          deno run --unstable-sloppy-imports --allow-all --unstable-kv src/cron/index.ts
+          deno run --unstable-sloppy-imports --allow-all src/cron/index.ts
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
