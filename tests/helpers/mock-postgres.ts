@@ -68,11 +68,11 @@ function normalizeQuery(text: string): string {
 }
 
 function runQuery(query: string, values: unknown[]): unknown[] {
-  if (query.startsWith("create table if not exists tracked_issues")) {
+  if (query.startsWith("create table if not exists daemon_disqualifier_tracked_issues")) {
     return [];
   }
 
-  if (query.startsWith("create index if not exists tracked_issues_owner_repo_idx")) {
+  if (query.startsWith("create index if not exists daemon_disqualifier_tracked_issues_owner_repo_idx")) {
     return [];
   }
 
@@ -80,18 +80,18 @@ function runQuery(query: string, values: unknown[]): unknown[] {
     return [];
   }
 
-  if (query.startsWith("select issue_number from tracked_issues")) {
+  if (query.startsWith("select issue_number from daemon_disqualifier_tracked_issues")) {
     const [owner, repo] = values as [string, string];
     return listIssueNumbers(owner, repo).map((issueNumber) => ({ issue_number: issueNumber }));
   }
 
-  if (query.startsWith("insert into tracked_issues")) {
+  if (query.startsWith("insert into daemon_disqualifier_tracked_issues")) {
     const [owner, repo, issueNumber] = values as [string, string, number];
     upsertTrackedIssue({ owner, repo, issueNumber });
     return [];
   }
 
-  if (query.startsWith("delete from tracked_issues")) {
+  if (query.startsWith("delete from daemon_disqualifier_tracked_issues")) {
     const [owner, repo, issueNumber] = values as [string, string, number];
     deleteTrackedIssue({ owner, repo, issueNumber });
     return [];
@@ -105,7 +105,7 @@ function runQuery(query: string, values: unknown[]): unknown[] {
     }));
   }
 
-  if (query.includes("select exists (select 1 from tracked_issues) as has_data")) {
+  if (query.includes("select exists (select 1 from daemon_disqualifier_tracked_issues) as has_data")) {
     return [{ has_data: trackedIssues.size > 0 }];
   }
 

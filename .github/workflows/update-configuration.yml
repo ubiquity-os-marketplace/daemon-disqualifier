@@ -166,7 +166,7 @@ jobs:
         env:
           NO_COLOR: "1"
           DENO_API_TOKEN: ${{ secrets.DENO_2_DEPLOY_TOKEN }}
-          DB_NAME: ${{ format('{0}-postgres', github.event.repository.name) }}
+          DB_NAME: ubiquity-os-postgres
           ORGANIZATION_SLUG: ${{ vars.DENO_ORG_NAME || 'ubiquity-os' }}
         run: |
           set -euo pipefail

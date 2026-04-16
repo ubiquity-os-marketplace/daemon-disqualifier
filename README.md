@@ -32,7 +32,8 @@ bun install
 
 Runtime state is stored in Postgres through `DATABASE_URL`.
 
-The deployment workflow only provisions the backing Prisma database in Deno Deploy. Deno app lifecycle is managed by `ubiquity-os/deno-deploy@main`, and both the Deno worker and `cron.yml` read `DATABASE_URL` from the selected GitHub environment.
+The deployment workflow only provisions the shared `ubiquity-os-postgres` Prisma database in Deno Deploy. Deno app lifecycle is managed by `ubiquity-os/deno-deploy@main`, and both the Deno worker and `cron.yml` read `DATABASE_URL` from the selected GitHub environment.
+Collision avoidance inside the shared database is handled by project-specific tables.
 
 Set `DATABASE_URL` in both the `main` and `development` GitHub environments before enabling Deno deploys or CRON runs.
 
