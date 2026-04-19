@@ -68,4 +68,24 @@ describe("watchUserActivity", () => {
     await watchUserActivity(mockContextTemplate);
     expect(infoSpy).not.toHaveBeenCalled();
   });
+
+  it("should NOT post comment on issues.reopened when no assignees", async () => {
+    const mockContext = { ...mockContextTemplate };
+    mockContext.eventName = "issues.reopened";
+    mockContext.payload = {
+      ...mockContextTemplate.payload,
+      issue: {
+        assignees: [],
+        title: "Test Issue",
+        state: "open",
+        labels: ["Price: 1 USD"],
+      },
+    } as unknown as ContextPlugin["payload"];
+
+    const postCommentSpy = mock(() => Promise.resolve({ id: 1, url: "http://test" } as any));
+    mockContext.commentHandler.postComment = postCommentSpy;
+
+    await watchUserActivity(mockContext);
+    expect(postCommentSpy).not.toHaveBeenCalled();
+  });
 });

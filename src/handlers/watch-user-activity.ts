@@ -14,7 +14,8 @@ export async function watchUserActivity(context: ContextPlugin) {
   if (
     ["issues.assigned", "issues.reopened"].includes(context.eventName) &&
     "issue" in context.payload &&
-    !shouldIgnoreIssue(context.payload.issue as IssueType)
+    !shouldIgnoreIssue(context.payload.issue as IssueType) &&
+    !(context.eventName === "issues.reopened" && !(context.payload.issue as IssueType).assignees?.length)
   ) {
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
