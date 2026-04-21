@@ -26,4 +26,4 @@ runs:
       uses: denoland/setup-deno@v2
     - name: Run main script
       shell: bash
-      run: deno run --unstable-sloppy-imports --allow-all --unstable-kv dist/index.js
+      run: deno run --unstable-sloppy-imports --allow-all dist/index.js
