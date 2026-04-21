@@ -37,7 +37,7 @@
     "@octokit/graphql-schema": "^15.26.1",
     "@octokit/rest": "^22.0.1",
     "@sinclair/typebox": "0.34.41",
-    "@ubiquity-os/plugin-sdk": "3.12.5",
+    "@ubiquity-os/plugin-sdk": "3.12.8",
     "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
     "hono": "^4.12.12",
     "luxon": "3.4.4",
