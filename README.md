@@ -30,25 +30,12 @@ bun install
 
 ### Database
 
-To start a local instance, run
+Runtime state is stored in Postgres through `DATABASE_URL`.
 
-```shell
-supabase start
-```
+The deployment workflow only provisions the shared `ubiquity-os-postgres` Prisma database in Deno Deploy. Deno app lifecycle is managed by `ubiquity-os/deno-deploy@main`, and both the Deno worker and `cron.yml` read `DATABASE_URL` from the selected GitHub environment.
+Collision avoidance inside the shared database is handled by project-specific tables.
 
-Afterward, you can generate types for full auto-completion with
-
-```shell
-bun run supabase:generate:local
-```
-
-### KV format
-
-CRON-tracked issues are stored in KV under `["cron", owner, repo]` with object entries shaped like:
-
-```json
-[{ "issueNumber": 123 }]
-```
+Set `DATABASE_URL` in both the `main` and `development` GitHub environments before enabling Deno deploys or CRON runs.
 
 ### Test
 

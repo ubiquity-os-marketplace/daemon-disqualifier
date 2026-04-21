@@ -2,7 +2,7 @@ import { createAppAuth } from "@octokit/auth-app";
 import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { createKvDatabaseHandler, IssueEntry, KvDatabaseHandler } from "../adapters/kv-database-handler";
+import { createPostgresIssueStore, IssueStore } from "../adapters/postgres-issue-store";
 import { resolveCronRepoConfig } from "./configuration";
 import { runRemindersForRepository } from "../handlers/watch-user-activity";
 import { populateDeadlineExtensionsThresholds } from "../run";
@@ -96,7 +96,7 @@ function buildCronContext(args: {
   issue: RepoIssue;
   config: PluginSettings;
   octokit: ContextPlugin["octokit"];
-  kvAdapter: KvDatabaseHandler;
+  issueStore: IssueStore;
 }): ContextPlugin {
   return {
     authToken: "",
@@ -126,7 +126,8 @@ function buildCronContext(args: {
       },
     },
     adapters: {
-      kv: args.kvAdapter,
+      issueStore: args.issueStore,
+      async close() {},
     },
   } as unknown as ContextPlugin;
 }
@@ -148,103 +149,108 @@ export async function runCronJob() {
     },
   });
 
-  const kvAdapter = await createKvDatabaseHandler();
-  const repositories = await kvAdapter.getAllRepositories();
+  const issueStore = await createPostgresIssueStore();
 
-  logger.ok(`Loaded KV data.`, {
-    repositories: repositories.length,
-  });
+  try {
+    const repositories = await issueStore.getAllRepositories();
 
-  for (const { owner, repo, issues } of repositories) {
-    if (issues.length === 0) {
-      continue;
-    }
+    logger.ok(`Loaded tracked issue data.`, {
+      repositories: repositories.length,
+    });
 
-    try {
-      logger.info(`Triggering update`, {
-        organization: owner,
-        repository: repo,
-        issueIds: issues.map((i: IssueEntry) => i.issueNumber),
-      });
-
-      const repoOctokit = await getInstallationOctokit(appOctokit, owner, repo, appAuth);
-      let issueToTrigger: RepoIssue | null = null;
-
-      for (const { issueNumber } of issues) {
-        const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
-        try {
-          await enforceRateLimit();
-          const issueResponse = await repoOctokit.rest.issues.get({ owner, repo, issue_number: issueNumber });
-          const hasAssignees = !!(issueResponse.data.assignee || issueResponse.data.assignees?.length);
-          if (issueResponse.data.state !== "open" || !hasAssignees) {
-            logger.debug("Removing entry due to issue closed or no assignees", {
-              owner,
-              repo,
-              issueNumber,
-              state: issueResponse.data.state,
-              assignees: issueResponse.data.assignees?.map((a) => a?.login),
-            });
-            await kvAdapter.removeIssueByNumber(owner, repo, issueNumber);
-            continue;
-          }
-
-          issueToTrigger = issueResponse.data;
-          logger.ok(`Selected issue for CRON reminder sweep (stopping after first valid issue).`, {
-            totalIssues: issues.length,
-            issueNumber,
-            url,
-          });
-          break;
-        } catch (err) {
-          logger.error("Failed to process issue", {
-            organization: owner,
-            repository: repo,
-            issueNumber,
-            url,
-            err,
-          });
-        } finally {
-          rateProcessed++;
-        }
+    for (const { owner, repo, issueNumbers } of repositories) {
+      if (issueNumbers.length === 0) {
+        continue;
       }
 
-      if (!issueToTrigger) {
-        logger.debug("No valid issue found to trigger CRON reminder sweep.", {
+      try {
+        logger.info(`Triggering update`, {
+          organization: owner,
+          repository: repo,
+          issueIds: issueNumbers,
+        });
+
+        const repoOctokit = await getInstallationOctokit(appOctokit, owner, repo, appAuth);
+        let issueToTrigger: RepoIssue | null = null;
+
+        for (const issueNumber of issueNumbers) {
+          const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
+          try {
+            await enforceRateLimit();
+            const issueResponse = await repoOctokit.rest.issues.get({ owner, repo, issue_number: issueNumber });
+            const hasAssignees = !!(issueResponse.data.assignee || issueResponse.data.assignees?.length);
+            if (issueResponse.data.state !== "open" || !hasAssignees) {
+              logger.debug("Removing entry due to issue closed or no assignees", {
+                owner,
+                repo,
+                issueNumber,
+                state: issueResponse.data.state,
+                assignees: issueResponse.data.assignees?.map((a) => a?.login),
+              });
+              await issueStore.removeIssueByNumber(owner, repo, issueNumber);
+              continue;
+            }
+
+            issueToTrigger = issueResponse.data;
+            logger.ok(`Selected issue for CRON reminder sweep (stopping after first valid issue).`, {
+              totalIssues: issueNumbers.length,
+              issueNumber,
+              url,
+            });
+            break;
+          } catch (err) {
+            logger.error("Failed to process issue", {
+              organization: owner,
+              repository: repo,
+              issueNumber,
+              url,
+              err,
+            });
+          } finally {
+            rateProcessed++;
+          }
+        }
+
+        if (!issueToTrigger) {
+          logger.debug("No valid issue found to trigger CRON reminder sweep.", {
+            owner,
+            repo,
+          });
+          continue;
+        }
+
+        const config = await resolveRepoConfig(repoOctokit, owner, repo);
+        if (!config) {
+          logger.warn("No plugin configuration found for repository; skipping CRON reminder sweep.", { owner, repo });
+          continue;
+        }
+
+        const context = buildCronContext({
           owner,
           repo,
+          issue: issueToTrigger,
+          config,
+          octokit: repoOctokit,
+          issueStore,
         });
-        continue;
+
+        await populateDeadlineExtensionsThresholds(context);
+        await runRemindersForRepository(context, context.payload.repository);
+        logger.ok("Processed repository updates directly through CRON reminder sweep.", {
+          owner,
+          repo,
+          issueNumber: issueToTrigger.number,
+        });
+      } catch (e) {
+        logger.error("Failed to process repository", {
+          owner,
+          repo,
+          issueNumbers,
+          e,
+        });
       }
-
-      const config = await resolveRepoConfig(repoOctokit, owner, repo);
-      if (!config) {
-        logger.warn("No plugin configuration found for repository; skipping CRON reminder sweep.", { owner, repo });
-        continue;
-      }
-
-      const context = buildCronContext({
-        owner,
-        repo,
-        issue: issueToTrigger,
-        config,
-        octokit: repoOctokit,
-        kvAdapter,
-      });
-
-      await populateDeadlineExtensionsThresholds(context);
-      await runRemindersForRepository(context, context.payload.repository);
-      logger.ok("Processed repository updates directly through CRON reminder sweep.", {
-        owner,
-        repo,
-        issueNumber: issueToTrigger.number,
-      });
-    } catch (e) {
-      logger.error("Failed to process repository", {
-        owner,
-        repo,
-        issues,
-        e,
-      });
     }
+  } finally {
+    await issueStore.close();
   }
 }

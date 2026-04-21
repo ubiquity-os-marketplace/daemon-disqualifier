@@ -17,7 +17,7 @@ import { db } from "./__mocks__/db";
 import { handlers } from "./__mocks__/handlers";
 import { createComment, createEvent, createIssue, createRepo, ONE_DAY } from "./__mocks__/helpers";
 import mockUsers from "./__mocks__/mock-users";
-import cfg from "./__mocks__/results/valid-configuration.json";
+import cfg from "./__mocks__/results/valid-configuration.json" with { type: "json" };
 import { botReminderComment, getIssueHtmlUrl, STRINGS } from "./__mocks__/strings";
 
 const server = setupServer(...handlers);
