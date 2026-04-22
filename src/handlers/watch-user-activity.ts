@@ -12,10 +12,10 @@ export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
   if (
-    ["issues.assigned", "issues.reopened"].includes(context.eventName) &&
+    ["issues.assigned", "issues.reopened", "pull_request.reopened"].includes(context.eventName) &&
     "issue" in context.payload &&
     !shouldIgnoreIssue(context.payload.issue as IssueType) &&
-    !(context.eventName === "issues.reopened" && !(context.payload.issue as IssueType).assignees?.length)
+    !(["issues.reopened", "pull_request.reopened"].includes(context.eventName) && !(context.payload.issue as IssueType).assignees?.length)
   ) {
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
