@@ -16,6 +16,12 @@ export async function watchUserActivity(context: ContextPlugin) {
     "issue" in context.payload &&
     !shouldIgnoreIssue(context.payload.issue as IssueType)
   ) {
+    // For reopened events, only post reminder if there are assignees
+    const issue = context.payload.issue as IssueType;
+    if (context.eventName === "issues.reopened" && !issue.assignees?.length && !issue.assignee) {
+      context.logger.debug(`Skipping reminder for reopened issue ${issue.html_url} because no user is assigned.`);
+      return { message: "OK" };
+    }
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {
