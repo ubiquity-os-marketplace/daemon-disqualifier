@@ -63,6 +63,30 @@ describe("watchUserActivity", () => {
     expect(warnSpy).toHaveBeenCalled();
   });
 
+  it("should not post a reminder when an unassigned task is reopened", async () => {
+    const mockContext = {
+      ...mockContextTemplate,
+      eventName: "issues.reopened",
+      payload: {
+        ...mockContextTemplate.payload,
+        issue: {
+          assignees: [],
+          assignee: null,
+          title: "Unassigned task",
+          state: "open",
+          labels: ["Price: 75 USD"],
+        },
+      },
+      commentHandler: {
+        postComment: mock(() => {}),
+      },
+    } as unknown as ContextPlugin;
+
+    await watchUserActivity(mockContext);
+
+    expect(mockContext.commentHandler.postComment).not.toHaveBeenCalled();
+  });
+
   it("should ignore an un-priced task", async () => {
     const infoSpy = spyOn(console, "info");
     await watchUserActivity(mockContextTemplate);
