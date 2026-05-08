@@ -8,6 +8,14 @@ import { formatMillisecondsToHumanReadable } from "./time-format";
 
 type IssueType = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"]["0"];
 
+/**
+ * Handles user activity watching for task assignment and reopening events.
+ * Posts reminder comments when issues are assigned or reopened, and
+ * initializes the CRON reminder state. Skips unpriced, locked, draft,
+ * or unassigned issues to avoid spurious notifications.
+ * @param context - The plugin context containing event payload, config, and adapters.
+ * @returns A result object with a log message string.
+ */
 export async function watchUserActivity(context: ContextPlugin) {
   const { logger } = context;
 
@@ -16,6 +24,15 @@ export async function watchUserActivity(context: ContextPlugin) {
     "issue" in context.payload &&
     !shouldIgnoreIssue(context.payload.issue as IssueType)
   ) {
+    /**
+     * Early return for reopened issues with no assignee.
+     * Mirrors the CRON-path guard in {@link updateReminders} which skips
+     * unassigned issues to avoid posting reminders with nobody to notify.
+     * @see updateReminders
+     */
+    if (context.eventName === "issues.reopened" && !context.payload.issue.assignees?.length && !(context.payload.issue as IssueType).assignee) {
+      return { message: logger.info("Issue reopened with no assignee, skipping reminder.").logMessage.raw };
+    }
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {
@@ -40,6 +57,13 @@ export async function watchUserActivity(context: ContextPlugin) {
   return { message: logger.warn(`Unsupported event ${context.eventName}`).logMessage.raw };
 }
 
+/**
+ * Runs the full reminder pipeline for all open issues in a repository.
+ * Called by the CRON workflow to check activity and send follow-up reminders.
+ * @param context - The plugin context.
+ * @param repo - The repository to scan for open assigned issues.
+ * @returns A result object with a log message string.
+ */
 export async function runRemindersForRepository(context: ContextPlugin, repo: ContextPlugin["payload"]["repository"]) {
   context.logger.info(`> Watching user activity for repo: ${repo.name} (${repo.html_url})`);
   await updateReminders(context, repo);
