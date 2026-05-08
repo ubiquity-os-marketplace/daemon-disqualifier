@@ -68,4 +68,26 @@ describe("watchUserActivity", () => {
     await watchUserActivity(mockContextTemplate);
     expect(infoSpy).not.toHaveBeenCalled();
   });
+
+  it("should NOT post a reminder when issue is reopened with no assignee", async () => {
+    const postCommentSpy = spyOn(mockContextTemplate.commentHandler, "postComment");
+    const mockContext = {
+      ...mockContextTemplate,
+      eventName: "issues.reopened",
+      payload: {
+        ...mockContextTemplate.payload,
+        issue: {
+          assignees: [],
+          assignee: null,
+          title: "Test Issue",
+          state: "open",
+          labels: [{ name: "Price: 75 USD" }],
+        },
+      },
+    } as unknown as ContextPlugin;
+
+    const result = await watchUserActivity(mockContext);
+    expect(postCommentSpy).not.toHaveBeenCalled();
+    expect(result.message).toContain("no assignee");
+  });
 });

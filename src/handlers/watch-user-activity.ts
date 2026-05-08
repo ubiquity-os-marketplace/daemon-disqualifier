@@ -16,6 +16,9 @@ export async function watchUserActivity(context: ContextPlugin) {
     "issue" in context.payload &&
     !shouldIgnoreIssue(context.payload.issue as IssueType)
   ) {
+    if (context.eventName === "issues.reopened" && !context.payload.issue.assignees?.length && !(context.payload.issue as IssueType).assignee) {
+      return { message: logger.info("Issue reopened with no assignee, skipping reminder.").logMessage.raw };
+    }
     const message = ["[!IMPORTANT]"];
     const priorityValue = getPriorityValue(context);
     if (context.config.pullRequestRequired) {
