@@ -5,6 +5,28 @@ import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { parseIssueUrl } from "./github-url";
 import { QUERY_PULL_REQUEST } from "./pull-request-operations";
 
+export function isPullRequestFromAssignee(
+  pullRequest: { author?: { id?: number; login?: string } | null },
+  issue: ListIssueForRepo
+): boolean {
+  if (!issue.assignees?.length || !pullRequest.author) {
+    return false;
+  }
+  return issue.assignees.some((assignee) => {
+    if (assignee.id && pullRequest.author?.id && assignee.id === pullRequest.author.id) {
+      return true;
+    }
+    if (
+      assignee.login &&
+      pullRequest.author?.login &&
+      assignee.login.toLowerCase() === pullRequest.author.login.toLowerCase()
+    ) {
+      return true;
+    }
+    return false;
+  });
+}
+
 export async function areLinkedPullRequestsApproved(context: ContextPlugin, issue: ListIssueForRepo) {
   const { octokit, logger } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
@@ -15,7 +37,7 @@ export async function areLinkedPullRequestsApproved(context: ContextPlugin, issu
       owner,
       issue_number,
     })
-  ).filter((o) => issue.assignees?.some((assignee) => assignee.id === o.author.id));
+  ).filter((o) => isPullRequestFromAssignee(o, issue));
 
   for (const pullRequest of pullRequestsFromAssignees) {
     const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);

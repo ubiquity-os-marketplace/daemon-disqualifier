@@ -5,7 +5,7 @@ import { ContextPlugin } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getRemainingAvailableExtensions } from "./deadline-extensions";
 import { parseIssueUrl } from "./github-url";
-import { areLinkedPullRequestsApproved } from "./pull-request";
+import { areLinkedPullRequestsApproved, isPullRequestFromAssignee } from "./pull-request";
 import { MUTATION_PULL_REQUEST_TO_DRAFT } from "./pull-request-operations";
 import { createStructuredMetadata } from "./structured-metadata";
 import { getMostRecentUserAssignmentEvent } from "./task-metadata";
@@ -36,7 +36,9 @@ export async function remindAssigneesForIssue(context: ContextPlugin, issue: Lis
   const { logger, config } = context;
   const issueItem = parseIssueUrl(issue.html_url);
 
-  const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter((o) => o.state === "OPEN").length;
+  const hasLinkedPr = !!(await collectLinkedPullRequests(context, issueItem)).filter(
+    (o) => o.state === "OPEN" && (!o.author || isPullRequestFromAssignee(o, issue))
+  ).length;
   const { remainingExtensions } = await getRemainingAvailableExtensions(context, issue);
   if (config.followUpInterval <= 0) {
     logger.debug("The reminder threshold is <= 0, won't send any reminder.");
@@ -198,8 +200,8 @@ export async function remindAssignees(context: ContextPlugin, issue: ListIssueFo
     });
   } else {
     const openedLinkedPullRequests = (await collectLinkedPullRequests(context, { repo, owner, issue_number }))
-      // We filter out closed and merged PRs to avoid commenting on these
-      .filter((o) => o.state === "OPEN");
+      // We filter out closed and merged PRs, as well as PRs not from the assigned user
+      .filter((o) => o.state === "OPEN" && (!o.author || isPullRequestFromAssignee(o, issue)));
     let shouldPostToMainIssue = openedLinkedPullRequests.length === 0;
     for (const pullRequest of openedLinkedPullRequests) {
       const { owner: prOwner, repo: prRepo, issue_number: prNumber } = parseIssueUrl(pullRequest.url);
@@ -309,7 +311,7 @@ export async function closeLinkedPullRequests(context: ContextPlugin, issue: Lis
   const { octokit, logger } = context;
   const { repo, owner, issue_number } = parseIssueUrl(issue.html_url);
   const pullRequestsFromAssignees = (await collectLinkedPullRequests(context, { repo, owner, issue_number })).filter((o) =>
-    issue.assignees?.some((assignee) => assignee.id === o.author.id)
+    isPullRequestFromAssignee(o, issue)
   );
 
   for (const pullRequest of pullRequestsFromAssignees) {

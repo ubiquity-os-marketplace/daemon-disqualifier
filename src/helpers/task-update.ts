@@ -6,7 +6,7 @@ import { ContextPlugin, TimelineEvent } from "../types/plugin-input";
 import { collectLinkedPullRequests } from "./collect-linked-pulls";
 import { getAssigneesActivityForIssue } from "./get-assignee-activity";
 import { parseIssueUrl } from "./github-url";
-import { areLinkedPullRequestsApproved } from "./pull-request";
+import { areLinkedPullRequestsApproved, isPullRequestFromAssignee } from "./pull-request";
 import { closeLinkedPullRequests, remindAssignees, remindAssigneesForIssue, unassignUserFromIssue } from "./remind-and-remove";
 import { getCommentsFromMetadata } from "./structured-metadata";
 import { getMostRecentUserAssignmentEvent, getTaskAssignmentDetails, parsePriorityLabel } from "./task-metadata";
@@ -50,8 +50,8 @@ export async function updateTaskReminder(context: ContextPlugin, repo: ContextPl
   const openedLinkedPullRequestUrls: string[] = (
     await collectLinkedPullRequests(context, { issue_number: issue.number, repo: repo.name, owner: repo.owner.login })
   )
-    // We filter out closed and merged PRs to avoid commenting on these
-    .filter((o) => o.state === "OPEN")
+    // We filter out closed and merged PRs, as well as PRs not from the assigned user
+    .filter((o) => o.state === "OPEN" && (!o.author || isPullRequestFromAssignee(o, issue)))
     .map((o) => o.url);
   openedLinkedPullRequestUrls.push(issue.html_url);
   const lastReminders: RestEndpointMethodTypes["issues"]["listComments"]["response"]["data"][] = await Promise.all(

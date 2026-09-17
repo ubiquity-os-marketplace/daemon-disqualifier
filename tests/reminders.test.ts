@@ -48,4 +48,119 @@ describe("Reminder tests", () => {
     expect(f).toHaveBeenCalledWith(expect.anything(), 1, "ubiquity-os", "daemon-disqualifier", FOLLOWUP_HEADER);
     expect(f).toHaveBeenCalledWith(expect.anything(), 4, "ubiquity-os", "daemon-disqualifier", FOLLOWUP_HEADER);
   });
+
+  it("Should post reminder only to assigned user's pull-request when another PR from an unassigned user exists", async () => {
+    const { remindAssignees } = await import("../src/helpers/remind-and-remove");
+    const createCommentMock = mock(() => Promise.resolve({}));
+
+    const context = {
+      logger: new Logs("debug"),
+      octokit: {
+        rest: {
+          issues: {
+            createComment: createCommentMock,
+          },
+        },
+      },
+      config: {
+        pullRequestRequired: true,
+        availableDeadlineExtensions: { enabled: false, amounts: {} },
+      },
+    } as unknown as ContextPlugin;
+
+    const issue = {
+      html_url: "https://github.com/ubiquity-os/daemon-disqualifier/issues/100",
+      number: 100,
+      assignees: [{ login: "userA", id: 101 }],
+    } as unknown as ListIssueForRepo;
+
+    spyOn(await import("../src/helpers/deadline-extensions"), "getRemainingAvailableExtensions").mockReturnValue(
+      Promise.resolve({ remainingExtensions: 3, extensionsLimit: 5, extensionTimeLapse: 1000, assignmentDate: new Date() }) as never
+    );
+
+    spyOn(await import("../src/helpers/collect-linked-pulls"), "collectLinkedPullRequests").mockReturnValue(
+      Promise.resolve([
+        {
+          id: "pr_userB",
+          number: 201,
+          state: "OPEN",
+          url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/201",
+          author: { login: "userB", id: 202 },
+        },
+        {
+          id: "pr_userA",
+          number: 202,
+          state: "OPEN",
+          url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/202",
+          author: { login: "userA", id: 101 },
+        },
+      ] as never)
+    );
+
+    await remindAssignees(context, issue);
+
+    // Should only comment on User A's PR (issue_number: 202), NOT on User B's PR (201) or main issue (100)
+    expect(createCommentMock).toHaveBeenCalledTimes(1);
+    expect(createCommentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        owner: "ubiquity-os",
+        repo: "daemon-disqualifier",
+        issue_number: 202,
+      })
+    );
+  });
+
+  it("Should fallback to posting to the main issue when only an unassigned user's PR is linked", async () => {
+    const { remindAssignees } = await import("../src/helpers/remind-and-remove");
+    const createCommentMock = mock(() => Promise.resolve({}));
+
+    const context = {
+      logger: new Logs("debug"),
+      octokit: {
+        rest: {
+          issues: {
+            createComment: createCommentMock,
+          },
+        },
+      },
+      config: {
+        pullRequestRequired: true,
+        availableDeadlineExtensions: { enabled: false, amounts: {} },
+      },
+    } as unknown as ContextPlugin;
+
+    const issue = {
+      html_url: "https://github.com/ubiquity-os/daemon-disqualifier/issues/100",
+      number: 100,
+      assignees: [{ login: "userA", id: 101 }],
+    } as unknown as ListIssueForRepo;
+
+    spyOn(await import("../src/helpers/deadline-extensions"), "getRemainingAvailableExtensions").mockReturnValue(
+      Promise.resolve({ remainingExtensions: 3, extensionsLimit: 5, extensionTimeLapse: 1000, assignmentDate: new Date() }) as never
+    );
+
+    spyOn(await import("../src/helpers/collect-linked-pulls"), "collectLinkedPullRequests").mockReturnValue(
+      Promise.resolve([
+        {
+          id: "pr_userB",
+          number: 201,
+          state: "OPEN",
+          url: "https://github.com/ubiquity-os/daemon-disqualifier/pull/201",
+          author: { login: "userB", id: 202 },
+        },
+      ] as never)
+    );
+
+    await remindAssignees(context, issue);
+
+    // Should NOT comment on User B's PR (201). Should fallback to the main issue (100)!
+    expect(createCommentMock).toHaveBeenCalledTimes(1);
+    expect(createCommentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        owner: "ubiquity-os",
+        repo: "daemon-disqualifier",
+        issue_number: 100,
+      })
+    );
+  });
 });
