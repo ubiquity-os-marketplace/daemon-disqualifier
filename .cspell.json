@@ -8,8 +8,6 @@
     "**/*.log",
     "**/*.http",
     "**/*.toml",
-    "src/types/database.ts",
-    "supabase/migrations/**",
     "tests/**",
     "dist/**"
   ],
@@ -21,7 +19,6 @@
     "outdir",
     "servedir",
     "typebox",
-    "supabase",
     "ubiquibot",
     "mswjs",
     "luxon",

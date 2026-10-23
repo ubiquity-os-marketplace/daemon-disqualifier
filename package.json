@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "start:deno": "deno serve --unstable-sloppy-imports --allow-all --watch --no-clear-screen --port 4000 src/worker.ts",
-    "prebuild": "bun run prepare:manifest && dotenv -- cross-env bun run supabase:generate:remote",
+    "prebuild": "bun run prepare:manifest",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
@@ -20,8 +20,6 @@
     "knip-ci": "knip --no-exit-code --reporter json --config .github/knip.ts",
     "prepare": "bun run prepare:manifest && husky install",
     "test": "bun test --preload=./tests/setup.ts --coverage",
-    "supabase:generate:local": "supabase gen types typescript --local > src/types/database.ts",
-    "supabase:generate:remote": "cross-env-shell \"supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts\"",
     "prepare:manifest": "bunx @ubiquity-os/plugin-manifest-tool@latest"
   },
   "keywords": [
@@ -56,9 +54,7 @@
     "@types/luxon": "3.4.2",
     "@types/ms": "0.7.34",
     "@types/node": "^22.7.7",
-    "cross-env": "7.0.3",
     "cspell": "8.8.3",
-    "dotenv-cli": "^11.0.0",
     "eslint": "9.15.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-check-file": "^2.8.0",
@@ -70,7 +66,6 @@
     "lint-staged": "15.2.5",
     "msw": "2.3.1",
     "prettier": "3.3.0",
-    "supabase": "1.176.9",
     "ts-node": "^10.9.2",
     "typescript": "5.5.4",
     "typescript-eslint": "^8.16.0"

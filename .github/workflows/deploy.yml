@@ -17,9 +17,3 @@ jobs:
         with:
           wranglerVersion: "3.57.0"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          secrets: |
-            SUPABASE_URL
-            SUPABASE_KEY
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
